@@ -122,46 +122,41 @@ Runnable, JWT-signed implementations (Node & Python) are in `examples/`.
 
 ## Endpoints (PGW v4.3)
 
-| API | Sandbox | Production |
-|-----|---------|------------|
-| Payment Token | `https://sandbox-pgw.2c2p.com/payment/4.3/paymentToken` | `https://pgw.2c2p.com/payment/4.3/paymentToken` |
-| Payment Inquiry | `https://sandbox-pgw.2c2p.com/payment/4.3/paymentInquiry` | `https://pgw.2c2p.com/payment/4.3/paymentInquiry` |
+Base: sandbox `https://sandbox-pgw.2c2p.com`, production `https://pgw.2c2p.com`. All
+endpoints share `/payment/4.3/<name>` (e.g. `/payment/4.3/paymentToken`,
+`/payment/4.3/paymentInquiry`). Full list and signing details: `references/authentication.md`.
 
-Other endpoints (Do Payment, Payment Option, etc.) share the `.../payment/4.3/<name>` shape.
+## How this skill is organized
 
-## Where to find what (quick index)
+Read `SKILL.md` (this file) for orientation. For depth, open the file that matches the
+task — **don't load everything**:
 
-Detailed, full table of contents with every page slug is in `references/doc-index.md`.
-Top-level map:
+**Focus topics** (the five main sidebar sections) — `references/topics/`:
 
-| I need… | Go to |
-|---------|-------|
-| What 2C2P is, getting started, sandbox creds | `/docs/general`, `/docs/sandbox-setup` |
-| Redirect / Hosted Payment Page integration | `/docs/redirect-api-how-it-works` |
-| Direct (custom) API integration & methods | `/docs/direct-api-how-it-works`, `/docs/direct-api-payment-methods` |
-| Payment Token / Inquiry / Do Payment field specs | `/docs/api-payment-token`, `/docs/api-payment-inquiry`, `/docs/api-do-payment` |
-| Backend/frontend return parameters | `/docs/api-payment-response-backend`, `/docs/api-payment-response-frontend` |
-| Refund / Void / Settle / maintenance | `/docs/payment-maintenance-how-it-works` |
-| Mobile SDK (iOS/Android/Flutter/RN) | `/docs/sdk-how-it-work` |
-| Web SDK (Drop-in / Secure Fields) | `/docs/web-sdk-drop-in-ui`, `/docs/encryption-of-card-data-information` |
-| Shopping cart plugins (WooCommerce, Shopify…) | `/docs/client-api` |
-| Payment **links** (QuickPay) | `/docs/quickpay-how-it-works` |
-| Contactless terminal (SoftPOS) | `/docs/softpos-overview` |
-| Disbursements (Payout) | `/docs/payout-how-it-works` |
-| Indonesia SNAP (Direct Debit / VA / QR) | `/docs/snap-overview` |
-| Bulk/offline file operations (Batch) | `/docs/batch-services-reconcile-report-full-payment` |
-| Response codes | `/docs/reference-response-code-guide`, `/docs/response-code-payment` |
-| Test cards / accounts per country | `/docs/reference-testing-information` |
-| Environment URLs | `/docs/reference-environment-guide` |
-| JWT / JWS / JWE encryption & signing | `/docs/json-web-tokens-jwt` |
-| Reference codes (currency, FX, agent, bank) | `/docs/reference-codes` |
+| Task | File |
+|------|------|
+| Hosted Payment Page / redirect checkout | `topics/redirect-integration.md` |
+| Custom checkout, wallets, QR, OTC, Secure Fields | `topics/direct-integration.md` |
+| API contracts: Payment Token, Inquiry, Do Payment, returns | `topics/payment-apis.md` |
+| Refund, void, settle, recurring, balance | `topics/payment-maintenance.md` |
+| WooCommerce / Shopify / Magento / etc. plugins | `topics/shopping-cart-plugins.md` |
 
-## Reference files in this skill
+**Cross-cutting references** — `references/`:
 
-- `references/glossary.md` — full terminology and acronym list.
-- `references/doc-index.md` — complete documentation table of contents with every slug.
-- `references/api-reference.md` — Payment Token / Inquiry / return field-level details.
-- `references/response-codes.md` — response code tables and how to react to each class.
-- `examples/payment-token.js`, `examples/payment_token.py` — runnable JWT-signed calls.
+| Need | File |
+|------|------|
+| Terms & acronyms (PGW, IPP, tranRef, …) | `glossary.md` |
+| JWT/JWS/JWE signing, endpoints, wire format | `authentication.md` |
+| Response codes + how to handle each class | `response-codes.md` |
+| Complete documentation map (every page slug) | `doc-index.md` |
 
-Load a reference only when the task needs that depth — keep context lean otherwise.
+**Examples** — `examples/payment-token.js`, `examples/payment_token.py` (runnable, JWT-signed).
+
+## Other 2C2P products (beyond the five focus topics)
+
+Indexed in `references/doc-index.md` → "Other sections": Mobile SDK
+(`/docs/sdk-how-it-work`), Web SDK (`/docs/web-sdk-drop-in-ui`), QuickPay payment links
+(`/docs/quickpay-how-it-works`), SoftPOS (`/docs/softpos-overview`), Payout
+(`/docs/payout-how-it-works`), SNAP / Indonesia (`/docs/snap-overview`), Batch Services
+(`/docs/batch-services-reconcile-report-full-payment`), and References & test cards
+(`/docs/reference-testing-information`, `/docs/reference-environment-guide`).
