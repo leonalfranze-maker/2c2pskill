@@ -146,6 +146,7 @@ task — **don't load everything**:
 | Need | File |
 |------|------|
 | Terms & acronyms (PGW, IPP, tranRef, …) | `glossary.md` |
+| **Full Payment Token parameter table** (every field, types, required) | `payment-token-parameters.md` |
 | JWT/JWS/JWE signing, endpoints, wire format | `authentication.md` |
 | Response codes + how to handle each class | `response-codes.md` |
 | Complete documentation map (every page slug) | `doc-index.md` |

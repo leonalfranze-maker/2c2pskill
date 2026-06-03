@@ -12,12 +12,14 @@ Required: `merchantID`, `invoiceNo` (unique per order), `description`, `amount` 
 `currencyCode` (e.g. `"SGD"`).
 
 Common optional: `frontendReturnUrl`, `backendReturnUrl`, `paymentChannel` (array),
-`tokenize` / `tokenizeOnly`, `cardTokens` (array), `recurring` + `recurringAmount` /
+`tokenize` / `tokenizeOnly`, `customerToken` (array), `recurring` + `recurringAmount` /
 `recurringInterval` / `recurringCount`, `installmentPeriodFilter`, `request3DS`
-(`"Y"`/`"N"`/`"F"`), `paymentExpiry` (`yyyy-MM-dd HH:mm:ss`), `locale`, `fxProviderCode`,
-`uiParams` (pre-fill buyer info), `userDefined1`..`userDefined5` (pass-through metadata).
+(`"Y"`/`"F"`/`"N"`), `paymentExpiry` (`yyyy-MM-dd HH:mm:ss`), `locale`, `fxProviderCode`,
+`userDefined1`..`userDefined5` (pass-through metadata).
 
-Field-level page: `/docs/api-payment-token-request-parameter`.
+→ **Complete, authoritative parameter table** (all 60+ fields, nested objects, types,
+required/optional): `../payment-token-parameters.md`. Source page:
+`/docs/api-payment-token-request-parameter`.
 
 ### Example
 ```json
