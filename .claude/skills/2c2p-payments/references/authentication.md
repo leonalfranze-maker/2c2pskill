@@ -40,6 +40,12 @@ Every request and response body is a JWT, wrapped like this:
 > Some accounts/products are provisioned for **JWE** (encrypted payload) — check your
 > dashboard config before adding encryption. See `/docs/reference-jwt-with-key`.
 
+> **Payment Maintenance is different.** The post-authorization *Payment Action* APIs
+> (refund/void/settle/inquiry, etc.) do **not** use the `/payment/4.3/` PGW endpoints or
+> plain JWS. They post to a separate endpoint (`.../PaymentAction/2.0/action`) and use
+> **JWE (RSA-OAEP + A256GCM) wrapped in JWS (PS256)** with key/certificate-based crypto.
+> See `topics/payment-maintenance.md` and `/docs/certificate-generation-guide`.
+
 ## Endpoints
 
 Base: sandbox `https://sandbox-pgw.2c2p.com`, production `https://pgw.2c2p.com`.

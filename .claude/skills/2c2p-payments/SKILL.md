@@ -138,8 +138,12 @@ task — **don't load everything**:
 | Hosted Payment Page / redirect checkout | `topics/redirect-integration.md` |
 | Custom checkout, wallets, QR, OTC, Secure Fields | `topics/direct-integration.md` |
 | API contracts: Payment Token, Inquiry, Do Payment, returns | `topics/payment-apis.md` |
+| API contracts: Initialization, Exchange Rate, payment-action, tokens, loyalty | `topics/payment-apis-extras.md` |
 | Refund, void, settle, recurring, balance | `topics/payment-maintenance.md` |
 | WooCommerce / Shopify / Magento / etc. plugins | `topics/shopping-cart-plugins.md` |
+
+Each `topics/` file contains a per-page summary of **every** documentation page in that
+sidebar section (purpose, flow, key request/response fields, gotchas, and the source slug).
 
 **Cross-cutting references** — `references/`:
 
