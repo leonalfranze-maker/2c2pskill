@@ -92,9 +92,12 @@ paco-integration/
     └── scripts/ try.js  doctor.js  generate-merchant-keys.js
 ```
 
-## 5. Decisions for Max
-1. **Stack:** Node.js only for v1? (Python/PHP later.)
-2. **Levels:** are the 3 levels (business / new dev / payments dev) right?
-3. **Opening text:** is the draft OK? Should it mention 2C2P helpdesk contacts? (We still have none public. See GAP-12.)
-4. **Checklist item 3 (IP allowlist):** OK to say "send your IP to your 2C2P contact" until an official process exists?
-5. **Where the skill must run:** Claude (Claude Code / Claude.ai) first? Other assistants (Kiro, Cursor) can read `SKILL.md` as plain instructions too.
+## 5. Decisions (Max, 2026-11-16)
+1. **Stack:** Node.js only for v1. **First milestone: we fire both payment APIs (`/prePaymentUi`, `/nonUi`) ourselves before building the skill.**
+2. **Levels:** the 3 levels are OK.
+3. **Opening text:** include helpdesk contact. Exact contact still to be decided.
+4. **Prerequisites:** the PO sends this skill **after onboarding is complete**, so the merchant should already have API key, officeId, IP allowlist and keys. The checklist becomes "confirm you have these from onboarding", and a ticket draft is needed only when something is missing.
+5. **Platform:** Claude first. Other assistants can read `SKILL.md` too.
+6. **Language:** the skill is written in **English** (enterprises in many countries). The AI replies in the user's language.
+
+Remaining items are added step by step after milestone 1.

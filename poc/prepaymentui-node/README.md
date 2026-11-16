@@ -48,10 +48,16 @@ Open http://localhost:3000, press Pay, and use test card `4111111111111111`, CVV
 `backendUrl` must be reachable from the internet. For UAT, put a public HTTPS URL (e.g. a tunnel) in `PUBLIC_BASE_URL`.
 
 ## Quick test with several environments (internal)
-Put one env file per environment in `envs/` (git-ignored, never committed), then call `/prePaymentUi` once without a browser:
+Put one env file per environment in `envs/` (git-ignored, never committed). Then call each API once without a browser.
+
+`/prePaymentUi` returns a payment page link:
 ```bash
-npm run try:uat-pgw
+npm run try:uat-pgw -- prepayment
 ```
-The other scripts follow the same pattern: `try:uat-ttb-3ds`, `try:uat-ttb-n3ds`, `try:qa-pgw`, `try:qa-ttb-3ds`, `try:qa-ttb-n3ds`. For the full browser flow, use `npm run start:uat-pgw`.
+`/nonUi` charges the test card directly. Add `--3ds Y` to request the OTP step:
+```bash
+npm run try:uat-pgw -- nonui --3ds Y
+```
+The other environments use the same pattern: `try:uat-ttb-3ds`, `try:uat-ttb-n3ds`, `try:qa-pgw`, `try:qa-ttb-3ds`, `try:qa-ttb-n3ds`. With your own `.env`, use `npm run try -- prepayment`. For the full browser flow, use `npm run start:uat-pgw`.
 
 **Open items before the first real call works: see [`/GAPS.md`](../../GAPS.md).**

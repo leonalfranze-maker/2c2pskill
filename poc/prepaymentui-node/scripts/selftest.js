@@ -8,6 +8,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import * as jose from 'jose';
 import { startServer } from '../server.js';
 import { loadKeys } from '../paco/jose.js';
+import { payNonUi } from '../paco/prepayment.js';
 
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('  ✓ ' + m); };
 const pair = () => generateKeyPairSync('rsa', { modulusLength: 2048, publicKeyEncoding: { type: 'spki', format: 'pem' }, privateKeyEncoding: { type: 'pkcs8', format: 'pem' } });
@@ -32,7 +33,8 @@ let lastRequest;
 const mock = http.createServer(async (req, res) => {
   let raw = ''; for await (const c of req) raw += c;
   try {
-    if (req.url !== '/api/2.0/Payment/prePaymentUi') throw new Error('wrong path ' + req.url);
+    const isNonUi = req.url === '/api/2.0/Payment/nonUi';
+    if (!isNonUi && req.url !== '/api/2.0/Payment/prePaymentUi') throw new Error('wrong path ' + req.url);
     if (req.headers.apikey !== API_KEY) throw new Error('apiKey header missing');
     const plain = req.headers['content-type'] === 'application/json'; // UAT accepts plain JSON
     if (!plain && req.headers['content-type'] !== 'application/jose') throw new Error('unsupported content-type');
@@ -47,7 +49,19 @@ const mock = http.createServer(async (req, res) => {
     lastRequest = r;
     for (const f of ['officeId', 'orderNo', 'productDescription', 'transactionAmount', 'notificationUrls']) if (!r[f]) throw new Error('missing ' + f);
     if (!/^\d{12}$/.test(r.transactionAmount.amountText)) throw new Error('amountText must be 12 digits');
-    const reply = {
+    let status = 200;
+    let reply;
+    if (isNonUi) {
+      if (!r.paymentType || !r.creditCardDetails?.cardNumber) throw new Error('nonUi: paymentType and creditCardDetails.cardNumber required');
+      const ok3ds = r.request3dsFlag === 'Y';
+      status = ok3ds ? 202 : 200;
+      reply = ok3ds
+        ? { version: '2.0', apiResponse: { responseCode: 'PC-B050001', responseDescription: 'Pending 3DS' },
+            data: { paymentIncompleteResult: { orderNo: r.orderNo, paymentStatusInfo: { paymentStatus: 'P', paymentStep: 'AU' } },
+              paymentPage: { paymentPageURL: `https://mock-paco.invalid/3ds?o=${r.orderNo}` } } }
+        : { version: '2.0', apiResponse: { responseCode: 'PC-B050000', responseDescription: 'Success' },
+            data: { paymentResult: { orderNo: r.orderNo, paymentStatusInfo: { paymentStatus: 'A', paymentStep: 'PA' } } } };
+    } else reply = {
       version: '2.0',
       apiResponse: { responseCode: 'PC-B050000', responseDescription: 'Success', responseDateTime: new Date().toISOString() },
       data: {
@@ -55,7 +69,7 @@ const mock = http.createServer(async (req, res) => {
         paymentPage: { paymentPageURL: `https://mock-paco.invalid/payment/form?o=${r.orderNo}`, validTillDateTime: new Date(Date.now() + 9e5).toISOString() },
       },
     };
-    res.writeHead(200, { 'Content-Type': plain ? 'application/json' : 'application/jose' });
+    res.writeHead(status, { 'Content-Type': plain ? 'application/json' : 'application/jose' });
     res.end(plain ? JSON.stringify(reply) : await pacoSeal(reply));
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -74,7 +88,8 @@ const cfg = {
 };
 // also exercise the "bare Base64" key format PACO may hand out
 cfg.pacoSigningPublicKey = pSign.publicKey.replace(/-----[^-]+-----|\s/g, '');
-const app = await startServer(cfg, await loadKeys(cfg));
+const appKeys = await loadKeys(cfg);
+const app = await startServer(cfg, appKeys);
 const base = cfg.publicBaseUrl;
 
 try {
@@ -108,6 +123,17 @@ try {
   const r4 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productDescription: 'Plain', amount: 1 }) });
   const j4 = await r4.json();
   ok(r4.status === 200 && j4.paymentPageURL, 'paymentPageURL returned without JOSE');
+
+  console.log('\n5) nonUi: frictionless (200) and 3DS (202)');
+  const card = { cardNumber: '4111 1111 1111 1111', cardExpiryMMYY: '1230', cvvCode: '123', cardHolderName: 'TEST' };
+  for (const plainJson of [false, true]) {
+    cfg.plainJson = plainJson;
+    const a = await payNonUi({ amount: 10, productDescription: 'nonUi' }, card, { cfg, keys: appKeys });
+    ok(a.outcome === 'COMPLETE' && a.paymentStatus === 'A', `${plainJson ? 'JSON' : 'JOSE'}: 200 -> COMPLETE, status A`);
+    ok(lastRequest.paymentType === 'CC' && lastRequest.creditCardDetails.cardNumber === '4111111111111111', `${plainJson ? 'JSON' : 'JOSE'}: paymentType CC + card (spaces stripped)`);
+    const b = await payNonUi({ amount: 10, productDescription: 'nonUi', request3dsFlag: 'Y' }, card, { cfg, keys: appKeys });
+    ok(b.outcome === 'ACTION_REQUIRED' && b.paymentPageURL.includes('/3ds'), `${plainJson ? 'JSON' : 'JOSE'}: 202 -> ACTION_REQUIRED with 3DS page`);
+  }
 
   console.log('\nALL PASSED');
 } finally {

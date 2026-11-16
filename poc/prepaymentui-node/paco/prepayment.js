@@ -59,15 +59,14 @@ export function buildPrePaymentUiRequest(order, cfg) {
   };
 }
 
-/** Calls PACO and returns { paymentPageURL, validTillDateTime, orderNo, raw } */
-export async function createPaymentPage(order, { cfg, keys }) {
-  const body = buildPrePaymentUiRequest(order, cfg);
+/** POST a JSON body to a PACO Payment API path. Returns { httpStatus, contentType, data }. */
+export async function callPaco(path, body, { cfg, keys }) {
   // UAT also accepts plain JSON (encryption not enforced). PRD requires JOSE.
   // Plain JSON is only a debugging aid: it separates "field problems" from "JOSE problems".
   const contentType = cfg.plainJson ? 'application/json' : 'application/jose';
   const payload = cfg.plainJson ? JSON.stringify(body) : await encryptRequest(body, { keys, apiKey: cfg.apiKey, pacoKeyId: cfg.pacoKeyId });
 
-  const res = await fetch(`${cfg.pacoBaseUrl.replace(/\/$/, '')}/api/2.0/Payment/prePaymentUi`, {
+  const res = await fetch(`${cfg.pacoBaseUrl.replace(/\/$/, '')}${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': contentType,
@@ -81,14 +80,60 @@ export async function createPaymentPage(order, { cfg, keys }) {
   const ct = res.headers.get('content-type') || '';
   // Docs: if PACO cannot decrypt the request it answers with application/json (not JOSE).
   const data = ct.includes('application/jose') ? await decryptResponse(text, { keys, apiKey: cfg.apiKey }) : safeJson(text);
+  return { httpStatus: res.status, contentType: ct, data };
+}
 
-  const page = data?.data?.paymentPage;
-  if (!res.ok || !page?.paymentPageURL) {
-    const err = new Error(`PACO prePaymentUi failed (HTTP ${res.status})`);
-    err.details = { httpStatus: res.status, contentType: ct, apiResponse: data?.apiResponse ?? data };
-    throw err;
+function pacoError(api, r) {
+  const err = new Error(`PACO ${api} failed (HTTP ${r.httpStatus})`);
+  err.details = { httpStatus: r.httpStatus, contentType: r.contentType, apiResponse: r.data?.apiResponse ?? r.data };
+  return err;
+}
+
+/** /prePaymentUi -> { paymentPageURL, validTillDateTime, orderNo, raw } */
+export async function createPaymentPage(order, { cfg, keys }) {
+  const body = buildPrePaymentUiRequest(order, cfg);
+  const r = await callPaco('/api/2.0/Payment/prePaymentUi', body, { cfg, keys });
+  const page = r.data?.data?.paymentPage;
+  if (r.httpStatus >= 300 || !page?.paymentPageURL) throw pacoError('prePaymentUi', r);
+  return { paymentPageURL: page.paymentPageURL, validTillDateTime: page.validTillDateTime, orderNo: body.orderNo, raw: r.data };
+}
+
+// ---- /nonUi ------------------------------------------------------------------------
+// Merchant collects card data itself. Required (spec https://devzone.2c2p.com/reference/pay):
+//   same as prePaymentUi + paymentType (e.g. "CC"); creditCardDetails.cardNumber for card payments.
+// WARNING: handling raw card numbers puts the merchant in PCI DSS scope. prePaymentUi avoids that.
+
+export function buildNonUiRequest(order, card, cfg) {
+  const base = buildPrePaymentUiRequest(order, cfg);
+  return {
+    ...base,
+    paymentType: order.paymentType || 'CC',
+    ...(order.request3dsFlag ? { request3dsFlag: order.request3dsFlag } : {}),
+    creditCardDetails: {
+      cardNumber: String(card.cardNumber).replace(/\s+/g, ''),
+      cardExpiryMMYY: card.cardExpiryMMYY,
+      cvvCode: card.cvvCode,
+      cardHolderName: card.cardHolderName,
+    },
+  };
+}
+
+/**
+ * /nonUi -> { outcome, orderNo, paymentStatus, paymentPageURL?, raw }
+ *   HTTP 200 = complete (authorized or declined, see paymentStatus)
+ *   HTTP 202 = incomplete, needs further action (e.g. 3DS/OTP): redirect the customer to paymentPageURL
+ */
+export async function payNonUi(order, card, { cfg, keys }) {
+  const body = buildNonUiRequest(order, card, cfg);
+  const r = await callPaco('/api/2.0/Payment/nonUi', body, { cfg, keys });
+  const d = r.data?.data;
+  if (r.httpStatus === 202 && d?.paymentPage?.paymentPageURL) {
+    return { outcome: 'ACTION_REQUIRED', orderNo: body.orderNo, paymentStatus: d.paymentIncompleteResult?.paymentStatusInfo?.paymentStatus, paymentPageURL: d.paymentPage.paymentPageURL, raw: r.data };
   }
-  return { paymentPageURL: page.paymentPageURL, validTillDateTime: page.validTillDateTime, orderNo: body.orderNo, raw: data };
+  if (r.httpStatus === 200 && d?.paymentResult) {
+    return { outcome: 'COMPLETE', orderNo: body.orderNo, paymentStatus: d.paymentResult.paymentStatusInfo?.paymentStatus, raw: r.data };
+  }
+  throw pacoError('nonUi', r);
 }
 
 function safeJson(text) {
