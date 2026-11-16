@@ -47,6 +47,10 @@ Open http://localhost:3000, press Pay, and use test card `4111111111111111`, CVV
 
 `backendUrl` must be reachable from the internet. For UAT, put a public HTTPS URL (e.g. a tunnel) in `PUBLIC_BASE_URL`.
 
+## Quickest test: HTML tester (no install)
+Open `public/tester.html` in a browser (double-click it). Click **Load .env file**, pick `/prePaymentUi` or `/nonUi`, then click **Send request**.
+It sends plain JSON, so it works in UAT only. If the browser can't make the call (CORS, or your IP isn't allowlisted), the page gives you a `curl` command to run instead, and you paste the output back into the page.
+
 ## Quick test with several environments (internal)
 Put one env file per environment in `envs/` (git-ignored, never committed). Then call each API once without a browser.
 
