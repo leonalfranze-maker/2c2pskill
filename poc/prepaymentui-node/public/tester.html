@@ -96,7 +96,15 @@
     <h2>3 · Result</h2>
     <div id="banner"></div>
     <div id="fallback" class="hidden">
-      <p style="margin:0 0 6px"><b>Run it from a terminal instead.</b> Copy this command, run it on a machine that can reach UAT, then paste the output below.</p>
+      <p style="margin:0 0 6px"><b>Step 1: which problem is it?</b> Open the PACO host in a new tab.</p>
+      <ul class="hint" style="margin:0 0 6px;padding-left:18px">
+        <li>Any page or error code shows (404, 401, JSON…) → this computer <b>can</b> reach UAT. The browser is blocked by <b>CORS</b>, so use Step 2.</li>
+        <li>"This site can't be reached" / <code>ERR_CONNECTION_RESET</code> → this computer <b>can't</b> reach UAT: <b>IP not allowlisted or VPN off</b>. Step 2 will fail too until that's fixed.</li>
+      </ul>
+      <div class="row" style="margin-top:0"><a class="small" id="probe" target="_blank" rel="noopener" style="text-decoration:none">Open PACO host ↗</a></div>
+      <p style="margin:14px 0 6px"><b>Step 2: send it from a terminal instead.</b> Copy the command, run it on this computer, then paste the output below.</p>
+      <div class="row" style="margin-top:0"><label for="shell" style="margin:0">Terminal</label>
+        <select id="shell" style="width:auto"><option value="ps">Windows PowerShell</option><option value="bash">macOS / Linux (bash)</option></select></div>
       <pre id="curl"></pre>
       <div class="row" style="margin-top:8px"><button class="small" id="copyCurl" type="button">Copy command</button></div>
       <label for="pasted" style="margin-top:12px">Paste the response here</label>
@@ -113,7 +121,7 @@
   const $ = (id) => document.getElementById(id);
   const STORE = 'paco-tester';
   let api = 'prePaymentUi';
-  let lastCurl = '';
+  let lastReq = null; // { url, key, json }
 
   // ---------- settings ----------
   const baseUrl = () => ($('envSel').value === 'custom' ? $('baseUrl').value.trim() : $('envSel').value).replace(/\/$/, '');
@@ -200,7 +208,23 @@
     return body;
   }
   const maskCard = (b) => b.creditCardDetails ? { ...b, creditCardDetails: { ...b.creditCardDetails, cardNumber: b.creditCardDetails.cardNumber.replace(/^(\d{6})\d+(\d{4})$/, '$1******$2'), cvvCode: '***' } } : b;
-  const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
+  const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;   // bash single-quote
+  const psq = (s) => `'${String(s).replace(/'/g, "''")}'`;          // PowerShell single-quote
+  function command(kind, { url, key, json }) {
+    if (kind === 'bash') {
+      return `curl -sS -X POST ${shq(url)} \\\n  -H 'Content-Type: application/json' -H 'Accept: application/json' \\\n  -H ${shq('apiKey: ' + key)} \\\n  -d ${shq(json)}; echo`;
+    }
+    // Windows PowerShell 5.1 and 7: force TLS 1.2, print the body on HTTP errors too
+    return `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\n`
+      + `try { (Invoke-WebRequest -UseBasicParsing -Method Post -Uri ${psq(url)} -ContentType 'application/json' -Headers @{ apiKey = ${psq(key)} } -Body ${psq(json)}).Content }\n`
+      + `catch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+  }
+  function renderCommand() {
+    if (!lastReq) return;
+    $('curl').textContent = command($('shell').value, lastReq).split(lastReq.key).join('<your API key>');
+  }
+  $('shell').value = /Win/i.test(navigator.userAgent) ? 'ps' : 'bash';
+  $('shell').addEventListener('change', renderCommand);
 
   // ---------- result rendering ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -239,8 +263,9 @@
 
     if ($('remember').checked) store.set({ baseUrl: baseUrl(), apiKey: $('apiKey').value.trim(), officeId: $('officeId').value.trim() });
     $('reqView').textContent = `POST ${url}\nContent-Type: application/json\napiKey: ••••${$('apiKey').value.trim().slice(-4)}\n\n${JSON.stringify(maskCard(body), null, 2)}`;
-    lastCurl = `curl -sS -X POST ${shq(url)} \\\n  -H 'Content-Type: application/json' -H 'Accept: application/json' \\\n  -H ${shq('apiKey: ' + $('apiKey').value.trim())} \\\n  -d ${shq(JSON.stringify(body))}`;
-    $('curl').textContent = lastCurl.replace($('apiKey').value.trim(), '<your API key>');
+    lastReq = { url, key: $('apiKey').value.trim(), json: JSON.stringify(body) };
+    renderCommand();
+    $('probe').href = baseUrl() + '/';
 
     $('fire').disabled = true; banner('warn', 'Sending…');
     try {
@@ -257,13 +282,18 @@
   });
 
   $('copyCurl').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(lastCurl); $('copyCurl').textContent = 'Copied ✓ (includes your API key)'; }
+    try { await navigator.clipboard.writeText(command($('shell').value, lastReq)); $('copyCurl').textContent = 'Copied ✓ (includes your API key)'; }
     catch { $('copyCurl').textContent = 'Copy failed: select the text manually'; }
     setTimeout(() => ($('copyCurl').textContent = 'Copy command'), 2500);
   });
   $('readPasted').addEventListener('click', () => {
     const t = $('pasted').value.trim();
-    try { interpret(null, JSON.parse(t)); } catch { banner('err', 'That is not JSON. If curl printed "Connection reset by peer", this computer\'s IP is not allowlisted for UAT.'); }
+    try { interpret(null, JSON.parse(t)); }
+    catch {
+      const net = /NETWORK ERROR|reset|forcibly closed|connection was closed|could not be resolved|timed out|Recv failure/i.test(t);
+      banner('err', net ? '<b>✗ Network error before PACO answered.</b> This computer can\'t reach UAT: the IP isn\'t allowlisted, or VPN is off.'
+                        : 'That is not JSON. Paste the full output of the command.');
+    }
   });
 })();
 </script>
