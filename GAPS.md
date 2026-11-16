@@ -6,6 +6,16 @@ Our side passes an offline end-to-end test against a local mock of PACO (`npm ru
 
 Fill in the **Answer** line of each gap. Once a gap is answered, the answer moves into the skill's `references/` so the next AI doesn't have to ask.
 
+## ✅ First real UAT call: 2026-11-16 (milestone 1)
+`/prePaymentUi` succeeded against UAT from an allowlisted network, using the single-file `tester.html` (plain JSON). The 2C2P payment page opened with the right order, description and amount.
+Learned from the real responses:
+- **CORS:** UAT answered a direct browser `fetch` (HTTP 400 / 200 visible in the page). Production still has to go through the merchant backend (JOSE, private keys, server IP allowlist).
+- **currencyCode:** `"THB"` → HTTP 400 `PC-B050006 Invalid currency code`. The successful call used a different value (likely numeric ISO 4217 `764`). **To confirm**, then change the defaults in code.
+- **Error shape:** HTTP 400 with `apiResponse.responseCode` / `responseDescription` / `marketingDescription`. `data` is absent.
+- **Success:** HTTP 200 with `data.paymentIncompleteResult` (incl. `availablePaymentTypes`) and `data.paymentPage.paymentPageURL` on `payment-api.demo-paco.2c2p.com/payment/...?pid=<controllerInternalId>`.
+- **Redirect back (GAP-09, partly):** PACO echoes our URLs with extra query params appended (`productDescription`, `controllerInternalId`) and adds `:443` to the host.
+- Still open: OTP page shown? `/nonUi` real call, JOSE real call, notification arrival.
+
 Legend: 🔴 blocks the first real call · 🟡 may break the first real call (we guessed, need to confirm) · 🟢 not blocking UAT, needed for the skill / production
 
 ---
