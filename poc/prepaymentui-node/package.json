@@ -1,0 +1,16 @@
+{
+  "name": "paco-prepaymentui-poc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal PACO /prePaymentUi integration: checkout page -> backend -> JOSE -> paymentPageURL",
+  "type": "module",
+  "engines": { "node": ">=20.6" },
+  "scripts": {
+    "start": "node --env-file=.env server.js",
+    "keys": "node scripts/generate-merchant-keys.js",
+    "selftest": "node scripts/selftest.js"
+  },
+  "dependencies": {
+    "jose": "5.9.6"
+  }
+}
