@@ -8,7 +8,14 @@
   "scripts": {
     "start": "node --env-file=.env server.js",
     "keys": "node scripts/generate-merchant-keys.js",
-    "selftest": "node scripts/selftest.js"
+    "selftest": "node scripts/selftest.js",
+    "try:uat-pgw": "node --env-file=envs/uat-pgw.env scripts/try-prepayment.js",
+    "try:uat-ttb-3ds": "node --env-file=envs/uat-ttb-3ds.env scripts/try-prepayment.js",
+    "try:uat-ttb-n3ds": "node --env-file=envs/uat-ttb-n3ds.env scripts/try-prepayment.js",
+    "try:qa-pgw": "node --env-file=envs/qa-pgw.env scripts/try-prepayment.js",
+    "try:qa-ttb-3ds": "node --env-file=envs/qa-ttb-3ds.env scripts/try-prepayment.js",
+    "try:qa-ttb-n3ds": "node --env-file=envs/qa-ttb-n3ds.env scripts/try-prepayment.js",
+    "start:uat-pgw": "node --env-file=envs/uat-pgw.env server.js"
   },
   "dependencies": {
     "jose": "5.9.6"

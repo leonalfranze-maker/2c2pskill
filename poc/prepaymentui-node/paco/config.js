@@ -27,8 +27,9 @@ export function loadConfig(env = process.env) {
     pacoSigningPublicKey: env.PACO_SIGNING_PUBLIC_KEY,
   };
 
-  if (cfg.plainJson && pacoEnv !== 'UAT') {
-    throw new Error('PACO_UAT_PLAIN_JSON is UAT-only. Production rejects plain JSON (HTTP 415).');
+  if (!cfg.pacoBaseUrl) throw new Error(`PACO_ENV=${pacoEnv} has no default URL. Set PACO_BASE_URL.`);
+  if (cfg.plainJson && pacoEnv === 'PRD') {
+    throw new Error('PACO_UAT_PLAIN_JSON is for test environments only. Production rejects plain JSON (HTTP 415).');
   }
   const required = { PACO_API_KEY: cfg.apiKey, PACO_OFFICE_ID: cfg.officeId };
   if (!cfg.plainJson) {
