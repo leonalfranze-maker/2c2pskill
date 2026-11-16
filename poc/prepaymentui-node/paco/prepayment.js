@@ -62,18 +62,19 @@ export function buildPrePaymentUiRequest(order, cfg) {
 /** Calls PACO and returns { paymentPageURL, validTillDateTime, orderNo, raw } */
 export async function createPaymentPage(order, { cfg, keys }) {
   const body = buildPrePaymentUiRequest(order, cfg);
-  const jwe = await encryptRequest(body, { keys, apiKey: cfg.apiKey, pacoKeyId: cfg.pacoKeyId });
+  // UAT also accepts plain JSON (encryption not enforced). PRD requires JOSE.
+  // Plain JSON is only a debugging aid: it separates "field problems" from "JOSE problems".
+  const contentType = cfg.plainJson ? 'application/json' : 'application/jose';
+  const payload = cfg.plainJson ? JSON.stringify(body) : await encryptRequest(body, { keys, apiKey: cfg.apiKey, pacoKeyId: cfg.pacoKeyId });
 
   const res = await fetch(`${cfg.pacoBaseUrl.replace(/\/$/, '')}/api/2.0/Payment/prePaymentUi`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/jose',
-      Accept: 'application/jose',
-      apiKey: cfg.apiKey, // OpenAPI securityScheme "ApiKeyAuth" (header "apiKey")
-      // GAP-03: Integration page also mentions a header named "token" and BASIC auth.
-      ...(cfg.accessToken ? { token: cfg.accessToken } : {}),
+      'Content-Type': contentType,
+      Accept: contentType,
+      apiKey: cfg.apiKey, // the only auth header PACO checks (value = company access token / API key)
     },
-    body: jwe,
+    body: payload,
   });
 
   const text = await res.text();

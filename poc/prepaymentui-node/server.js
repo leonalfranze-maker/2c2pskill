@@ -7,12 +7,13 @@
 
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { loadConfig } from './paco/config.js';
+import { loadConfig, hasJoseKeys } from './paco/config.js';
 import { loadKeys, decryptResponse } from './paco/jose.js';
 import { createPaymentPage } from './paco/prepayment.js';
 
 export async function startServer(cfg = loadConfig(), keys) {
-  keys ??= await loadKeys(cfg);
+  // In UAT plain-JSON mode the keys may not exist yet. JOSE notifications then can't be decrypted.
+  keys ??= hasJoseKeys(cfg) ? await loadKeys(cfg) : null;
   const orders = new Map(); // demo only: replace with your database
 
   const server = http.createServer(async (req, res) => {
@@ -34,7 +35,9 @@ export async function startServer(cfg = loadConfig(), keys) {
       if (req.method === 'POST' && url.pathname === '/paco/notification') {
         const raw = await readBody(req);
         // Same JOSE scheme as API responses (docs: Payment Result Notification).
-        const msg = (req.headers['content-type'] || '').includes('json') ? JSON.parse(raw) : await decryptResponse(raw, { keys, apiKey: cfg.apiKey });
+        const isJose = (req.headers['content-type'] || '').includes('jose') || /^[\w-]+\.[\w-]*\.[\w-]+\.[\w-]+\.[\w-]+$/.test(raw.trim());
+        if (isJose && !keys) throw new Error('JOSE notification received but JOSE keys are not configured in .env');
+        const msg = isJose ? await decryptResponse(raw, { keys, apiKey: cfg.apiKey }) : JSON.parse(raw);
         const r = msg?.data?.paymentResult ?? {};
         const status = r.paymentStatusInfo?.paymentStatus; // A=Authorized, S=Settled, V=Voided, F=Failed, P=Pending
         console.log(`[notification] order=${r.orderNo} status=${status} code=${msg?.apiResponse?.responseCode}`);

@@ -33,24 +33,30 @@ const mock = http.createServer(async (req, res) => {
   let raw = ''; for await (const c of req) raw += c;
   try {
     if (req.url !== '/api/2.0/Payment/prePaymentUi') throw new Error('wrong path ' + req.url);
-    if (req.headers['content-type'] !== 'application/jose') throw new Error('content-type must be application/jose');
     if (req.headers.apikey !== API_KEY) throw new Error('apiKey header missing');
-    const { plaintext, protectedHeader } = await jose.compactDecrypt(raw, pk.pEncPriv);
-    if (protectedHeader.kid !== KID || protectedHeader.enc !== 'A128CBC-HS256') throw new Error('bad JWE header');
-    const { payload } = await jose.jwtVerify(new TextDecoder().decode(plaintext), pk.mSignPub, { issuer: API_KEY, audience: 'PacoAudience', algorithms: ['PS256'] });
-    lastRequest = payload.request;
-    const r = payload.request;
+    const plain = req.headers['content-type'] === 'application/json'; // UAT accepts plain JSON
+    if (!plain && req.headers['content-type'] !== 'application/jose') throw new Error('unsupported content-type');
+    let r;
+    if (plain) r = JSON.parse(raw);
+    else {
+      const { plaintext, protectedHeader } = await jose.compactDecrypt(raw, pk.pEncPriv);
+      if (protectedHeader.kid !== KID || protectedHeader.enc !== 'A128CBC-HS256') throw new Error('bad JWE header');
+      const { payload } = await jose.jwtVerify(new TextDecoder().decode(plaintext), pk.mSignPub, { issuer: API_KEY, audience: 'PacoAudience', algorithms: ['PS256'] });
+      r = payload.request;
+    }
+    lastRequest = r;
     for (const f of ['officeId', 'orderNo', 'productDescription', 'transactionAmount', 'notificationUrls']) if (!r[f]) throw new Error('missing ' + f);
     if (!/^\d{12}$/.test(r.transactionAmount.amountText)) throw new Error('amountText must be 12 digits');
-    res.writeHead(200, { 'Content-Type': 'application/jose' });
-    res.end(await pacoSeal({
+    const reply = {
       version: '2.0',
       apiResponse: { responseCode: 'PC-B050000', responseDescription: 'Success', responseDateTime: new Date().toISOString() },
       data: {
         paymentIncompleteResult: { orderNo: r.orderNo, paymentStatusInfo: { paymentStatus: 'P', paymentStep: 'PP' } },
         paymentPage: { paymentPageURL: `https://mock-paco.invalid/payment/form?o=${r.orderNo}`, validTillDateTime: new Date(Date.now() + 9e5).toISOString() },
       },
-    }));
+    };
+    res.writeHead(200, { 'Content-Type': plain ? 'application/json' : 'application/jose' });
+    res.end(plain ? JSON.stringify(reply) : await pacoSeal(reply));
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ apiResponse: { responseCode: 'MOCK-400', responseDescription: e.message } }));
@@ -96,6 +102,12 @@ try {
   cfg.officeId = '';
   const r3 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productDescription: 'x', amount: 1 }) });
   ok(r3.status === 502, 'PACO error surfaced to frontend as 502 with details');
+
+  console.log('\n4) UAT plain-JSON debug mode (no JOSE)');
+  cfg.officeId = OFFICE; cfg.plainJson = true;
+  const r4 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productDescription: 'Plain', amount: 1 }) });
+  const j4 = await r4.json();
+  ok(r4.status === 200 && j4.paymentPageURL, 'paymentPageURL returned without JOSE');
 
   console.log('\nALL PASSED');
 } finally {

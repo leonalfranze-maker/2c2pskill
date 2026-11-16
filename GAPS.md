@@ -20,22 +20,28 @@ Legend: 🔴 blocks the first real call · 🟡 may break the first real call (w
 - UAT keys: `2C2P-JOSE-Key-UAT.zip` (cloudfront link on the Integration page). Docs: "Please contact your service provider for password to extract above files."
 - Without the PACO **encryption** public key we can't encrypt the request. Without the **signing** public key we can't verify the response.
 - Need: how a merchant gets the password (onboarding email? helpdesk ticket?). Is it the same password for every merchant?
+- Partial workaround (from GAP-03): UAT accepts plain JSON, so the **first UAT call can be made without any keys**. That proves apiKey, officeId, IP allowlist and fields. JOSE is still needed before go-live.
 - **Answer:**
 
-## 🔴 GAP-03: Which auth header(s)? (3 different statements in the docs)
+## ✅ GAP-03: Which auth header(s)? (3 different statements in the docs). ANSWERED
 1. OpenAPI spec (`/prePaymentUi`, `/nonUi`): header **`apiKey`**.
 2. Integration page > Access Token: header **`token`** ("identification token for that company"). Missing or wrong value returns "Access Denied".
 3. Integration page > API Protections: **BASIC HTTP auth**, username/password "shared as part of client onboarding".
-- Code currently sends `apiKey` always, plus `token` if `PACO_ACCESS_TOKEN` is set. No BASIC auth.
-- Need: which of these does PACO actually check today? Is `token` the same value as `apiKey`?
-- **Answer:**
+- **Answer (confirmed by the PACO team, 2026-11-16):**
+  - Only the **`apiKey`** header is checked, in UAT and PRD. Its value is the company access token (= the API key). Missing or wrong → request rejected.
+  - No `token` header and no BASIC auth are used on the Payment API.
+  - **UAT accepts plain JSON** (`application/json`) as well as JOSE. **PRD requires JOSE**: plain JSON gets HTTP 415.
+  - Code updated: sends `apiKey` only. Added a UAT-only plain-JSON debug mode (`PACO_UAT_PLAIN_JSON`). It refuses to start with that mode in PRD.
+  - Skill: `paco-integration/references/authentication.md`.
 
-## 🔴 GAP-04: UAT refuses connections from our server (IP whitelist?)
+## 🔴 GAP-04: UAT refuses connections from unknown IPs. PARTLY ANSWERED
 - From this cloud container, both `core.demo-paco.2c2p.com` and `payment-api.demo-paco.2c2p.com` **reset the TLS handshake** (curl error 35, before any HTTP). Our proxy allowed the host. The reset came from the far end.
 - Docs: IP whitelisting is mandatory in PRD, "optional for non-production environments provided the message encryption is enabled".
 - Likely: UAT is IP-restricted or behind a WAF that blocks cloud IPs.
-- Need: does UAT require the merchant's server IP to be whitelisted? How does a merchant request it (ticket text)?
-- **Answer:**
+- **Answer (PACO team, 2026-11-16):**
+  - Confirmed: UAT resets the TLS handshake for **any** source IP that isn't allowed, not only cloud IPs. A test from an office network got the same reset. PRD hosts complete the handshake normally.
+  - **Still open:** no documented process exists for a merchant to get allowlisted. Needs confirmation from 2C2P Ops/Security before the skill can describe it.
+  - Skill wording until then: "The UAT sandbox may only accept connections from allowlisted source IPs. If the TLS handshake is reset, send your server's public IP to your 2C2P integration contact." The helpdesk ticket draft must include the merchant's public egress IP.
 
 ## 🟡 GAP-05: JWT `aud` value
 - Integration page: `"aud": "PacoAudience"` **"(TBC exact wording)"**. Code uses `PacoAudience`.

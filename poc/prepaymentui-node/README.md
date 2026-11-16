@@ -33,7 +33,13 @@ Upload `keys/merchant-signing-public.pem` and `keys/merchant-encryption-public.p
 ```bash
 cp .env.example .env
 ```
-Fill `.env` (apiKey, officeId, your private keys, PACO public keys). Then start the server:
+Fill `.env` (apiKey, officeId, your private keys, PACO public keys).
+
+Tip for the very first UAT call: set `PACO_UAT_PLAIN_JSON=true`. You then only need `PACO_API_KEY` and `PACO_OFFICE_ID`, no keys. UAT accepts plain JSON. Production does not, so switch it off and test again with JOSE before go-live.
+
+If the connection is reset during the TLS handshake, your server's IP isn't allowlisted for UAT. See [`authentication.md`](../../paco-integration/references/authentication.md).
+
+Then start the server:
 ```bash
 npm start
 ```
