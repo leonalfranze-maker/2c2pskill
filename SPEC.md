@@ -17,18 +17,40 @@
 ### Step 0: Opening (first reply after the skill loads)
 Short, in the user's language. Draft:
 
-> Hi! I can help you connect your system to **2C2P PACO** payments. I can:
-> 1. **Explain** how PACO works, from a simple overview down to API and encryption details
-> 2. **List what you need** before you start (API key, office ID, network access, and so on), and draft the request to 2C2P for anything missing
-> 3. **Build it for you**: a payment page in your project that redirects to the 2C2P payment page, plus the backend that handles the result
-> 4. **Test it with you** in the sandbox: test card → OTP → success page
->
-> To pitch this right: which describes you best?
-> **(a)** business / project side · **(b)** developer, new to payment gateways · **(c)** developer who has integrated payment APIs before
+> Hi! I'm here to help you work with **2C2P PACO** payments. What would you like to do?
+> 1. **Ask a question**: anything about PACO, from "how does it work?" to API and encryption details
+> 2. **Get a slide deck** explaining how a PACO integration works, ready to share with your team
+> 3. **Integrate with the PACO API**: I'll guide you step by step, write the code in your project, and test it with you in the sandbox
 
-Then remember the level and adapt every later answer (section 4).
+Exactly these 3 options, in this order. Nothing else in the opening.
 
-### Step 1: Explain (any time the user asks)
+**After the user picks an option**, the AI asks one question to set the depth (skip it if the user's message already shows it):
+> Which describes you best? **(a)** business / project side · **(b)** developer, new to payment gateways · **(c)** developer who has integrated payment APIs before
+
+The AI remembers the level for the rest of the conversation. The user can switch options at any time (e.g. from slides to integration).
+
+| Option | What happens | Sections |
+|---|---|---|
+| 1. Ask a question | Answer at the user's level, from `references/` only. Unconfirmed → say so and offer a helpdesk draft. | Step 1 |
+| 2. Slide deck | Generate an HTML slide deck (one file, opens in any browser), see below. | Step 1b |
+| 3. Integrate | Checklist → project setup → first call → full payment → JOSE + go-live. | Steps 2–6 |
+
+### Step 1b: Slide deck (option 2)
+- Output: **one self-contained HTML file** (`paco-integration-overview.html`) in the user's workspace. No external dependencies, opens offline, arrow keys / click to move between slides, prints to PDF.
+- Built from a **template in the skill** (`templates/slides/`), so the diagrams and facts are always correct. The AI only fills in and adapts: company name, chosen flow, level (a/b/c), language.
+- Default deck (about 8 slides):
+  1. What PACO does for you (one sentence + logos-free diagram)
+  2. The payment journey: customer → your site → 2C2P payment page → back to your site
+  3. Who does what: your frontend, your backend, PACO (and why the browser never calls PACO directly)
+  4. What happens on the 2C2P payment page (card entry, OTP/3DS, result)
+  5. How you learn the result: backend notification (trusted) vs. redirect (display only), and the inquiry check
+  6. What you need: API key, office ID, IP allowlist, keys for encryption, HTTPS URL
+  7. From sandbox to live: UAT test card → JOSE → production checklist
+  8. Getting help: helpdesk contact (to be decided) and what to include in a ticket
+- Level (a) gets plain words and pictures. Level (c) adds endpoints, field names and the JOSE flow.
+- After creating it, the AI tells the user where the file is and offers option 3 as the next step.
+
+### Step 1: Explain (option 1, or any time the user asks)
 | Level | Style | Content |
 |---|---|---|
 | (a) business | analogies, no code | "Your site asks PACO for a payment link → customer pays on 2C2P's secure page → PACO tells your server the result." What the merchant must prepare. Timeline and who does what. |
@@ -87,6 +109,8 @@ paco-integration/
 │   ├── testing-uat.md       # test cards, OTP, request3dsFlag
 │   ├── troubleshooting.md   # symptom → cause → action
 │   └── helpdesk-templates.md
+├── templates/slides/        # HTML slide deck template for option 2
+│   └── paco-overview.html
 └── templates/node/          # generalized from poc/prepaymentui-node
     ├── .env.example  paco/  public/  server.js
     └── scripts/ try.js  doctor.js  generate-merchant-keys.js
@@ -99,5 +123,6 @@ paco-integration/
 4. **Prerequisites:** the PO sends this skill **after onboarding is complete**, so the merchant should already have API key, officeId, IP allowlist and keys. The checklist becomes "confirm you have these from onboarding", and a ticket draft is needed only when something is missing.
 5. **Platform:** Claude first. Other assistants can read `SKILL.md` too.
 6. **Language:** the skill is written in **English** (enterprises in many countries). The AI replies in the user's language.
+7. **Opening (2026-11-20):** the first reply offers exactly 3 options: (1) ask a question, (2) get a slide deck explaining a PACO integration, (3) integrate with the PACO API. The depth question comes after the user picks one.
 
 Remaining items are added step by step after milestone 1.
