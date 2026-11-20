@@ -11,6 +11,9 @@
 3. If the user pastes a credential in chat anyway: don't repeat it, tell them to put it in `.env` instead, and suggest asking 2C2P to rotate it if the chat is shared.
 4. State only what the references say. If something isn't covered, say "not confirmed, ask 2C2P" and offer a ticket draft. Never guess field rules.
 5. Plain JSON is a UAT debugging step only. Production code must use JOSE.
+6. **Never send an email or message.** The AI may only create a **draft**. The user reviews it and presses Send.
+7. **Before drafting any email, ask "Anything else you'd like to ask 2C2P?"** and put every open question into **one** email, so the user doesn't send several emails in a row.
+8. Emails never contain credentials (API key, private keys, passwords).
 
 ## 3. Conversation flow
 
@@ -59,6 +62,19 @@ The AI remembers the level for the rest of the conversation. The user can switch
 
 The user can always say "simpler" or "more detail".
 
+**Knowledge base.** Option 1 needs general knowledge first, not only integration steps: `references/overview.md` (what PACO is, the flows, roles, terms) and `references/faq.md` (common questions with verified answers: supported payment types, test vs. live, settlement / void / refund basics, security, what the merchant is responsible for). Every answer comes from these files.
+
+**When the AI can't answer:**
+1. Say plainly that the skill doesn't cover it or it isn't confirmed. Don't guess.
+2. Add the question to a running **"Questions for your PO"** list for this conversation, and tell the user it's been added.
+3. When the user wants to send them (or at the end of the topic), ask once: **"Anything else you'd like to ask before I draft the email?"** Add anything new.
+4. Draft **one** email to their 2C2P PO with all the questions, numbered, plus context the PO needs: company name, environment (UAT/PRD), officeId if the user wants it included, what they were trying to do. No credentials.
+5. Delivery:
+   - **Email connector available** (e.g. Gmail / Outlook via MCP): create the email as a **draft** in the user's mailbox, then tell the user it's in their Drafts, ready to review and send. **Never send.**
+   - **No connector:** show the email as text (subject + body) for the user to copy.
+   - The PO's address comes from the user (from their onboarding). The skill contains no 2C2P addresses. If unknown, leave **To** empty.
+6. After drafting, clear the list. New questions start a new list.
+
 ### Step 2: What you need (checklist)
 The AI shows this as a checklist and tracks it:
 
@@ -92,15 +108,16 @@ For each missing 2C2P item, the AI offers a ready-to-send ticket/email draft.
 - Generate keys, upload public keys, add PACO public keys to `.env`, switch off plain JSON, repeat Steps 4–5.
 - Production checklist: JOSE on, HTTPS, PRD URLs/kid, IP allowlist for PRD, amount comes from the server-side cart, idempotent notification handling, never trust the front-end redirect.
 
-### Helpdesk drafts (any step)
-Templates: new merchant credentials, UAT IP allowlist, PACO public key / zip password, enable a payment channel, production go-live. The AI fills in what it knows (company, IP, environment, officeId if known) and leaves blanks for the rest. Draft only. The user sends it.
+### Helpdesk / PO drafts (any step)
+Templates: questions for the PO (from option 1), UAT IP allowlist, PACO public key / zip password, enable a payment channel, production go-live. The AI fills in what it knows (company, IP, environment, officeId if known) and leaves blanks for the rest. Same rules as option 1: ask "anything else?" first, one email, draft only (in the mailbox if an email connector is available), the user sends it.
 
 ## 4. Skill layout
 ```
 paco-integration/
 ├── SKILL.md                 # rules (§2), flow (§3), how to use the files below
 ├── references/
-│   ├── overview.md          # explanation at the 3 levels
+│   ├── overview.md          # general knowledge: what PACO is, flows, roles, terms (3 levels)
+│   ├── faq.md               # common questions with verified answers
 │   ├── prerequisites.md     # the checklist (§3 Step 2)
 │   ├── authentication.md    # apiKey, JSON vs JOSE, IP allowlist   (exists)
 │   ├── prepaymentui.md      # required fields, amountText, URLs, response
@@ -108,7 +125,7 @@ paco-integration/
 │   ├── notification.md      # backend + frontend notification, statuses
 │   ├── testing-uat.md       # test cards, OTP, request3dsFlag
 │   ├── troubleshooting.md   # symptom → cause → action
-│   └── helpdesk-templates.md
+│   └── helpdesk-templates.md  # PO question email + ticket templates
 ├── templates/slides/        # HTML slide deck template for option 2
 │   └── paco-overview.html
 └── templates/node/          # generalized from poc/prepaymentui-node
@@ -124,5 +141,6 @@ paco-integration/
 5. **Platform:** Claude first. Other assistants can read `SKILL.md` too.
 6. **Language:** the skill is written in **English** (enterprises in many countries). The AI replies in the user's language.
 7. **Opening (2026-11-20):** the first reply offers exactly 3 options: (1) ask a question, (2) get a slide deck explaining a PACO integration, (3) integrate with the PACO API. The depth question comes after the user picks one.
+8. **Unanswered questions (2026-11-20):** answer from the knowledge base. Collect anything unanswered into one email to the user's PO. Ask "anything else?" before drafting. With an email connector, create a draft only; the user sends it.
 
 Remaining items are added step by step after milestone 1.
