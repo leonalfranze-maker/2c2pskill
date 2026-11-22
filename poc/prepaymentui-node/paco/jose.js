@@ -17,7 +17,7 @@ const JWE_ALG = 'RSA-OAEP';
 const JWE_ENC = 'A128CBC-HS256';
 const SIGNATURE_TTL_SECONDS = 5 * 60; // "Signatures will expire 5 minutes after generation."
 
-export const REQUEST_AUDIENCE = 'PacoAudience'; // GAP-04: docs say "(TBC exact wording)"
+export const REQUEST_AUDIENCE = 'PacoAudience'; // confirmed exact value
 export const RESPONSE_ISSUER = 'PacoIssuer';
 
 // PACO hands out keys as "Base64 encoded RSA public keys" (often without PEM armour).
@@ -43,7 +43,7 @@ export async function loadKeys(cfg) {
 export async function encryptRequest(requestBody, { keys, apiKey, pacoKeyId }) {
   const now = Math.floor(Date.now() / 1000);
   const jws = await new jose.SignJWT({ request: requestBody })
-    .setProtectedHeader({ alg: JWS_ALG, typ: 'JWT' }) // GAP-05: kid / crit headers on the JWS are not specified
+    .setProtectedHeader({ alg: JWS_ALG, typ: 'JWT' }) // no kid needed (PACO finds the key via iss); no crit header
     .setIssuer(apiKey)
     .setAudience(REQUEST_AUDIENCE)
     .setIssuedAt(now)
@@ -65,7 +65,7 @@ export async function decryptResponse(compactJwe, { keys, apiKey }) {
     issuer: RESPONSE_ISSUER,
     audience: apiKey,
   });
-  // GAP-06: name of the claim that carries the response body is not documented.
+  // The response body is in the `response` claim (confirmed). PACO responses may have no `exp`: don't require it.
   // Use `response` if present, otherwise the whole claim set.
   return payload.response ?? payload;
 }

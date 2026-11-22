@@ -15,25 +15,36 @@ Required in **production** for every Payment, Void, Settlement, Refund and Trans
 - PACO's public keys are Base64 RSA public keys from 2C2P (UAT / PRD zip files on the Integration page, password from 2C2P). [DZ]
 - Key IDs (`kid`) published on the Integration page: UAT `7664a2ed0dee4879bdfca0e8ce1ac313`, PRD `19f84b5655f04e25a99b09f1ee2fac78`. [DZ]
 
-## Request: JWE( JWS( claims ) ) [DZ]
-1. Wrap the JSON body: `{ "request": <body> }`.
-2. Sign as a JWT with **PS256** using the merchant signing private key. Claims:
-   - `iss` = API key
-   - `aud` = `"PacoAudience"` (docs mark the exact wording "TBC": **Unconfirmed**)
-   - `iat`, `nbf`, `exp` (signatures expire **5 minutes** after creation)
-   - `jti` (UUID) is optional
-3. Encrypt the JWS with the PACO encryption public key: `alg` **RSA-OAEP**, `enc` **A128CBC-HS256**, `kid` = PACO key ID.
-4. Send the compact JWE as the body with `Content-Type: application/jose` and `Accept: application/jose`.
+## Request: JWE( JWS( claims ) ) [DZ][2C2P confirmed]
+1. **Inner JWS (a signed JWT)**, signed with the merchant **signing** private key, `alg` **PS256**. Claims:
+   | Claim | Value |
+   |---|---|
+   | `request` | the full JSON request body |
+   | `iss` | your **API key**. PACO uses it to find your registered public key, so no `kid` is needed on the JWS. |
+   | `aud` | **`"PacoAudience"`**, exactly (the docs' "TBC" note is resolved) |
+   | `exp` | **required**. Keep it short: about 5 minutes. Keep your server clock in sync. |
+   | `iat`, `nbf`, `jti` | recommended |
+   Don't add a `crit` header.
+2. **Outer JWE**, encrypted with the PACO **encryption** public key:
+   - `alg` **RSA-OAEP**, `enc` **A128CBC-HS256**
+   - **`kid` = the PACO key ID you received** (UAT/PRD values above). Always send it. A `kid` that matches no key → PACO can't decrypt.
+   - `cty: "JWT"` is fine. `typ` / `cty` aren't checked.
+3. Send the **compact JWE string** (5 dot-separated parts) as the whole body, with headers:
+   - `Content-Type: application/jose`
+   - **`Accept: application/jose`**: PACO decides the response format from `Accept`. Without it you may get plain JSON back.
+   - `apiKey: <API key>`
 
-## Response / notification [DZ]
-1. Decrypt the JWE with the merchant **encryption** private key.
-2. Verify the JWS with the PACO **signing** public key (PS256). Expect `iss` = `"PacoIssuer"`, `aud` = API key.
-3. Read the body. Which claim holds it is **Unconfirmed** (requests use `request`). Generated code reads `response` and falls back to the whole claim set.
+## Response / notification [DZ][2C2P confirmed]
+1. Decrypt the JWE with the merchant **encryption** private key (`RSA-OAEP` / `A128CBC-HS256`).
+2. Verify the JWS with the PACO **signing** public key, **PS256**. The JWS header carries PACO's `kid`.
+3. Check `iss` = `"PacoIssuer"` and `aud` = your API key.
+4. The body is in the **`response`** claim.
+5. **Don't require `exp`** on PACO's responses. It may be absent.
 - If PACO can't decrypt or validate a request, it answers with `application/json` (not JOSE) and an error code.
 
-## Unconfirmed details (the template handles them defensively)
-- JWS header: whether `kid` and `crit: ["exp"]` are required. The docs mention `crit` for `exp`.
-- JWE header: whether `typ` / `cty` are required.
+## Old field and path names
+The v2.0 renames (`/nonUI` → `/nonUi`, `/prePaymentUI` → `/prePaymentUi`, `notificationURLs` → `notificationUrls`) are backward compatible: old spellings are still accepted. Use the new names in new code. Some responses still use `notificationURLs`, so read both. [2C2P confirmed]
+
 The official sample code (C#, PHP, Java) is linked from the Integration page. Prefer the skill's tested Node template.
 
 ## JOSE-related errors

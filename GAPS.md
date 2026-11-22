@@ -10,7 +10,7 @@ Fill in the **Answer** line of each gap. Once a gap is answered, the answer move
 `/prePaymentUi` succeeded against UAT from an allowlisted network, using the single-file `tester.html` (plain JSON). The 2C2P payment page opened with the right order, description and amount.
 Learned from the real responses:
 - **CORS:** UAT answered a direct browser `fetch` (HTTP 400 / 200 visible in the page). Production still has to go through the merchant backend (JOSE, private keys, server IP allowlist).
-- **currencyCode:** `"THB"` → HTTP 400 `PC-B050006 Invalid currency code`. The successful call used a different value (likely numeric ISO 4217 `764`). **To confirm**, then change the defaults in code.
+- **currencyCode:** first call `"THB"` → HTTP 400 `PC-B050006`. **Resolved (2C2P confirmed):** PACO wants the ISO 4217 **alphabetic** code (`THB`). Numeric `764` is rejected. The same error is returned when the currency doesn't match the office's currency, which is the likely cause of the first failure. Code defaults (`THB`) are correct.
 - **Error shape:** HTTP 400 with `apiResponse.responseCode` / `responseDescription` / `marketingDescription`. `data` is absent.
 - **Success:** HTTP 200 with `data.paymentIncompleteResult` (incl. `availablePaymentTypes`) and `data.paymentPage.paymentPageURL` on `payment-api.demo-paco.2c2p.com/payment/...?pid=<controllerInternalId>`.
 - **Redirect back (GAP-09, partly):** PACO echoes our URLs with extra query params appended (`productDescription`, `controllerInternalId`) and adds `:443` to the host.
@@ -53,11 +53,11 @@ Legend: 🔴 blocks the first real call · 🟡 may break the first real call (w
   - **Still open:** no documented process exists for a merchant to get allowlisted. Needs confirmation from 2C2P Ops/Security before the skill can describe it.
   - Skill wording until then: "The UAT sandbox may only accept connections from allowlisted source IPs. If the TLS handshake is reset, send your server's public IP to your 2C2P integration contact." The helpdesk ticket draft must include the merchant's public egress IP.
 
-## 🟡 GAP-05: JWT `aud` value
+## ✅ GAP-05: JWT `aud` value. ANSWERED: `"PacoAudience"` exactly
 - Integration page: `"aud": "PacoAudience"` **"(TBC exact wording)"**. Code uses `PacoAudience`.
 - **Answer:**
 
-## 🟡 GAP-06: Exact JOSE headers
+## ✅ GAP-06: Exact JOSE headers. ANSWERED: see `paco-integration/references/jose.md` (kid on JWE, no crit, Accept: application/jose)
 - Docs give algorithms (`PS256`, `RSA-OAEP`, `A128CBC-HS256`) and the UAT `kid` (`7664a2ed0dee4879bdfca0e8ce1ac313`). They don't give the exact header set.
   - JWS: is `kid` required? The docs mention a `crit` header for `exp`. Should `exp` be in the JWS **header** with `crit: ["exp"]`, or is the JWT `exp` claim enough?
   - JWE: `typ`/`cty` required?
@@ -65,7 +65,7 @@ Legend: 🔴 blocks the first real call · 🟡 may break the first real call (w
 - The official sample code (C#/PHP/Java zips on the same cloudfront host) would answer this. Need: are those zips public (no password)? If yes, the cloudfront host can be allowed in this session and I'll read them.
 - **Answer:**
 
-## 🟡 GAP-07: Response claim name
+## ✅ GAP-07: Response claim name. ANSWERED: `response`
 - Request is wrapped as `{ "request": {...} }`. The docs don't say which claim holds the **response** (`response`? top level?).
 - Code reads `payload.response`, falls back to the whole payload.
 - **Answer:**

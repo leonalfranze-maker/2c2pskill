@@ -40,7 +40,9 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **Can I test on localhost?** Yes, from an allowlisted network. PACO can't reach localhost for the backend notification, so use a tunnel or the Inquiry API to confirm results. → `testing-uat.md`
 
-**Which currency format?** `"THB"` was rejected in UAT (`PC-B050006`). ISO 4217 numeric (`764`) is the likely rule: **Unconfirmed**. `decimalPlaces` must match the ISO 4217 exponent. → `payment-apis.md`
+**Which currency format?** ISO 4217 **alphabetic**, uppercase (`"THB"`), never numeric (`"764"`). It must be a currency your office is set up for. `decimalPlaces` = ISO 4217 exponent (THB 2, JPY 0). → `payment-apis.md`
+
+**Can I reuse an orderNo?** Only if the earlier payment with that number failed, was cancelled or expired. Never after it was approved, settled or voided (`PC-B050033`). Reusing it cancels the earlier unfinished payment link. → `payment-apis.md`
 
 **How long is the payment link valid?** See `validTillDateTime` in the response. You can set `linkExpiryDateTime` / `paymentExpiryDateTime` in the request. → `payment-apis.md`
 

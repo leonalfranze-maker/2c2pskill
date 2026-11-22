@@ -34,13 +34,30 @@ Every request is wrapped in `apiRequest`:
 | Field | Rule |
 |---|---|
 | `officeId` | string ≤ 20. Issued at onboarding. |
-| `orderNo` | string ≤ 40, unique per payment. Retry rules after a failure are **Unconfirmed** (duplicate errors `PC-B050023` / `PC-B050033` exist). |
+| `orderNo` | string ≤ 40, **unique within your company** (across all its offices). Reuse rules: see *orderNo reuse* below. |
 | `productDescription` | string ≤ 50 (`PC-B050021` if invalid). Shown on the Payment Page. |
-| `transactionAmount.amount` | decimal, e.g. `50.5` |
+| `transactionAmount.amount` | decimal > 0, e.g. `50.5`. No more decimals than `decimalPlaces`. `amount`, `amountText` and `decimalPlaces` must agree. |
 | `transactionAmount.amountText` | **exactly 12 digits**, amount in minor units, zero-padded: 50.50 → `000000005050` |
-| `transactionAmount.decimalPlaces` | the currency's ISO 4217 exponent (THB 2, JPY 0). Mismatch → `PC-B050093`. |
-| `transactionAmount.currencyCode` | 3 chars. **`"THB"` was rejected in UAT** with `PC-B050006 Invalid currency code` [UAT]. ISO 4217 **numeric** (THB = `764`) is the likely rule: **Unconfirmed**, ask the PO if it fails. |
+| `transactionAmount.decimalPlaces` | the currency's ISO 4217 exponent: THB/USD/MYR/IDR **2**, JPY/KRW/VND **0**, BHD/KWD **3**. Mismatch → `PC-B050093`. |
+| `transactionAmount.currencyCode` | **ISO 4217 alphabetic code**, uppercase: `"THB"`, `"USD"`, `"JPY"`. **Not** the numeric code (`"764"` is rejected). It must also be a currency your office is set up for. Otherwise `PC-B050006`. [2C2P confirmed] |
 | `notificationUrls.*` | all 4 required, valid URLs (`PC-B050018` if invalid). `backendUrl` must be reachable by PACO from the internet. |
+
+The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) apply to `settlementAmount` and `refundAmount`, which must use the **same currency as the original payment**. [2C2P confirmed]
+
+### orderNo reuse [2C2P confirmed]
+`orderNo` must be unique within your **company**. Settlement, void, refund and inquiry all find the payment by `orderNo`. Whether you may reuse an `orderNo` depends on the latest state of the earlier payment with that number:
+
+| Earlier payment | Reuse the same `orderNo`? |
+|---|---|
+| `A` approved, `S` settled, `V` voided | **No** → `PC-B050033` Duplicate payment |
+| `F` rejected/failed/timeout, `C` cancelled/abandoned, `PCPS` page created but not paid | yes |
+| step `GP`, `AC` (on the OTP page), `AX` (OTP timeout), `PE` (expired) | yes |
+| APM payment at step `PR` / `PE` / `PT` | yes |
+| anything else, e.g. `I` processing, `P` waiting for QR/APM payment | only **after** both its link expiry and payment expiry have passed. Before that → `PC-B050033` |
+
+- A successful new request with the same `orderNo` **cancels the earlier unfinished one**: its old payment link stops working.
+- Two requests with the same `orderNo` at the same moment: the second gets `PC-B050033`.
+- **Recommendation:** never reuse the `orderNo` of a payment that succeeded (including refunded ones). For a customer retry after a failure, either reuse it (allowed above) or use `ORDER-123-2` style suffixes. Pick one and be consistent.
 
 ### Useful optional fields (send only when needed)
 | Field | Use |

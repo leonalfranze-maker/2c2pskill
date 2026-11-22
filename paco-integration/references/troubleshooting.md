@@ -27,7 +27,7 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050001` / `PC-B050002` | pending / pending on external party | wait for the notification or inquire |
 | `PC-B050004` | invalid order number | ≤ 40 chars, non-empty |
 | `PC-B050005` | invalid amount | `amount` > 0, matches `amountText` |
-| `PC-B050006` | invalid currency code | `"THB"` was rejected in UAT. Try ISO 4217 numeric (`764`), otherwise ask the PO. [UAT] |
+| `PC-B050006` | invalid currency code | use the ISO 4217 **alphabetic** code (`THB`, not `764`), uppercase. If it's already alphabetic, the currency doesn't match your office's currency: check which currency your office uses, or ask the PO. [2C2P confirmed] |
 | `PC-B050093` | decimal places / currency mismatch | `decimalPlaces` = ISO 4217 exponent |
 | `PC-B050007` / `08` / `09` | invalid card number / CVV / expiry | nonUi card fields |
 | `PC-B050085` / `PC-B050089` | invalid cardholder name | English letters and spaces only, not all digits |
@@ -37,7 +37,7 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050012` | invalid payment category | drop `paymentCategory` or use a valid value |
 | `PC-B050064` | invalid channel code | check the channel list |
 | `PC-B050010` / `35` / `36` / `92` | no route / PSP / channel for this payment | the method or currency isn't enabled on the office → ask the PO |
-| `PC-B050023` / `PC-B050033` | duplicate payment | new `orderNo` (retry rules **Unconfirmed**) |
+| `PC-B050033` | duplicate payment | this `orderNo` already has an approved/settled/voided payment, or one still in progress. See *orderNo reuse* in `payment-apis.md`. |
 | `PC-B050030` | 3DS authentication failed | customer failed OTP. Show failed, allow retry. |
 | `PC-B050031` / `PC-B050032` | authorization failed / call to acquirer failed | declined or acquirer down. Show failed. |
 | `PC-B050059` | ACS timeout | 3DS page timed out. Retry. |
