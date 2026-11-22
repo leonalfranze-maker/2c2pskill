@@ -38,7 +38,7 @@ Every request is wrapped in `apiRequest`:
 | `productDescription` | string ≤ 50 (`PC-B050021` if invalid). Shown on the Payment Page. |
 | `transactionAmount.amount` | decimal > 0, e.g. `50.5`. No more decimals than `decimalPlaces`. `amount`, `amountText` and `decimalPlaces` must agree. |
 | `transactionAmount.amountText` | **exactly 12 digits**, amount in minor units, zero-padded: 50.50 → `000000005050` |
-| `transactionAmount.decimalPlaces` | the currency's ISO 4217 exponent: THB/USD/MYR/IDR **2**, JPY/KRW/VND **0**, BHD/KWD **3**. Mismatch → `PC-B050093`. |
+| `transactionAmount.decimalPlaces` | per currency, see **`currencies.md`** (THB/USD **2**, JPY/KRW/VND **0**, BHD/KWD **3**). Mismatch → `PC-B050093`. |
 | `transactionAmount.currencyCode` | **ISO 4217 alphabetic code**, uppercase: `"THB"`, `"USD"`, `"JPY"`. **Not** the numeric code (`"764"` is rejected). It must also be a currency your office is set up for. Otherwise `PC-B050006`. [2C2P confirmed] |
 | `notificationUrls.*` | all 4 required, valid URLs (`PC-B050018` if invalid). `backendUrl` must be reachable by PACO from the internet. |
 

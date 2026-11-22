@@ -122,6 +122,7 @@ paco-integration/
 │   ├── prerequisites.md     # the checklist (§3 Step 2)
 │   ├── authentication.md    # apiKey, JSON vs JOSE, IP allowlist   (exists)
 │   ├── prepaymentui.md      # required fields, amountText, URLs, response
+│   ├── currencies.md        # 155 currencies: alphabetic code + decimalPlaces
 │   ├── jose.md              # keys, algorithms, claims
 │   ├── notification.md      # backend + frontend notification, statuses
 │   ├── testing-uat.md       # test cards, OTP, request3dsFlag

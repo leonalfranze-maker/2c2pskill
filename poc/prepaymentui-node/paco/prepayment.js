@@ -16,14 +16,22 @@
 // and intentionally NOT sent here.
 
 import { encryptRequest, decryptResponse } from './jose.js';
+import { CURRENCY_DECIMALS } from './currencies.js';
 
-// Minor-unit exponent. Extend as needed; the docs only show THB with 2.
-const DECIMALS = { THB: 2, SGD: 2, MYR: 2, PHP: 2, HKD: 2, USD: 2, JPY: 0, KRW: 0, VND: 0 };
-
+// currencyCode: ISO 4217 ALPHABETIC (e.g. "THB"). Numeric codes ("764") are rejected by PACO.
 export function buildAmount(amount, currencyCode) {
-  const decimalPlaces = DECIMALS[currencyCode] ?? 2;
-  const minor = Math.round(Number(amount) * 10 ** decimalPlaces);
+  const code = String(currencyCode || '').trim().toUpperCase();
+  const decimalPlaces = CURRENCY_DECIMALS[code];
+  if (decimalPlaces === undefined) {
+    throw new Error(/^\d+$/.test(code)
+      ? `currencyCode must be alphabetic (e.g. "THB"), not numeric "${code}"`
+      : `Unknown currencyCode "${code}" (see paco-integration/references/currencies.md)`);
+  }
+  const value = Number(amount);
+  const minor = Math.round(value * 10 ** decimalPlaces);
   if (!Number.isFinite(minor) || minor <= 0) throw new Error('amount must be a positive number');
+  if (Math.abs(minor - value * 10 ** decimalPlaces) > 1e-6) throw new Error(`${code} allows at most ${decimalPlaces} decimal places`);
+  currencyCode = code;
   const amountText = String(minor).padStart(12, '0');
   if (amountText.length !== 12) throw new Error('amount too large for 12-digit amountText');
   return { amount: minor / 10 ** decimalPlaces, amountText, currencyCode, decimalPlaces };
