@@ -36,7 +36,10 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050021` | invalid product description | non-empty, ≤ 50 |
 | `PC-B050012` | invalid payment category | drop `paymentCategory` or use a valid value |
 | `PC-B050064` | invalid channel code | check the channel list |
-| `PC-B050010` / `35` / `36` / `92` | no route / PSP / channel for this payment | the method or currency isn't enabled on the office → ask the PO |
+| `PC-B050010` / `35` / `36` / `92` | no route / PSP / channel for this payment | the method/currency isn't enabled on the office, or no channel matches your `request3dsFlag` (try without it) → ask the PO |
+| `PC-B051402` | payment type not supported | the `paymentType` isn't available for this payment. Check `availablePaymentTypes`. |
+| `PC-B052201` | inquiry: orderNo not valid or doesn't exist | check `orderNo`, environment (UAT vs PRD) and API key |
+| `PC-B050076` | invalid 3DS version | `/nonUi` with external 3DS: send `authentication3DSVersion` with `dsTransID` |
 | `PC-B050033` | duplicate payment | this `orderNo` already has an approved/settled/voided payment, or one still in progress. See *orderNo reuse* in `payment-apis.md`. |
 | `PC-B050030` | 3DS authentication failed | customer failed OTP. Show failed, allow retry. |
 | `PC-B050031` / `PC-B050032` | authorization failed / call to acquirer failed | declined or acquirer down. Show failed. |

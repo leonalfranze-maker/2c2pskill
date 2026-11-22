@@ -64,7 +64,7 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 |---|---|
 | `preferredPaymentTypes` | array of payment types to show first/only on the page, e.g. `["CC"]` |
 | `paymentExpiryDateTime` / `linkExpiryDateTime` | when the payment / the page link expires |
-| `request3dsFlag` | `N` no 3DS · `Y` relaxed · `Y-Strict` strict. Default comes from the office profile. |
+| `request3dsFlag` | exactly `"N"` (no 3DS), `"Y"` (relaxed: full authentication or attempt accepted) or `"Y-Strict"` (full authentication only). Case-sensitive. Not sent → the office's setting. The office must have a channel matching the value, otherwise `PC-B050035` / `PC-B050036`. The office may upgrade `Y` to strict. `Y` doesn't guarantee an OTP page: the issuer can approve without a challenge. |
 | `generalPayerDetails` | payer name / email / phone (`mobilePhone` 8–15 chars incl. country code) |
 | `statementDescriptor` | ≤ 20, text on the cardholder's statement |
 | `autoRedirectDelayTimer` | seconds PACO's result page waits before redirecting back. `0` = immediately. See `notification.md`. |
@@ -76,7 +76,7 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 ### Response
 - **HTTP 200** [DZ][UAT]:
   - `data.paymentPage.paymentPageURL`: redirect the customer here. Optional `validTillDateTime` (UTC).
-  - `data.paymentIncompleteResult`: `orderNo`, `controllerInternalID`, `paymentStatusInfo`, `availablePaymentTypes` (the methods this office offers), echoed `notificationURLs` (uppercase `URL` in responses).
+  - `data.paymentIncompleteResult`: `orderNo`, `controllerInternalID`, `paymentStatusInfo`, `availablePaymentTypes` (the methods available **for this payment**, see below), echoed `notificationURLs` (uppercase `URL` in responses).
 - **HTTP 400**: `apiResponse.responseCode` / `responseDescription` / `marketingDescription`. No `data`. Map the code with `troubleshooting.md`.
 - ⚠️ `PC-B050000 "Success"` here means **the payment page was created**, not that the customer paid. Store the order as *pending* and confirm later with the Inquiry API.
 - Observed [UAT]: the page URL looks like `https://payment-api.demo-paco.2c2p.com/payment/...?pid=<controllerInternalId>&lang=en-US`.
@@ -101,14 +101,26 @@ Responses:
 - **202**: incomplete, needs further action (e.g. 3DS challenge) → `data.paymentPage.paymentPageURL` (send the customer there) and/or `data.paymentIncompleteResult.aresACSChallenge` (`acsURL`, `challengeHtml`). Default: redirect to `paymentPageURL`.
 - **400**: error, as above.
 
-**Warning:** with `/nonUi` the merchant handles raw card numbers, which puts them in PCI DSS scope. Recommend `/prePaymentUi` unless they already have a PCI-compliant card form. Whether 2C2P asks for proof of PCI compliance is **Unconfirmed**.
+**PCI DSS warning.** With `/nonUi` and raw card data, the merchant receives, transmits or processes full card numbers on its own servers, which puts it in **PCI DSS scope**. That typically means an SAQ D self-assessment or an Attestation of Compliance (general PCI DSS fact, not a PACO rule). With `/prePaymentUi` the merchant never touches card numbers, so the scope is much smaller.
+- Recommend `/prePaymentUi` by default.
+- If the merchant needs `/nonUi` with raw card data: they must be PCI DSS compliant and **agree it with 2C2P first** (add it to the PO email). 2C2P's exact requirement is **Unconfirmed**.
+- Never log or store card numbers or CVV. Generated code masks them.
+
+### 3DS with /nonUi [2C2P confirmed]
+| Setup | What the merchant does |
+|---|---|
+| PACO handles 3DS (default) | Send card data + `request3dsFlag`. If a challenge is needed, PACO answers **HTTP 202**. Send the customer to `paymentPageURL`, or render the challenge from `aresACSChallenge`. |
+| Merchant already authenticated the card with its own 3DS provider | Send the results in `creditCardDetails`: `eciValue`, `cAvvValue`, `dsTransID`, `threeDSServerTransID`, `authentication3DSVersion` (e.g. `2.2.0`), `authenticationStatus` (+ optional `xidValue`, `acsTransId`, `sdkTransId`, `authenticationStatusReason`). With `dsTransID` + `eciValue` + `cAvvValue` + `authentication3DSVersion` all present, PACO skips its own 3DS. |
+
+Errors: full/attempt ECI without CAVV → `PC-B050010`. `dsTransID` without version → `PC-B050076`.
 
 ## Payment types (for `paymentType`, `preferredPaymentTypes`) [DZ]
 `CC` (any card), `CC-VI` Visa, `CC-CA` Mastercard, `CC-AX` Amex, `CC-DC` Diners, `CC-DS` Discover, `CC-UP` UnionPay, `CC-JC` JCB, `IPP` installments, `QR`, `DEEPLINK`, `WALLET`, `OTC` (over the counter), `SSM` (ATM/kiosk), `WEBPAY`, `IMBANK` (i-banking), `EXT`.
 Full channel/agent list (Apple Pay, Google Pay, PromptPay QR, TrueMoney, …): https://devzone.2c2p.com/docs/payment-type-channel-and-agent
 - A method must be **enabled on the office** to appear. Otherwise: `PC-B050092` (no channel/agent) or `PC-B050010` / `PC-B050035` (no route).
-- To find what an office has: `availablePaymentTypes` in the prePaymentUi response.
-- To enable a new method: ask the PO (draft email). The process is **Unconfirmed**.
+- `availablePaymentTypes` in the prePaymentUi response = **what this payment can be paid with**: the office's methods filtered by this payment's currency, amount, expiry, purchase items and `preferredPaymentTypes`. Parent types are added too (`WALLET` alongside a specific wallet). It's reliable for "what can this customer use now", **not** for "everything my office has": a method can be missing just because it doesn't support this currency or amount. [2C2P confirmed]
+- Sending a `paymentType` that isn't available → `PC-B051402` "Payment type not support" or `PC-B050035`.
+- **Enabling a new method** (wallet, QR, …) is done by 2C2P, not by the merchant. It goes through a **business review and a commercial agreement**. Contact your 2C2P account manager / PO (draft email). [2C2P confirmed]
 
 ## APM notes [DZ APM flow]
 - With prePaymentUi, if the office offers only one method and it's an APM, the Payment Page skips the selection step.

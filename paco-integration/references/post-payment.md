@@ -88,7 +88,7 @@ You get **202** when:
 ### Getting the final refund result
 - **There is no backend notification for refunds.** The request accepts `refundNotificationURLs`, but don't rely on it: no callback is sent today.
 - After **200**: the response is the result.
-- After **202**: follow up in the PACO Portal or by inquiry. Whether `transactionStatus` shows each refund separately is **Unconfirmed**.
+- After **202**: follow up in the PACO Portal or by inquiry. `transactionStatus` lists **each refund as its own entry** (status `R`/`PCRP`), but without a refund number. With several refunds on one order, match them by status and `lastUpdatedDttm`.
 - Refund steps: `RP` → (approved) → `RF` refunded → `RS` refund settled. `RR` rejected, `RE` expired before approval.
 
 | Error | Meaning |

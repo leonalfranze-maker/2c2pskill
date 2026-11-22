@@ -36,7 +36,13 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **Test cards?** Visa 4111111111111111 / Mastercard 5555555555554444, CVV 123, OTP 123456, any future expiry (12/30). Decline test: 4444333322221111. → `testing-uat.md`
 
-**Why don't I see the OTP page?** 3DS depends on `request3dsFlag` and your office profile. Send `request3dsFlag: "Y"` to request it. → `testing-uat.md`
+**Why don't I see the OTP page?** 3DS depends on `request3dsFlag` and your office setting. `"Y"` requests 3DS, but the card can still pass without a challenge. → `testing-uat.md`
+
+**How do I check a payment's real status?** `GET /api/2.0/Inquiry/transactionStatus?orderNo=…` with your `apiKey` header (plain JSON, even in production). `data` is an **array**: retries and refunds each have their own entry, newest first. Use the first entry that isn't a refund (`R`/`PCRP`). → `notification.md`
+
+**Do I need the EMV 3DS guides on the Dev Zone?** No for `/prePaymentUi` (the payment page handles 3DS) and no for `/nonUi` when PACO does 3DS. Only if you authenticate cards with your own 3DS provider and send the results to `/nonUi`. → `payment-apis.md`
+
+**Is nonUi allowed for me?** Using raw card data puts you in PCI DSS scope. Agree it with 2C2P first. prePaymentUi avoids it. → `payment-apis.md`
 
 **My connection to UAT is reset before any response.** Your IP isn't allowlisted. It's not your code. → `troubleshooting.md`
 

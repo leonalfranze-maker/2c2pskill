@@ -10,13 +10,16 @@ Sources [DZ]: https://devzone.2c2p.com/docs/test-card · https://devzone.2c2p.co
 | Rejected card (for decline tests) | `4444333322221111` | | | |
 | Amex | `374340095639074` | | | |
 
-- Test cards work in UAT only and may need to be enabled for your office first. If they are declined unexpectedly, ask the PO.
+- Test cards work in UAT only. [DZ]
+- **A UAT office may be set up to return a fixed result for every card** (always approve, always decline, or always time out), whatever card you use. Others go to a test acquirer, which may decline some test cards (e.g. Amex) or occasionally fail. [2C2P confirmed]
+- So if results look odd (every card declined, or a "decline" card approved), ask 2C2P how your UAT office is set up for testing, and to set up the outcome you need (approve / decline / timeout).
 - Country pages list extra test accounts (wallets, i-banking, IPP cards). Use the merchant's country page.
 - Never use test cards in production. Never use real cards in UAT.
 
 ## OTP / 3DS page
-- Whether the OTP page appears depends on `request3dsFlag` (`N` / `Y` / `Y-Strict`) and, when it's not sent, on the office profile. [DZ]
-- To see the OTP step in a demo, send `request3dsFlag: "Y"`. That this always works on every UAT office is **Unconfirmed**.
+- Whether the OTP page appears depends on `request3dsFlag` (`"N"` / `"Y"` / `"Y-Strict"`, case-sensitive) and, when it's not sent, on the office setting. [DZ][2C2P confirmed]
+- `"Y"` asks for 3DS, but **doesn't guarantee an OTP page**: the card may be authenticated without a challenge (frictionless). If you need the OTP step for a demo and don't see it, try the other test card or ask 2C2P.
+- If the office has no channel matching your `request3dsFlag` value → `PC-B050035` / `PC-B050036`. Drop the flag or ask 2C2P.
 
 ## Network
 - UAT only accepts allowlisted source IPs. A blocked machine gets **TLS connection reset** with no HTTP status. [2C2P confirmed][UAT]

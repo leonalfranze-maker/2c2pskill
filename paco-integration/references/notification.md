@@ -92,12 +92,37 @@ Key fields in `data.paymentResult`:
 
 **Approved is not always captured.** Depending on the office's settlement model, capture is automatic or the merchant must call `/settlement`. See `post-payment.md`.
 
-## 2. Inquiry API [DZ]
-`GET {base}/api/2.0/Inquiry/transactionStatus?orderNo=<orderNo>` (the spec also accepts the 2C2P invoice no.)
-- Header `apiKey`. **No JOSE** on this endpoint (Integration page).
-- Use it: on the result page (especially on localhost without a tunnel), when a notification is late, and in a reconciliation job for stuck `P` payments.
-- 200 response schema isn't fully documented. 400 → `BaseApiResponseWrapper` with `apiResponse`. `PC-B050080` means more than one transaction matched.
-- `POST /api/2.0/Inquiry/transactionList` (JOSE) returns lists: max 500 results / past 12 months, filter with `advSearchParams`.
+## 2. Inquiry API: the source of truth [DZ][2C2P confirmed]
+`GET {base}/api/2.0/Inquiry/transactionStatus?orderNo=<orderNo>`
+- Header: `apiKey`. **No `officeId`**: the payment is found by your company (from the API key) + `orderNo`.
+- **Plain JSON in UAT and production.** No JOSE needed for this GET. (If you send `Accept: application/jose` the answer may come back as JOSE, so send `Accept: application/json`.)
+- The data is current. Use it right after a notification or a redirect.
+- When to call: on every notification, on the result page, and in a scheduled job for orders still pending (`PCPS`, `I`, `P`, `A`/`PS`).
+
+### Response (HTTP 200)
+```json
+{ "version": "…", "apiResponse": { "responseCode": "…", "responseDescription": "…" },
+  "data": [
+    { "orderNo": "…", "controllerInternalId": "…", "invoiceNo2C2P": "…", "pspReferenceNo": "…",
+      "paymentStatusInfo": { "paymentStatus": "A", "paymentStep": "PA", "lastUpdatedDttm": "…" },
+      "priorPaymentResponseDetails": { "responseCode": "PC-B050000", "responseDescription": "…", "acquirerResponseCode": "…" },
+      "creditCardPaymentDetails": { "cardNumber": "411111XXXXXX1111", "authenticationStatus": "Y", "eciValue": "…" },
+      "content": { "type": "…", "data": "…", "extra": { "qrData": "…" } },
+      "paymentExpiryDateTime": "…", "userDefined1": "…" }
+  ] }
+```
+- **`data` is an array.** One entry per payment attempt with this `orderNo` (a failed try plus a retry = 2 entries), **newest first**. **Every refund is a separate entry** with its own `paymentStatusInfo` (status `R` / `PCRP`). Refund entries have **no `refundNo`**.
+- **Don't just take `data[0]`.** It may be a refund. To get the payment's status: take the **first entry whose `paymentStatus` is not `R` or `PCRP`**. Refund entries tell you about refunds.
+- `apiResponse` is about this inquiry call. `priorPaymentResponseDetails.responseCode` is the result of the payment attempt itself.
+- An unpaid payment past its `paymentExpiryDateTime` is reported as `F` / step `PT` (payment timeout).
+- Field name `lastUpdatedDttm`: check it against a real response.
+
+| Error | Meaning |
+|---|---|
+| HTTP 400 `PC-B052201` | `orderNo` not valid or doesn't exist (wrong environment? wrong company key?) |
+| HTTP 401 `PC-B050088` | API key missing or wrong |
+
+`POST /api/2.0/Inquiry/transactionList` (JOSE) returns lists: max 500 results / past 12 months, filtered with `advSearchParams`. [DZ]
 
 ## 3. Frontend redirect [DZ][UAT][2C2P confirmed]
 - After the Payment Page, the browser is sent with a **GET** (normal navigation) to `confirmationUrl` (success), `failedUrl` (failed) or `cancellationUrl` (cancelled).
