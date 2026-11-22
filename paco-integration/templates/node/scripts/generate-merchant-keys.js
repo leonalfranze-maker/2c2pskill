@@ -35,7 +35,7 @@ console.log(`Created 2 key pairs in ${dir}/ (RSA 4096).
    ${dir}/merchant-signing-public.b64.txt
    ${dir}/merchant-encryption-public.b64.txt
 
-2. In .env (private keys stay on this server):
+2. In .env, uncomment/set (private keys stay on this server):
    MERCHANT_SIGNING_PRIVATE_KEY_FILE=${dir}/merchant-signing-private.pem
    MERCHANT_ENCRYPTION_PRIVATE_KEY_FILE=${dir}/merchant-encryption-private.pem
 

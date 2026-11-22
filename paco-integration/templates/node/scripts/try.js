@@ -25,7 +25,7 @@ const keys = hasJoseKeys(cfg) ? await loadKeys(cfg) : null;
 const order = { amount, productDescription: `Skill POC ${api}`, request3dsFlag: opt('--3ds') };
 const mask = (n) => n.replace(/^(\d{6})\d+(\d{4})$/, '$1******$2');
 
-console.log(`→ ${api} | ${cfg.pacoEnv} ${cfg.pacoBaseUrl} | officeId=${cfg.officeId} | ${cfg.plainJson ? 'plain JSON' : 'JOSE'}`);
+console.log(`→ ${api} | ${cfg.pacoEnv} ${cfg.pacoBaseUrl} | officeId set | ${cfg.plainJson ? 'plain JSON' : 'JOSE'}`);
 try {
   if (api === 'inquiry') {
     const orderNo = args[1];

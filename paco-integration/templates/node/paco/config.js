@@ -15,7 +15,11 @@ function keyValue(env, name) {
   if (env[name]) return env[name];
   const file = env[`${name}_FILE`];
   if (!file) return undefined;
-  try { return readFileSync(file, 'utf8'); } catch { throw new Error(`${name}_FILE: cannot read ${file}`); }
+  try { return readFileSync(file, 'utf8'); } catch {
+    // In UAT plain-JSON mode keys aren't needed yet: treat a missing file as "not set".
+    if (/^(1|true|yes)$/i.test(env.PACO_UAT_PLAIN_JSON || '')) return undefined;
+    throw new Error(`${name}_FILE: cannot read ${file} (run \`npm run keys\` first)`);
+  }
 }
 
 export function loadConfig(env = process.env) {

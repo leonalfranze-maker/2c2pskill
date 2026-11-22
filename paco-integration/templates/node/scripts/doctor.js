@@ -60,13 +60,13 @@ if (plainJson && pacoEnv === 'PRD') fail('PACO_UAT_PLAIN_JSON=true is not allowe
 else if (plainJson) warn('Plain JSON mode (UAT first call only). Switch it off and test with JOSE before go-live.');
 
 const keyNames = ['MERCHANT_SIGNING_PRIVATE_KEY', 'MERCHANT_ENCRYPTION_PRIVATE_KEY', 'PACO_ENCRYPTION_PUBLIC_KEY', 'PACO_SIGNING_PUBLIC_KEY'];
-const given = keyNames.filter((k) => env[k] || env[`${k}_FILE`]);
+const given = keyNames.filter((k) => env[k] || (env[`${k}_FILE`] && (!plainJson || existsSync(env[`${k}_FILE`]))));
 if (given.length === 0 && plainJson) {
   ok('JOSE keys not set yet (fine for the first plain-JSON UAT call)');
 } else {
   for (const k of keyNames) {
     if (!env[k] && !env[`${k}_FILE`]) { (plainJson ? warn : fail)(`${k} is not set`); continue; }
-    if (!env[k] && !existsSync(env[`${k}_FILE`])) { fail(`${k}_FILE points to a missing file`); continue; }
+    if (!env[k] && !existsSync(env[`${k}_FILE`])) { (plainJson ? warn : fail)(`${k}_FILE points to a missing file (run \`npm run keys\`)`); continue; }
   }
   // Try to load each key on its own, so the message names the key that's wrong (never its value).
   const spec = {
