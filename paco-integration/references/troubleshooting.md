@@ -43,4 +43,9 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050059` | ACS timeout | 3DS page timed out. Retry. |
 | `PC-B050061` / `PC-B050077` / `PC-B050091` | payment / link expired | create a new payment |
 | `PC-B050013` | payment not found | wrong `orderNo` / office / environment |
-| Void / settlement / refund errors | see `post-payment.md` | |
+| `PC-B050055` | settlement called on an **auto**-settlement payment | don't call settlement. PACO captures automatically. |
+| `PC-B050039` | refund without a valid `localMakerChecker` | send `maker.username` (see `post-payment.md`) |
+| `PC-B051939` | invalid email | fix `maker.email` or other email fields |
+| `PC-B050047` | void on a settled payment | refund instead |
+| `PC-B050053` | refund not possible (e.g. not settled yet) | void instead |
+| Other void / settlement / refund errors | see `post-payment.md` | |

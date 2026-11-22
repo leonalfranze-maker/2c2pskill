@@ -30,19 +30,38 @@ Key fields in `data.paymentResult`:
 | `failedReason` | why it failed |
 | `apiResponse.responseCode` | e.g. `PC-B050000` Payment Successful |
 
-## Payment status & step [DZ spec descriptions]
-| `paymentStatus` | Meaning |
-|---|---|
-| `A` | Authorized |
-| `S` | Settled |
-| `V` | Voided |
-| `F` | Failed |
-| `P` | Pending |
+## Payment status & step [2C2P confirmed]
+`paymentStatus` is the overall state. Act on it. `paymentStep` is the detailed stage. Each step belongs to exactly one status.
 
-Steps seen in the docs: `PA` (described both as "Pre-Authorized" and "Payment Approved"), `AU` Authorized, `ST` Settled, `EG` EP Generated, `PF` Payment Forwarded.
-**Unconfirmed:** the full official status/step list and which ones are final. The public Reference page links to a non-public URL. Until confirmed: treat `A` and `S` as success, `F` and `V` as not paid, `P` as wait-and-inquire.
+| `paymentStatus` | Meaning | Steps |
+|---|---|---|
+| `PCPS` | Pre-stage: prePaymentUi called, customer hasn't paid yet | `GP` gather payment details |
+| `I` | Initial: being processed | `IP` initial payment, `CP` check pass, `EG` EP generate, `FP` fraud pass, `AC` redirect to ACS (OTP page), `VP` 3DS pass, `AX` ACS session timeout, `PF` payment forwarded |
+| `P` | Pending payment: waiting for the customer (e.g. QR, APM) | `PP` pending payment |
+| `A` | **Approved: authorized, not captured yet** | `PA` payment approved, `PS` pending for settlement |
+| `S` | Settled (captured) | `ST` settled |
+| `F` | Rejected | `PR` payment rejected, `PT` payment timeout, `VF` 3DS fail, `AM` merchant session expired, `FF` fraud fail, `CR` corporate BIN reject, `SE` system error |
+| `C` | Cancelled: customer cancelled or left the payment page | `AB` abandoned, `PC` cancelled |
+| `E` | Expired: payment time ran out | `PE` payment expired |
+| `V` | Voided | `VD` void |
+| `PCRP` | Refund preparation | `RI` refund initiated |
+| `R` | Refund exists (see step) | `RP` waiting for the merchant's own refund approver, `RP2` waiting for external provider review, `RP3` waiting for bank approval, `RF` refunded, `RS` refund settled, `RR` refund rejected, `RE` refund expired on approval |
 
-**Authorized is not always captured.** If the office's PSP uses manual settlement, the merchant must call `/settlement` (see `post-payment.md`). Ask the PO which model applies.
+### Which states are final
+| State | Treat as | What the merchant can still do |
+|---|---|---|
+| `F`, `C`, `E`, `V` | **final: not paid** | nothing (no settle, void or refund) |
+| `S` / `ST` | **final for the payment** | refund |
+| `A` / `PA` | **not final** | settle (manual model only) or void |
+| `A` / `PS` | **not final** (capture in progress) | void. Don't settle again. |
+| `PCPS`, `I`, `P` | **in progress** | wait. The outcome will be `A`, `S`, `F`, `C` or `E`. |
+| `RI`, `RP`, `RP2`, `RP3` | refund in progress | `RP`: the merchant's approver must approve it |
+| `RF` / `RS`, `RR`, `RE` | refund finished | `RF` may still move on to `RS` |
+
+- If a notification and an inquiry disagree, **trust the latest inquiry**.
+- Order handling: mark the order paid on `A` (or `S`). Mark it failed on `F`/`C`/`E`/`V`. On anything else, keep it pending and inquire later.
+
+**Approved is not always captured.** Depending on the office's settlement model, capture is automatic or the merchant must call `/settlement`. See `post-payment.md`.
 
 ## 2. Inquiry API [DZ]
 `GET {base}/api/2.0/Inquiry/transactionStatus?orderNo=<orderNo>` (the spec also accepts the 2C2P invoice no.)

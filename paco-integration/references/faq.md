@@ -16,7 +16,15 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **How do I know a payment succeeded?** From the backend notification to your `backendUrl`, or by calling the Inquiry API. Never from the browser redirect alone. → `notification.md`
 
-**Status "A" means I have the money?** It means **authorized**. Depending on your PSP's settlement model, capture is automatic or you must call `/settlement`. Which applies to your office: **Unconfirmed**, ask your PO before go-live. → `post-payment.md`
+**Status "A" means I have the money?** It means **approved (authorized), not captured yet**. With the **auto** settlement model PACO captures it at the cut-off. With **manual** you must call `/settlement`, or it's never captured. Check "Settlement Model" in the PACO Portal transaction details, or ask your PO. → `post-payment.md`
+
+**Which statuses are final?** `S` (settled), and `F` / `C` / `E` / `V` (not paid). `A` and the in-progress statuses can still change. If sources disagree, trust the latest inquiry. → `notification.md`
+
+**Can I refund part of a payment?** Yes, once it's settled, several times up to the full amount. Every refund must include `localMakerChecker` (who requested it). → `post-payment.md`
+
+**Will PACO notify me when a refund completes?** No, there's no refund callback. HTTP 200 = result in the response. HTTP 202 = still in progress (approval in the Portal, or waiting for the customer's bank details), so follow up in the Portal or by inquiry. → `post-payment.md`
+
+**Can I capture less than I authorized?** Usually yes (partial settlement), except installments, payments itemized by sub-merchant and some special card types. → `post-payment.md`
 
 **Cancel vs refund?** Not settled yet → void. Settled → refund. → `post-payment.md`
 

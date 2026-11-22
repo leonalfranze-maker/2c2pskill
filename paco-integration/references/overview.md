@@ -44,13 +44,13 @@ PACO is 2C2P's payment API platform ("Core Payment API"). A merchant's backend c
 
 ## Payment lifecycle [DZ]
 ```
-create ──► authorized (A) ──capture/settlement──► settled (S) ──refund──► refunded
+create ──► approved (A) ──capture/settlement──► settled (S) ──refund──► refunded
                 │
                 └──void (before settlement)──► voided (V)
 failed (F) / pending (P) are other outcomes
 ```
 - **Void** = cancel an authorized payment that is **not settled yet**. After settlement, use **refund**.
-- **Settlement (capture)** can be **automatic or manual depending on the PSP's settlement model**. Error `PC-B050055`: "Transaction using auto settlement cannot manual settled before cut off time. Check settlement model of its PSP." Which model a given office uses is **Unconfirmed**: ask the PO.
+- **Settlement (capture)** is **auto** (PACO captures at the cut-off, the merchant does nothing) or **manual** (the merchant must call `/settlement`, or the payment stays approved but not captured). 2C2P sets the model per office channel. It's visible in the PACO Portal transaction details ("Settlement Model"), or ask the PO. [2C2P confirmed] → `post-payment.md`
 - Some wallet/QR (APM) payments are settled straight away, so they can't be voided. Use refund instead. [DZ]
 
 ## Glossary
