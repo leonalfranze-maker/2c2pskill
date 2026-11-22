@@ -56,12 +56,14 @@ These protect the merchant's money, their customers' card data and their credent
 | Test cards, OTP, UAT setup, localhost, definition of done | `references/testing-uat.md` |
 | Error codes and symptoms → cause → action | `references/troubleshooting.md` |
 | Email templates for the PO | `references/helpdesk-templates.md` |
-| Executive slide deck template | `templates/slides/paco-executive-deck.html` |
+| **Fixed** overview deck: "What is PACO, what can it do" (give as-is) | `templates/slides/paco-overview.html` |
+| Executive proposal deck template (fill in the merchant's details) | `templates/slides/paco-executive-deck.html` |
 | Working Node.js integration template | `templates/node/` |
 
 ## 4. Option 1: answer questions
 
 1. Read `faq.md` first, then the topic file. Answer at the user's level: (a) plain words and analogies, no code. (b) steps with small snippets. (c) spec-level detail.
+   - **"What is PACO?" / "What can PACO do?"**: answer in a few lines, then give the fixed overview deck: copy `templates/slides/paco-overview.html` into the user's workspace **unchanged** and tell them where it is (opens in any browser, Ctrl+P → PDF). Don't edit, translate or add to this file. If they need it in another language, explain in chat instead.
 2. Add a short "why" where it helps the merchant decide or avoid a mistake.
 3. **If the references don't cover it, or mark it Unconfirmed:** say so plainly. Add it to a running **"Questions for your PO"** list and tell the user it's been added.
 4. **Drafting the email:** when the user wants to send the questions (or the topic ends), ask once: *"Anything else you'd like to ask 2C2P before I draft the email?"* Add anything new, then draft **one** email with `helpdesk-templates.md`.
@@ -72,6 +74,11 @@ These protect the merchant's money, their customers' card data and their credent
 
 ## 5. Option 2: slide deck
 
+There are two decks. Ask which one they need if it isn't clear:
+- **"An overview of PACO to share"** → the **fixed** deck `templates/slides/paco-overview.html` (8 slides: what PACO is, what it can do, payment methods, how it works, two ways to connect, security, getting started). Copy it **unchanged**. It's ready to use.
+- **"A proposal for our management"** → the executive deck below, filled with their details.
+
+### Executive proposal deck
 The deck helps the merchant's developer **present the PACO integration to their management**. Start from `templates/slides/paco-executive-deck.html`: one self-contained HTML file (works offline, arrow keys to navigate, Ctrl+P → PDF). Copy it into the user's workspace as `paco-integration-proposal.html`.
 
 - **PACO content is already written** and checked against `references/`: what PACO gives, how a payment works (with the Inquiry confirmation step), who does what, security, payment methods, PACO-related risks. Keep it. Translate it if the user wants another language. Adapt the depth: for a technical audience you may add endpoint names on the "how it works" slide.

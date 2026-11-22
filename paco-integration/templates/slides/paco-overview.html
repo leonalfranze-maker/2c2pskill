@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACO Overview</title>
+<!--
+  PACO OVERVIEW: FIXED DECK
+  Hand this to anyone who asks "What is PACO and what can it do?". Do NOT edit it: give it as-is.
+  One self-contained file: works offline, arrow keys / buttons to navigate, Ctrl+P → PDF.
+  Content is public-safe and matches the paco-integration skill references.
+-->
+<style>
+  :root { --ink:#14213d; --muted:#5b6478; --line:#d9dee8; --bg:#eef1f6; --slide:#fff;
+    --accent:#0f766e; --accent-soft:#e6f4f2; --navy:#14213d; --navy-soft:#e8ecf5; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font: 22px/1.4 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .deck { position: fixed; inset: 0 0 52px 0; display: grid; place-items: center; overflow: hidden; }
+  .slide { position: absolute; width: 1280px; height: 720px; background: var(--slide); padding: 56px 72px 64px;
+    display: none; flex-direction: column; box-shadow: 0 10px 40px rgba(20,33,61,.15); transform-origin: center; }
+  .slide.active { display: flex; }
+  .kicker { font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+  h1 { font-size: 60px; line-height: 1.08; margin: 0 0 20px; letter-spacing: -.01em; }
+  h2 { font-size: 40px; line-height: 1.15; margin: 0 0 28px; letter-spacing: -.01em; }
+  h3 { font-size: 22px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 27px; color: var(--muted); max-width: 1000px; }
+  .small { font-size: 18px; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .card { border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; background: #fff; border-top: 5px solid var(--accent); }
+  .card.navy { border-top-color: var(--navy); }
+  .card .icon { font-size: 30px; line-height: 1; margin-bottom: 12px; }
+  .card p { font-size: 18px; color: var(--muted); margin: 0; }
+  .slide ul { margin: 0; padding-left: 24px; } .slide li { margin-bottom: 10px; }
+  .tag { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-bottom: 10px; }
+  .tag.navy { background: var(--navy-soft); color: var(--navy); }
+  .callout { margin-top: auto; border-left: 6px solid var(--accent); background: var(--accent-soft); padding: 14px 20px; border-radius: 8px; font-size: 21px; }
+  .footer { position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between;
+    font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+  .journey { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .step { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 20px 18px; font-size: 19px; background: #fff; }
+  .step .n { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--navy); color: #fff; margin-bottom: 12px; }
+  .step.paco .n { background: var(--accent); }
+  .step.key { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .step:not(:last-child)::after { content: "→"; position: absolute; right: -16px; top: 24px; color: var(--muted); }
+  .who { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .method { border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .method b { display: block; font-size: 21px; margin-bottom: 4px; }
+  .method span { font-size: 17px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 19px; }
+  th { text-align: left; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); padding: 8px 12px; }
+  td { border-bottom: 1px solid var(--line); padding: 12px; vertical-align: top; }
+  .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .phase { border-top: 5px solid var(--accent); padding-top: 12px; }
+  .phase .n { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .08em; }
+  .controls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; z-index: 10; font: 14px system-ui, sans-serif; }
+  .controls button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 7px 12px; cursor: pointer; font: inherit; color: var(--ink); }
+  .controls span { color: var(--muted); min-width: 52px; text-align: center; }
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    html, body { background: #fff; height: auto; }
+    .deck { position: static; display: block; }
+    .slide { position: relative; display: flex !important; transform: none !important; box-shadow: none; break-after: page; page-break-after: always; }
+    .controls { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="deck">
+
+  <!-- 1 -->
+  <section class="slide">
+    <div style="margin-top:120px">
+      <div class="kicker">2C2P PACO</div>
+      <h1>Accept payments online,<br>simply and securely</h1>
+      <p class="lead">What PACO is and what it can do for your business</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="kicker">What is PACO</div>
+    <h2>One payment API for your whole checkout</h2>
+    <p class="lead" style="margin-bottom:34px">PACO is 2C2P's payment platform. Your systems connect to it once, and your customers can pay with cards, wallets, QR and more, on a secure 2C2P payment page.</p>
+    <div class="grid3">
+      <div class="card"><div class="icon">🔌</div><h3>Connect once</h3><p>One integration for many payment methods and markets</p></div>
+      <div class="card"><div class="icon">🛡️</div><h3>Pay securely</h3><p>Customers enter card details on 2C2P's page, not on your systems</p></div>
+      <div class="card"><div class="icon">⚙️</div><h3>Manage everything</h3><p>Check, cancel, capture and refund payments by API or in the portal</p></div>
+    </div>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="kicker">What you can do</div>
+    <h2>What PACO can do for you</h2>
+    <div class="grid3">
+      <div class="card"><div class="icon">💳</div><h3>Take payments</h3><p>Online payments from your website or app, in many currencies</p></div>
+      <div class="card"><div class="icon">🧾</div><h3>Hosted payment page</h3><p>Ready-made, mobile-friendly page with bank OTP (3-D Secure) built in</p></div>
+      <div class="card"><div class="icon">🔍</div><h3>Check status anytime</h3><p>Ask PACO for the real status of any payment</p></div>
+      <div class="card"><div class="icon">↩️</div><h3>Cancel &amp; refund</h3><p>Void before capture, refund after, in full or in part</p></div>
+      <div class="card"><div class="icon">🔁</div><h3>Save cards &amp; installments</h3><p>Card tokenization, installment and recurring plans, where enabled</p></div>
+      <div class="card"><div class="icon">🧪</div><h3>Sandbox &amp; portal</h3><p>Test safely with test cards, then manage live payments in the Merchant Portal</p></div>
+    </div>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="kicker">Payment methods</div>
+    <h2>Let customers pay the way they like</h2>
+    <div class="methods">
+      <div class="method"><b>💳 Cards</b><span>Visa, Mastercard, Amex, JCB, UnionPay, Diners, Discover</span></div>
+      <div class="method"><b>📱 Wallets</b><span>e.g. Apple Pay, Google Pay, Alipay, TrueMoney, ShopeePay</span></div>
+      <div class="method"><b>🔳 QR payments</b><span>e.g. PromptPay, DuitNow and other national QR schemes</span></div>
+      <div class="method"><b>🏦 Internet banking</b><span>Pay directly from a bank account</span></div>
+      <div class="method"><b>🏪 Counter &amp; ATM</b><span>Pay at a bank counter, convenience store, ATM or kiosk</span></div>
+      <div class="method"><b>📆 Installments</b><span>Spread card payments over several months</span></div>
+    </div>
+    <div class="callout">Available methods and currencies depend on what 2C2P enables on your account.</div>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="kicker">How it works</div>
+    <h2>A payment in four steps</h2>
+    <div class="journey">
+      <div class="step"><div class="n">1</div><div class="who">Your site</div>Customer clicks <b>Pay</b>. Your server asks PACO for a payment page.</div>
+      <div class="step paco"><div class="n">2</div><div class="who">2C2P page</div>Customer chooses a method and pays. OTP if the bank asks.</div>
+      <div class="step paco"><div class="n">3</div><div class="who">PACO</div>Tells your server the result and sends the customer back to you.</div>
+      <div class="step key"><div class="n">4</div><div class="who">Your server</div><b>Confirms the final status with PACO</b>, then fulfils the order.</div>
+    </div>
+    <div class="callout">Always confirm the status with PACO before delivering. A first "success" message or the customer's return to your site isn't proof of payment.</div>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="kicker">Integration options</div>
+    <h2>Two ways to connect</h2>
+    <table>
+      <tr><th style="width:24%"></th><th><span class="tag">Recommended</span><br>2C2P payment page</th><th><span class="tag navy">Advanced</span><br>Your own payment form</th></tr>
+      <tr><td><b>Who collects card details</b></td><td>2C2P's secure page</td><td>Your own form</td></tr>
+      <tr><td><b>Card data on your servers</b></td><td>No</td><td>Yes: PCI DSS applies, agree with 2C2P first</td></tr>
+      <tr><td><b>Payment methods</b></td><td>All methods on your account, on one page</td><td>The ones you build into your form</td></tr>
+      <tr><td><b>Effort</b></td><td>Fastest to launch</td><td>More build and compliance work</td></tr>
+      <tr><td><b>Best for</b></td><td>Most businesses</td><td>Teams with an existing PCI-compliant checkout</td></tr>
+    </table>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="kicker">Security</div>
+    <h2>Security built in</h2>
+    <div class="grid2">
+      <div class="card"><h3>🛡️ Card data stays with 2C2P</h3><p>With the payment page, card numbers never touch your systems, which keeps your PCI DSS scope small.</p></div>
+      <div class="card"><h3>🔐 Encrypted and signed</h3><p>Production messages are signed and encrypted (JOSE), with keys you generate and keep.</p></div>
+      <div class="card"><h3>🌐 Approved servers only</h3><p>Only your allowlisted servers can connect to PACO.</p></div>
+      <div class="card"><h3>✅ Double-checked results</h3><p>Every payment can be confirmed with PACO's status API before you deliver.</p></div>
+    </div>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="kicker">Getting started</div>
+    <h2>From sandbox to live</h2>
+    <div class="timeline">
+      <div class="phase"><div class="n">1 · ONBOARD</div><h3>Get set up</h3><p class="small">2C2P provides your API key, office ID and account setup. You share your server IPs and public keys.</p></div>
+      <div class="phase"><div class="n">2 · BUILD</div><h3>Connect</h3><p class="small">Your server creates payments and confirms results with PACO.</p></div>
+      <div class="phase"><div class="n">3 · TEST</div><h3>Try it safely</h3><p class="small">Pay with test cards in the sandbox: success, decline, OTP, refund.</p></div>
+      <div class="phase"><div class="n">4 · LAUNCH</div><h3>Go live</h3><p class="small">Encryption on, production credentials, and you're taking real payments.</p></div>
+    </div>
+    <div class="callout">Your AI assistant can answer questions, prepare a proposal for your management, and guide your developers step by step through the integration.</div>
+    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+  </section>
+
+</main>
+<nav class="controls" aria-label="Slide navigation">
+  <button id="prev" type="button" aria-label="Previous slide">←</button><span id="count"></span><button id="next" type="button" aria-label="Next slide">→</button>
+</nav>
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.slide')]; let i = 0;
+  slides.forEach((s, n) => s.querySelectorAll('.pg').forEach((p) => (p.textContent = `${n + 1} / ${slides.length}`)));
+  const fit = () => { const k = Math.min(innerWidth / 1280, (innerHeight - 52) / 720) * 0.97; slides.forEach((s) => (s.style.transform = `scale(${k})`)); };
+  const show = (n) => { i = Math.max(0, Math.min(slides.length - 1, n)); slides.forEach((s, j) => s.classList.toggle('active', j === i));
+    document.getElementById('count').textContent = `${i + 1} / ${slides.length}`; try { history.replaceState(null, '', `#${i + 1}`); } catch {} };
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    if (e.key === 'Home') show(0); if (e.key === 'End') show(slides.length - 1);
+  });
+  addEventListener('resize', fit); fit(); show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>
