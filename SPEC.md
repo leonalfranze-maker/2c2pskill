@@ -130,7 +130,7 @@ paco-integration/
 │   ├── troubleshooting.md   # symptom → cause → action
 │   └── helpdesk-templates.md  # PO question email + ticket templates
 ├── templates/slides/        # HTML slide deck template for option 2
-│   └── paco-overview.html
+│   └── paco-executive-deck.html  # exec deck: PACO parts written, merchant parts as placeholders
 └── templates/node/          # generalized from poc/prepaymentui-node
     ├── .env.example  paco/  public/  server.js
     └── scripts/ try.js  doctor.js  generate-merchant-keys.js

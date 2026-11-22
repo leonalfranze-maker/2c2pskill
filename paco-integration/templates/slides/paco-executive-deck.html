@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACO Integration Proposal</title>
+<!--
+  ============================================================================
+  PACO EXECUTIVE DECK: TEMPLATE
+  For a merchant's developer to present a 2C2P PACO integration to their management.
+  One self-contained file: no internet needed. Arrow keys / buttons to navigate. Ctrl+P → PDF.
+
+  HOW TO FILL (for the AI assistant using the paco-integration skill)
+  - Content about PACO is already written. Keep it. Translate it if the user wants another language.
+    Facts come from the skill's references/. Don't add PACO details that aren't in references/.
+  - Merchant-specific content is marked with class "fill" (inline) or "fill-block" (block) and a
+    data-fill key. Replace the WHOLE element (including its tag) with plain content once known.
+    Only fill what the user told you or what you found in their project. Never invent figures,
+    dates, costs or names. Leave an item as a placeholder if it's unknown.
+  - The badge "N items to fill" (top right) counts what's left. It disappears at 0.
+  - Never put credentials, internal 2C2P information or pricing you weren't given into the deck.
+
+  data-fill keys:
+    company, presenter, date, channel ................. title & context
+    summary-goal, summary-why, summary-timeline,
+    summary-cost, summary-decision ..................... slide 2: executive summary
+    current-checkout, current-pain, current-volume ..... slide 3: where we are today
+    our-systems ........................................ slide 6: our systems involved
+    our-compliance ..................................... slide 7: our security / compliance notes
+    launch-methods, launch-currencies, later-methods ... slide 8: what we launch with
+    scope-system-*, scope-estimate-* ................... slide 9: our system + estimate per component
+    plan-* ............................................. slide 10: duration / owner per phase
+    team, effort, cost-build, cost-run ................. slide 11: team, effort & cost
+    our-risks .......................................... slide 12: our own risks
+    decision, next-steps ............................... slide 13: the ask
+  ============================================================================
+-->
+<style>
+  :root {
+    --ink: #14213d; --muted: #5b6478; --line: #d9dee8; --bg: #eef1f6; --slide: #ffffff;
+    --accent: #0f766e; --accent-soft: #e6f4f2; --navy: #14213d; --navy-soft: #e8ecf5;
+    --warn: #b45309; --warn-soft: #fff7e6; --fill: #7c3aed; --fill-soft: #f5f0ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font: 22px/1.4 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .deck { position: fixed; inset: 0 0 52px 0; display: grid; place-items: center; overflow: hidden; }
+  .slide { position: absolute; width: 1280px; height: 720px; background: var(--slide);
+    padding: 56px 72px 64px; display: none; flex-direction: column;
+    box-shadow: 0 10px 40px rgba(20, 33, 61, .15); transform-origin: center center; }
+  .slide.active { display: flex; }
+  .slide > header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 26px; }
+  .kicker { font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: 54px; line-height: 1.1; margin: 0 0 18px; letter-spacing: -.01em; }
+  h2 { font-size: 38px; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+  h3 { font-size: 21px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 26px; color: var(--muted); max-width: 980px; }
+  .small { font-size: 17px; color: var(--muted); }
+  .footer { position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between;
+    font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .card { border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; background: #fff; }
+  .card.paco { border-top: 5px solid var(--accent); }
+  .card.us { border-top: 5px solid var(--navy); }
+  .card ul, .slide ul { margin: 0; padding-left: 22px; }
+  .card li, .slide li { margin-bottom: 7px; }
+  .tag { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-bottom: 10px; }
+  .tag.us { background: var(--navy-soft); color: var(--navy); }
+  .callout { margin-top: auto; border-left: 6px solid var(--accent); background: var(--accent-soft);
+    padding: 14px 20px; border-radius: 8px; font-size: 21px; }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  table { width: 100%; border-collapse: collapse; font-size: 18px; }
+  th { text-align: left; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 2px solid var(--line); padding: 8px 10px; }
+  td { border-bottom: 1px solid var(--line); padding: 9px 10px; vertical-align: top; }
+  td b { color: var(--ink); }
+
+  /* Journey diagram */
+  .journey { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 6px; }
+  .step { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px 14px; background: #fff; font-size: 17px; }
+  .step .n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
+    background: var(--navy); color: #fff; margin-bottom: 10px; font-size: 17px; }
+  .step.paco .n { background: var(--accent); }
+  .step.key { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .step:not(:last-child)::after { content: "→"; position: absolute; right: -13px; top: 18px; color: var(--muted); font-size: 18px; }
+  .who { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .legend { display: flex; gap: 22px; font-size: 15px; color: var(--muted); margin-top: 14px; }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+  /* Placeholders to fill */
+  .fill { background: var(--fill-soft); color: var(--fill); border: 1.5px dashed var(--fill); border-radius: 6px; padding: 0 6px; font-style: italic; }
+  .fill-block { background: var(--fill-soft); color: #4c1d95; border: 2px dashed var(--fill); border-radius: 12px; padding: 14px 18px; font-size: 18px; }
+  .fill-block::before { content: "TO FILL"; display: block; font-size: 12px; font-weight: 800; letter-spacing: .12em; color: var(--fill); margin-bottom: 4px; font-style: normal; }
+  td .fill-block { padding: 6px 10px; font-size: 15px; border-radius: 8px; }
+  td .fill-block::before { display: none; }
+
+  /* Controls */
+  .controls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; z-index: 10; font: 14px system-ui, sans-serif; }
+  .controls button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 7px 12px; cursor: pointer; font: inherit; color: var(--ink); }
+  .controls span { color: var(--muted); min-width: 52px; text-align: center; }
+  .todo { position: fixed; bottom: 12px; right: 16px; z-index: 10; font: 600 14px system-ui, sans-serif; color: var(--fill);
+    background: var(--fill-soft); border: 1.5px dashed var(--fill); border-radius: 999px; padding: 6px 14px; }
+
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    html, body { background: #fff; height: auto; }
+    .deck { position: static; display: block; }
+    .slide { position: relative; display: flex !important; transform: none !important; box-shadow: none; page-break-after: always; break-after: page; }
+    .controls, .todo { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="todo" id="todo" hidden></div>
+<main class="deck" id="deck">
+
+  <!-- 1. Title -->
+  <section class="slide">
+    <div style="margin-top:110px">
+      <div class="kicker">Proposal</div>
+      <h1>Accepting online payments with<br>2C2P PACO</h1>
+      <p class="lead">Integration plan for <span class="fill" data-fill="company">Company name</span>'s <span class="fill" data-fill="channel">channel, e.g. website and mobile app</span></p>
+    </div>
+    <div style="margin-top:auto" class="small">
+      <span class="fill" data-fill="presenter">Presenter, role</span> · <span class="fill" data-fill="date">Date</span>
+    </div>
+  </section>
+
+  <!-- 2. Executive summary -->
+  <section class="slide">
+    <header><div class="kicker">Executive summary</div></header>
+    <h2 style="margin-bottom:24px">What we propose and what we need from you</h2>
+    <table>
+      <tr><td style="width:240px"><b>Proposal</b></td><td>Connect our checkout to <b>2C2P PACO</b> using 2C2P's <b>hosted payment page</b>, so customers pay on a secure 2C2P page and we never handle card numbers.</td></tr>
+      <tr><td><b>Goal</b></td><td><div class="fill-block" data-fill="summary-goal">The business outcome, e.g. accept cards and QR payments online for X by Q3.</div></td></tr>
+      <tr><td><b>Why now</b></td><td><div class="fill-block" data-fill="summary-why">The trigger, e.g. new channel launch, replacing the current provider, customer demand.</div></td></tr>
+      <tr><td><b>Timeline</b></td><td><div class="fill-block" data-fill="summary-timeline">Target go-live date and main milestones (see the plan slide).</div></td></tr>
+      <tr><td><b>Effort &amp; cost</b></td><td><div class="fill-block" data-fill="summary-cost">Team, effort and budget (see the team &amp; cost slide).</div></td></tr>
+      <tr><td><b>Decision needed</b></td><td><div class="fill-block" data-fill="summary-decision">What you ask management to approve today.</div></td></tr>
+    </table>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 3. Today -->
+  <section class="slide">
+    <header><div class="kicker">Where we are today</div></header>
+    <h2 style="margin-bottom:26px">Our current checkout</h2>
+    <div class="grid3" style="flex:1">
+      <div><h3>How customers pay today</h3><div class="fill-block" data-fill="current-checkout">Current checkout flow and payment provider(s), or "orders only, no online payment yet".</div></div>
+      <div><h3>What's not working</h3><div class="fill-block" data-fill="current-pain">Pain points: manual steps, missing payment methods, failed payments, cost, compliance burden…</div></div>
+      <div><h3>Volumes</h3><div class="fill-block" data-fill="current-volume">Orders / transactions per month, average order value, main currencies and markets.</div></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 4. What PACO gives us -->
+  <section class="slide">
+    <header><div class="kicker">The solution</div></header>
+    <h2 style="margin-bottom:26px">What 2C2P PACO gives us</h2>
+    <div class="grid2">
+      <div class="card paco"><h3>One integration, many payment methods</h3>
+        <p class="small" style="margin:0">Cards (Visa, Mastercard, Amex, JCB, UnionPay…), wallets, QR, internet banking, over-the-counter and installments, as enabled on our account.</p></div>
+      <div class="card paco"><h3>Secure hosted payment page</h3>
+        <p class="small" style="margin:0">2C2P's mobile-friendly page collects card details and runs the bank's OTP check (3-D Secure). Card numbers never reach our systems.</p></div>
+      <div class="card paco"><h3>The full payment lifecycle by API</h3>
+        <p class="small" style="margin:0">Create payments, check their status, cancel (void), capture (settle) and refund, all from our own systems.</p></div>
+      <div class="card paco"><h3>Sandbox and Merchant Portal</h3>
+        <p class="small" style="margin:0">A test environment with test cards to build and test safely, and a portal to view transactions, handle refunds and manage users.</p></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 5. How a payment works -->
+  <section class="slide">
+    <header><div class="kicker">How it works</div></header>
+    <h2 style="margin-bottom:26px">A payment, step by step</h2>
+    <div class="journey">
+      <div class="step"><div class="n">1</div><div class="who">Customer</div>Clicks <b>Pay</b> on our site or app</div>
+      <div class="step"><div class="n">2</div><div class="who">Our server</div>Asks PACO for a secure payment page</div>
+      <div class="step paco"><div class="n">3</div><div class="who">2C2P page</div>Customer pays. OTP if the bank asks.</div>
+      <div class="step paco"><div class="n">4</div><div class="who">PACO</div>Notifies our server of the result</div>
+      <div class="step"><div class="n">5</div><div class="who">Customer</div>Returns to our site</div>
+      <div class="step key"><div class="n">6</div><div class="who">Our server</div><b>Confirms the final status with PACO</b> before fulfilling</div>
+    </div>
+    <div class="legend"><span><i class="dot" style="background:var(--navy)"></i>Our systems</span><span><i class="dot" style="background:var(--accent)"></i>2C2P PACO</span></div>
+    <div class="callout">We ship, issue or credit <b>only after our server has confirmed the payment with PACO</b> (step 6). The first "success" message and the customer's return to our site are not proof of payment.</div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 6. Who does what -->
+  <section class="slide">
+    <header><div class="kicker">Responsibilities</div></header>
+    <h2 style="margin-bottom:24px">Who does what</h2>
+    <div class="grid2" style="flex:1">
+      <div class="card paco"><span class="tag">2C2P / PACO</span>
+        <ul>
+          <li>Hosted payment page and card data handling</li>
+          <li>Bank OTP / 3-D Secure</li>
+          <li>Connection to card schemes, banks and wallet providers</li>
+          <li>Payment notifications and status API</li>
+          <li>Account setup: payment methods, currencies, capture model, network access</li>
+          <li>Sandbox, Merchant Portal and support</li>
+        </ul></div>
+      <div class="card us"><span class="tag us">Us</span>
+        <ul>
+          <li>Checkout and order system</li>
+          <li>Server integration: create payment, receive notification, <b>confirm status</b></li>
+          <li>Keeping our keys and credentials secure</li>
+          <li>Fulfilment, refunds and cancellations from our back office</li>
+          <li>Daily reconciliation</li>
+        </ul>
+        <div class="fill-block" data-fill="our-systems" style="margin-top:10px">Our systems involved, e.g. web shop, mobile app, order service, ERP, finance.</div></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 7. Security & compliance -->
+  <section class="slide">
+    <header><div class="kicker">Security &amp; compliance</div></header>
+    <h2 style="margin-bottom:24px">Built to keep money and card data safe</h2>
+    <div class="grid2">
+      <div>
+        <ul>
+          <li><b>Card numbers never touch our servers.</b> The 2C2P page collects them, which keeps our PCI DSS scope much smaller.</li>
+          <li><b>Encrypted and signed messages</b> in production (JOSE), with keys we generate and keep.</li>
+          <li><b>Only our approved servers can connect</b> (IP allowlist).</li>
+          <li><b>Credentials stay in secure storage</b>, never in code or chat.</li>
+          <li><b>Every payment is double-checked</b> with PACO's status API before we deliver.</li>
+        </ul>
+      </div>
+      <div><h3>Our requirements</h3>
+        <div class="fill-block" data-fill="our-compliance">Internal security review, data-protection or audit requirements, PCI DSS status, approvals needed before launch.</div></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 8. Payment methods -->
+  <section class="slide">
+    <header><div class="kicker">Customer experience</div></header>
+    <h2 style="margin-bottom:24px">Payment methods for our customers</h2>
+    <div class="grid2" style="flex:1">
+      <div class="card paco"><span class="tag">Available through PACO</span>
+        <ul>
+          <li><b>Cards:</b> Visa, Mastercard, Amex, JCB, UnionPay, Diners, Discover</li>
+          <li><b>Wallets:</b> e.g. Apple Pay, Google Pay, Alipay, TrueMoney, ShopeePay</li>
+          <li><b>QR payments</b>, e.g. PromptPay, DuitNow</li>
+          <li><b>Internet banking, over the counter, ATM/kiosk</b></li>
+          <li><b>Installment plans</b></li>
+        </ul>
+        <p class="small" style="margin-top:10px">2C2P enables methods and currencies on our account. New methods go through a 2C2P review.</p></div>
+      <div class="card us"><span class="tag us">What we launch with</span>
+        <h3>Methods</h3><div class="fill-block" data-fill="launch-methods">Methods for launch, e.g. cards + PromptPay QR.</div>
+        <h3 style="margin-top:12px">Currencies &amp; markets</h3><div class="fill-block" data-fill="launch-currencies">e.g. THB, Thailand.</div>
+        <h3 style="margin-top:12px">Later phases</h3><div class="fill-block" data-fill="later-methods">Methods to add later, if any.</div></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 9. Build scope -->
+  <section class="slide">
+    <header><div class="kicker">Scope</div></header>
+    <h2 style="margin-bottom:20px">What we need to build</h2>
+    <table>
+      <tr><th style="width:27%">Component</th><th style="width:37%">What it does</th><th>Our system</th><th style="width:15%">Estimate</th></tr>
+      <tr><td><b>Checkout "Pay"</b></td><td>Sends the customer to the secure 2C2P page</td><td><div class="fill-block" data-fill="scope-system-checkout">web / app</div></td><td><div class="fill-block" data-fill="scope-estimate-checkout">days</div></td></tr>
+      <tr><td><b>Payment service</b></td><td>Creates payments on PACO from our server</td><td><div class="fill-block" data-fill="scope-system-payment">service</div></td><td><div class="fill-block" data-fill="scope-estimate-payment">days</div></td></tr>
+      <tr><td><b>Result handling</b></td><td>Receives notifications, confirms status, updates the order</td><td><div class="fill-block" data-fill="scope-system-result">service</div></td><td><div class="fill-block" data-fill="scope-estimate-result">days</div></td></tr>
+      <tr><td><b>Status check job</b></td><td>Re-checks unfinished payments on a schedule</td><td><div class="fill-block" data-fill="scope-system-job">scheduler</div></td><td><div class="fill-block" data-fill="scope-estimate-job">days</div></td></tr>
+      <tr><td><b>Back-office actions</b></td><td>Refund, cancel, capture (if our account uses manual capture)</td><td><div class="fill-block" data-fill="scope-system-backoffice">back office</div></td><td><div class="fill-block" data-fill="scope-estimate-backoffice">days</div></td></tr>
+      <tr><td><b>Security setup</b></td><td>Keys, message encryption, secret storage, server allowlist</td><td><div class="fill-block" data-fill="scope-system-security">infra</div></td><td><div class="fill-block" data-fill="scope-estimate-security">days</div></td></tr>
+    </table>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 10. Plan -->
+  <section class="slide">
+    <header><div class="kicker">Plan</div></header>
+    <h2 style="margin-bottom:20px">From sandbox to launch</h2>
+    <table>
+      <tr><th style="width:5%">#</th><th style="width:22%">Phase</th><th style="width:43%">Done when</th><th>Duration</th><th>Owner</th></tr>
+      <tr><td>1</td><td><b>Setup</b></td><td>Credentials, keys and server access confirmed with 2C2P</td><td><div class="fill-block" data-fill="plan-duration-1">weeks</div></td><td><div class="fill-block" data-fill="plan-owner-1">name</div></td></tr>
+      <tr><td>2</td><td><b>Build</b></td><td>Payments work end-to-end in the sandbox</td><td><div class="fill-block" data-fill="plan-duration-2">weeks</div></td><td><div class="fill-block" data-fill="plan-owner-2">name</div></td></tr>
+      <tr><td>3</td><td><b>Test</b></td><td>Success, decline, OTP, refund and cancel cases pass</td><td><div class="fill-block" data-fill="plan-duration-3">weeks</div></td><td><div class="fill-block" data-fill="plan-owner-3">name</div></td></tr>
+      <tr><td>4</td><td><b>Harden</b></td><td>Encryption on, security review done, monitoring in place</td><td><div class="fill-block" data-fill="plan-duration-4">weeks</div></td><td><div class="fill-block" data-fill="plan-owner-4">name</div></td></tr>
+      <tr><td>5</td><td><b>Go-live prep</b></td><td>Production credentials and access from 2C2P, launch checklist signed off</td><td><div class="fill-block" data-fill="plan-duration-5">weeks</div></td><td><div class="fill-block" data-fill="plan-owner-5">name</div></td></tr>
+      <tr><td>6</td><td><b>Launch</b></td><td>Live payments, daily reconciliation running</td><td><div class="fill-block" data-fill="plan-date-launch">date</div></td><td><div class="fill-block" data-fill="plan-owner-6">name</div></td></tr>
+    </table>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 11. Team, effort & cost -->
+  <section class="slide">
+    <header><div class="kicker">Resources</div></header>
+    <h2 style="margin-bottom:26px">Team, effort and cost</h2>
+    <div class="grid2" style="flex:1">
+      <div><h3>Team</h3><div class="fill-block" data-fill="team">Roles and people, e.g. 1 backend, 1 frontend, QA, project lead.</div>
+        <h3 style="margin-top:18px">Effort</h3><div class="fill-block" data-fill="effort">Total effort (person-days), from the scope estimates.</div></div>
+      <div><h3>One-time cost</h3><div class="fill-block" data-fill="cost-build">Build and testing cost.</div>
+        <h3 style="margin-top:18px">Running cost</h3><div class="fill-block" data-fill="cost-run">Transaction fees per our agreement with 2C2P, plus operations and support.</div></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 12. Risks -->
+  <section class="slide">
+    <header><div class="kicker">Risks</div></header>
+    <h2 style="margin-bottom:20px">Risks and how we handle them</h2>
+    <table>
+      <tr><th style="width:38%">Risk</th><th>Mitigation</th></tr>
+      <tr><td><b>Treating a payment as paid too early</b></td><td>Deliver only after our server confirms the status with PACO</td></tr>
+      <tr><td><b>A result notification is missed</b> (it's sent once)</td><td>Scheduled status check for unfinished payments</td></tr>
+      <tr><td><b>Payments approved but never captured</b></td><td>Confirm our account's capture model with 2C2P. Automate capture if it's manual.</td></tr>
+      <tr><td><b>Method or currency not enabled on our account</b></td><td>Confirm the account setup with 2C2P at kickoff</td></tr>
+      <tr><td><b>Server access set up late</b></td><td>Send our server IPs to 2C2P in the setup phase</td></tr>
+      <tr><td colspan="2"><div class="fill-block" data-fill="our-risks">Our own risks: e.g. team availability, dependencies on other projects, release freeze, legacy system changes.</div></td></tr>
+    </table>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+  <!-- 13. Decision -->
+  <section class="slide">
+    <header><div class="kicker">The ask</div></header>
+    <h2 style="margin-bottom:26px">Decision and next steps</h2>
+    <div class="grid2" style="flex:1">
+      <div><h3>We ask you to approve</h3><div class="fill-block" data-fill="decision">e.g. go-ahead for the PACO integration, budget X, team Y, target launch date Z.</div></div>
+      <div><h3>Next steps after approval</h3><div class="fill-block" data-fill="next-steps">e.g. 1) kickoff with 2C2P, 2) confirm account setup and server access, 3) start the sandbox build.</div></div>
+    </div>
+    <div class="footer"><span>PACO integration proposal</span><span class="pg"></span></div>
+  </section>
+
+</main>
+<nav class="controls" aria-label="Slide navigation">
+  <button id="prev" type="button" aria-label="Previous slide">←</button>
+  <span id="count"></span>
+  <button id="next" type="button" aria-label="Next slide">→</button>
+</nav>
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = 0;
+  slides.forEach((s, n) => s.querySelectorAll('.pg').forEach((p) => (p.textContent = `${n + 1} / ${slides.length}`)));
+
+  function fit() {
+    const k = Math.min(innerWidth / 1280, (innerHeight - 52) / 720) * 0.97;
+    slides.forEach((s) => (s.style.transform = `scale(${k})`));
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, j) => s.classList.toggle('active', j === i));
+    document.getElementById('count').textContent = `${i + 1} / ${slides.length}`;
+    try { history.replaceState(null, '', `#${i + 1}`); } catch {}
+  }
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+  });
+  addEventListener('resize', fit);
+
+  // Remaining placeholders
+  const left = document.querySelectorAll('.fill, .fill-block').length;
+  const todo = document.getElementById('todo');
+  if (left) { todo.hidden = false; todo.textContent = `${left} item${left === 1 ? '' : 's'} to fill`; }
+
+  fit();
+  show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>

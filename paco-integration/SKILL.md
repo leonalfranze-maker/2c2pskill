@@ -56,7 +56,7 @@ These protect the merchant's money, their customers' card data and their credent
 | Test cards, OTP, UAT setup, localhost, definition of done | `references/testing-uat.md` |
 | Error codes and symptoms → cause → action | `references/troubleshooting.md` |
 | Email templates for the PO | `references/helpdesk-templates.md` |
-| Slide deck template | `templates/slides/` |
+| Executive slide deck template | `templates/slides/paco-executive-deck.html` |
 | Working Node.js integration template | `templates/node/` |
 
 ## 4. Option 1: answer questions
@@ -72,19 +72,16 @@ These protect the merchant's money, their customers' card data and their credent
 
 ## 5. Option 2: slide deck
 
-Make **one self-contained HTML file** (`paco-integration-overview.html`) in the user's workspace: no external dependencies, works offline, arrow keys/click to move between slides, prints to PDF. Start from `templates/slides/` so diagrams and facts stay correct. Fill in the company name, recommended flow, level and language.
+The deck helps the merchant's developer **present the PACO integration to their management**. Start from `templates/slides/paco-executive-deck.html`: one self-contained HTML file (works offline, arrow keys to navigate, Ctrl+P → PDF). Copy it into the user's workspace as `paco-integration-proposal.html`.
 
-Default slides (about 8):
-1. What PACO does for you
-2. The payment journey: customer → your site → 2C2P payment page → back to your site
-3. Who does what: your frontend, your backend, PACO, and why the browser never calls PACO
-4. What happens on the 2C2P payment page (card entry, OTP/3DS, result)
-5. How you learn the result: notification and redirect are first reports, **Inquiry is the truth**
-6. What you need: API key, office ID, IP allowlist, encryption keys, HTTPS URL
-7. From sandbox to live: UAT test card → JOSE → production checklist
-8. Getting help: what to include when you contact 2C2P
+- **PACO content is already written** and checked against `references/`: what PACO gives, how a payment works (with the Inquiry confirmation step), who does what, security, payment methods, PACO-related risks. Keep it. Translate it if the user wants another language. Adapt the depth: for a technical audience you may add endpoint names on the "how it works" slide.
+- **Merchant content is left as placeholders** (`fill` / `fill-block` elements with a `data-fill` key, listed in the comment at the top of the file): goals, current checkout, systems, launch methods and currencies, scope estimates, plan, team, cost, own risks, the decision asked.
+  - Fill only what the user told you or what you can see in their project. **Never invent** figures, dates, costs or names. Replace the whole placeholder element with plain text when you fill it.
+  - Leave unknown items as placeholders. The badge in the corner counts what's left.
+  - Ask for the missing items in **one** short list, grouped by slide, so the user can come back with answers.
+- Don't add pricing, internal 2C2P information or credentials.
 
-Level (a): plain words and pictures. Level (c): add endpoints, field names and the JOSE flow. Afterwards, say where the file is and offer option 3.
+Afterwards, say where the file is, how many items are still to fill, and offer option 3.
 
 ## 6. Option 3: integrate
 
