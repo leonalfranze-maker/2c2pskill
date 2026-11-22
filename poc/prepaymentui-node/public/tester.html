@@ -45,7 +45,7 @@
 <body>
 <main>
   <h1>PACO API Tester</h1>
-  <p class="sub">Fire <b>/prePaymentUi</b> or <b>/nonUi</b> against the UAT sandbox with plain JSON. Credentials stay in this browser only.</p>
+  <p class="sub">Fire <b>/prePaymentUi</b> or <b>/nonUi</b> against the UAT sandbox with plain JSON, then check the real status with <b>Inquiry</b>. Credentials stay in this browser only.</p>
 
   <section class="card">
     <h2>1 · Connection
@@ -72,8 +72,12 @@
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-pre" aria-selected="true" type="button"><b>/prePaymentUi</b><span>Get a link to the 2C2P payment page</span></button>
       <button class="tab" role="tab" id="tab-non" aria-selected="false" type="button"><b>/nonUi</b><span>Charge card details directly</span></button>
+      <button class="tab" role="tab" id="tab-inq" aria-selected="false" type="button"><b>Inquiry</b><span>Check the real status of an order</span></button>
     </div>
-    <div class="grid">
+    <div id="inqBox" class="grid hidden">
+      <div><label for="inqOrder">orderNo</label><input id="inqOrder" placeholder="filled in after each payment request"></div>
+    </div>
+    <div class="grid" id="payBox">
       <div><label for="desc">Product description (max 50)</label><input id="desc" maxlength="50" value="Skill POC test"></div>
       <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="100.00"></div>
       <div><label for="currency">Currency</label><input id="currency" maxlength="3" value="THB"></div>
@@ -163,10 +167,14 @@
     api = name;
     $('tab-pre').setAttribute('aria-selected', name === 'prePaymentUi');
     $('tab-non').setAttribute('aria-selected', name === 'nonUi');
+    $('tab-inq').setAttribute('aria-selected', name === 'inquiry');
     $('cardBox').classList.toggle('hidden', name !== 'nonUi');
+    $('payBox').classList.toggle('hidden', name === 'inquiry');
+    $('inqBox').classList.toggle('hidden', name !== 'inquiry');
   }
   $('tab-pre').addEventListener('click', () => selectTab('prePaymentUi'));
   $('tab-non').addEventListener('click', () => selectTab('nonUi'));
+  $('tab-inq').addEventListener('click', () => selectTab('inquiry'));
 
   // ---------- request building (same rules as the Node backend) ----------
   // PACO currency list (alphabetic code -> decimalPlaces), exported 2026-11-22. Numeric codes are rejected.
@@ -213,6 +221,11 @@
   const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;   // bash single-quote
   const psq = (s) => `'${String(s).replace(/'/g, "''")}'`;          // PowerShell single-quote
   function command(kind, { url, key, json }) {
+    if (json == null) { // GET (inquiry)
+      return kind === 'bash'
+        ? `curl -sS ${shq(url)} -H 'Accept: application/json' -H ${shq('apiKey: ' + key)}; echo`
+        : `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\ntry { (Invoke-WebRequest -UseBasicParsing -Uri ${psq(url)} -Headers @{ apiKey = ${psq(key)}; Accept = 'application/json' }).Content }\ncatch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+    }
     if (kind === 'bash') {
       return `curl -sS -X POST ${shq(url)} \\\n  -H 'Content-Type: application/json' -H 'Accept: application/json' \\\n  -H ${shq('apiKey: ' + key)} \\\n  -d ${shq(json)}; echo`;
     }
@@ -239,6 +252,15 @@
     const code = ar.responseCode ? `${esc(ar.responseCode)} ${esc(ar.responseDescription || '')}` : '';
     const page = data?.data?.paymentPage?.paymentPageURL;
     const result = data?.data?.paymentResult;
+    if (Array.isArray(data?.data)) { // Inquiry: newest first; refunds are separate entries (R / PCRP)
+      const isRefund = (e) => ['R', 'PCRP'].includes(e?.paymentStatusInfo?.paymentStatus);
+      const pay = data.data.find((e) => !isRefund(e));
+      const refunds = data.data.filter(isRefund).length;
+      const st = pay?.paymentStatusInfo?.paymentStatus, step = pay?.paymentStatusInfo?.paymentStep;
+      const verdict = ['A', 'S'].includes(st) ? ['ok', 'PAID'] : ['F', 'C', 'E', 'V'].includes(st) ? ['err', 'NOT PAID'] : ['warn', 'IN PROGRESS'];
+      banner(verdict[0], `<b>Inquiry (source of truth): ${esc(verdict[1])}</b> · status ${esc(st ?? '-')} / step ${esc(step ?? '-')}<br>${data.data.length} entr${data.data.length === 1 ? 'y' : 'ies'} (attempts + ${refunds} refund${refunds === 1 ? '' : 's'}) · order ${esc(pay?.orderNo ?? '')}`);
+      return;
+    }
     if (page) {
       banner('ok', `<b>✓ Got a payment page link</b> ${code ? '· ' + code : ''}<br><small>"Success" here means the page was created, not that anyone has paid.</small><br>Pay with 4111111111111111 · CVV 123 · OTP 123456.<br>
         <a class="go" href="${esc(page)}" target="_blank" rel="noopener">Open payment page →</a>`);
@@ -254,24 +276,37 @@
   // ---------- send ----------
   $('fire').addEventListener('click', async () => {
     showOut(); $('fallback').classList.add('hidden'); $('resView').textContent = '(waiting…)';
-    let body, url;
+    let body = null, url;
+    const key = $('apiKey').value.trim();
     try {
-      if (!$('apiKey').value.trim() || !$('officeId').value.trim()) throw new Error('Fill in API key and Office ID first (or load your .env file).');
-      url = `${baseUrl()}/api/2.0/Payment/${api}`;
+      if (!key) throw new Error('Fill in the API key first (or load your .env file).');
+      if (/core\.paco\.2c2p\.com/.test(baseUrl()) && api !== 'inquiry') throw new Error('Production rejects plain JSON. Use the Node backend with JOSE for production.');
+      if (api === 'inquiry') {
+        const orderNo = $('inqOrder').value.trim();
+        if (!orderNo) throw new Error('Enter an orderNo.');
+        url = `${baseUrl()}/api/2.0/Inquiry/transactionStatus?orderNo=${encodeURIComponent(orderNo)}`;
+      } else {
+        if (!$('officeId').value.trim()) throw new Error('Fill in Office ID first (or load your .env file).');
+        url = `${baseUrl()}/api/2.0/Payment/${api}`;
+        body = buildBody();
+        $('inqOrder').value = body.orderNo; // ready for the Inquiry tab
+      }
       if (!/^https:\/\//.test(url)) throw new Error('Base URL must start with https://');
-      if (/core\.paco\.2c2p\.com/.test(url)) throw new Error('Production rejects plain JSON. Use the Node backend with JOSE for production.');
-      body = buildBody();
     } catch (e) { banner('err', esc(e.message)); $('resView').textContent = '(not sent)'; return; }
 
-    if ($('remember').checked) store.set({ baseUrl: baseUrl(), apiKey: $('apiKey').value.trim(), officeId: $('officeId').value.trim() });
-    $('reqView').textContent = `POST ${url}\nContent-Type: application/json\napiKey: ••••${$('apiKey').value.trim().slice(-4)}\n\n${JSON.stringify(maskCard(body), null, 2)}`;
-    lastReq = { url, key: $('apiKey').value.trim(), json: JSON.stringify(body) };
+    if ($('remember').checked) store.set({ baseUrl: baseUrl(), apiKey: key, officeId: $('officeId').value.trim() });
+    $('reqView').textContent = body
+      ? `POST ${url}\nContent-Type: application/json\napiKey: ••••${key.slice(-4)}\n\n${JSON.stringify(maskCard(body), null, 2)}`
+      : `GET ${url}\napiKey: ••••${key.slice(-4)}`;
+    lastReq = { url, key, json: body ? JSON.stringify(body) : null };
     renderCommand();
     $('probe').href = baseUrl() + '/';
 
     $('fire').disabled = true; banner('warn', 'Sending…');
     try {
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', apiKey: $('apiKey').value.trim() }, body: JSON.stringify(body) });
+      const res = body
+        ? await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', apiKey: key }, body: JSON.stringify(body) })
+        : await fetch(url, { headers: { Accept: 'application/json', apiKey: key } });
       const text = await res.text();
       let data; try { data = JSON.parse(text); } catch { data = text; }
       interpret(res.status, data);

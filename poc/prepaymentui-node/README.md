@@ -48,7 +48,7 @@ Open http://localhost:3000, press Pay, and use test card `4111111111111111`, CVV
 `backendUrl` must be reachable from the internet. For UAT, put a public HTTPS URL (e.g. a tunnel) in `PUBLIC_BASE_URL`.
 
 ## Quickest test: HTML tester (no install)
-Open `public/tester.html` in a browser (double-click it). Click **Load .env file**, pick `/prePaymentUi` or `/nonUi`, then click **Send request**.
+Open `public/tester.html` in a browser (double-click it). Click **Load .env file**, pick `/prePaymentUi` or `/nonUi`, then click **Send request**. After paying, open the **Inquiry** tab (the orderNo is filled in) to see the real status.
 It sends plain JSON, so it works in UAT only. If the browser can't make the call (CORS, or your IP isn't allowlisted), the page gives you a `curl` command to run instead, and you paste the output back into the page.
 
 ## Quick test with several environments (internal)
@@ -61,6 +61,10 @@ npm run try:uat-pgw -- prepayment
 `/nonUi` charges the test card directly. Add `--3ds Y` to request the OTP step:
 ```bash
 npm run try:uat-pgw -- nonui --3ds Y
+```
+Check the real status of an order (source of truth):
+```bash
+npm run try:uat-pgw -- inquiry <orderNo>
 ```
 The other environments use the same pattern: `try:uat-ttb-3ds`, `try:uat-ttb-n3ds`, `try:qa-pgw`, `try:qa-ttb-3ds`, `try:qa-ttb-n3ds`. With your own `.env`, use `npm run try -- prepayment`. For the full browser flow, use `npm run start:uat-pgw`.
 

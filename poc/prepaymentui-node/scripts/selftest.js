@@ -30,8 +30,17 @@ const pacoSeal = async (body) => new jose.CompactEncrypt(new TextEncoder().encod
 )).setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A128CBC-HS256' }).encrypt(pk.mEncPub);
 
 let lastRequest;
+const inquiryState = new Map(); // orderNo -> data[] returned by the mock Inquiry API
+const entry = (orderNo, paymentStatus, paymentStep) => ({ orderNo, paymentStatusInfo: { paymentStatus, paymentStep, lastUpdatedDttm: new Date().toISOString() } });
 const mock = http.createServer(async (req, res) => {
   let raw = ''; for await (const c of req) raw += c;
+  if (req.method === 'GET' && req.url.startsWith('/api/2.0/Inquiry/transactionStatus')) {
+    const orderNo = new URL(req.url, 'http://x').searchParams.get('orderNo');
+    if (req.headers.apikey !== API_KEY) { res.writeHead(401, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ apiResponse: { responseCode: 'PC-B050088' } })); }
+    const data = inquiryState.get(orderNo);
+    res.writeHead(data ? 200 : 400, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(data ? { version: '2.0', apiResponse: { responseCode: 'PC-B050000' }, data } : { apiResponse: { responseCode: 'PC-B052201', responseDescription: 'OrderNo is not valid or does not exist' } }));
+  }
   try {
     const isNonUi = req.url === '/api/2.0/Payment/nonUi';
     if (!isNonUi && req.url !== '/api/2.0/Payment/prePaymentUi') throw new Error('wrong path ' + req.url);
@@ -108,10 +117,23 @@ try {
     version: '1.0.0', apiResponse: { responseCode: 'PC-B050000', responseDescription: 'Success' },
     data: { paymentResult: { orderNo: j1.orderNo, paymentStatusInfo: { paymentStatus: 'A', paymentStep: 'PA' } } },
   });
+  // The notification says A, but the Inquiry API (source of truth) says the payment was rejected.
+  inquiryState.set(j1.orderNo, [entry(j1.orderNo, 'F', 'PR')]);
   const r2 = await fetch(`${base}/paco/notification`, { method: 'POST', headers: { 'Content-Type': 'application/jose' }, body: note });
-  ok(r2.status === 200, 'merchant answers HTTP 200');
-  const page = await (await fetch(`${base}/payment/result?status=success&orderNo=${j1.orderNo}`)).text();
-  ok(page.includes('<b>A (unconfirmed)</b>'), 'result page shows notification status as unconfirmed');
+  ok(r2.status === 200, 'merchant answers HTTP 200 immediately');
+  await new Promise((r) => setTimeout(r, 200));
+  let page = await (await fetch(`${base}/payment/result?status=success&orderNo=${j1.orderNo}`)).text();
+  ok(page.includes('Payment not completed') && page.includes('<b>F / PR</b>'), 'notification said A, inquiry said F → order shown as NOT paid (inquiry wins)');
+  ok(!page.includes('Payment successful'), 'redirect "status=success" in the URL is ignored');
+
+  console.log('\n2b) inquiry array: refund entry first, payment entry second');
+  inquiryState.set(j1.orderNo, [entry(j1.orderNo, 'R', 'RS'), entry(j1.orderNo, 'S', 'ST'), entry(j1.orderNo, 'F', 'PR')]);
+  page = await (await fetch(`${base}/payment/result?orderNo=${j1.orderNo}`)).text();
+  ok(page.includes('<b>S / ST</b>') && page.includes('Payment successful'), 'picks the first non-refund entry (S/ST), not data[0] (refund)');
+
+  console.log('\n2c) unknown orderNo');
+  page = await (await fetch(`${base}/payment/result?orderNo=NOPE123`)).text();
+  ok(page.includes('NOT_FOUND') || page.includes('Checking payment'), 'PC-B052201 handled without crashing');
 
   console.log('\n3) error path: PACO rejects');
   cfg.officeId = '';
