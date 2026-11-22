@@ -41,7 +41,8 @@ export async function startServer(cfg = loadConfig(), keys) {
         const r = msg?.data?.paymentResult ?? {};
         const status = r.paymentStatusInfo?.paymentStatus; // A=Authorized, S=Settled, V=Voided, F=Failed, P=Pending
         console.log(`[notification] order=${r.orderNo} status=${status} code=${msg?.apiResponse?.responseCode}`);
-        if (r.orderNo) orders.set(r.orderNo, { ...orders.get(r.orderNo), status, notification: msg });
+        // First report only: production code must confirm with the Inquiry API before fulfilling the order.
+        if (r.orderNo) orders.set(r.orderNo, { ...orders.get(r.orderNo), status: `${status} (unconfirmed)`, notification: msg });
         return send(res, 200, 'OK', 'text/plain'); // docs: "HTTP Status 200 is suffice"
       }
 

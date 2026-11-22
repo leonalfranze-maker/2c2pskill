@@ -240,12 +240,12 @@
     const page = data?.data?.paymentPage?.paymentPageURL;
     const result = data?.data?.paymentResult;
     if (page) {
-      banner('ok', `<b>✓ Got a payment page link</b> ${code ? '· ' + code : ''}<br>Pay with 4111111111111111 · CVV 123 · OTP 123456.<br>
+      banner('ok', `<b>✓ Got a payment page link</b> ${code ? '· ' + code : ''}<br><small>"Success" here means the page was created, not that anyone has paid.</small><br>Pay with 4111111111111111 · CVV 123 · OTP 123456.<br>
         <a class="go" href="${esc(page)}" target="_blank" rel="noopener">Open payment page →</a>`);
     } else if (result) {
       const st = result.paymentStatusInfo?.paymentStatus;
-      const names = { A: 'Authorized', S: 'Settled', V: 'Voided', F: 'Failed', P: 'Pending' };
-      banner(st === 'A' || st === 'S' ? 'ok' : 'warn', `<b>Payment status: ${esc(st)} ${esc(names[st] || '')}</b> · order ${esc(result.orderNo)}${code ? '<br>' + code : ''}${result.failedReason ? '<br>' + esc(result.failedReason) : ''}`);
+      const names = { A: 'Approved', S: 'Settled', V: 'Voided', F: 'Rejected', P: 'Pending', C: 'Cancelled', E: 'Expired' };
+      banner(st === 'A' || st === 'S' ? 'ok' : 'warn', `<b>Payment status: ${esc(st)} ${esc(names[st] || '')}</b> · order ${esc(result.orderNo)}${code ? '<br>' + code : ''}${result.failedReason ? '<br>' + esc(result.failedReason) : ''}<br><small>⚠️ First report only. Confirm with the Inquiry API before fulfilling an order.</small>`);
     } else {
       banner('err', `<b>✗ PACO did not return a link or a result</b>${code ? '<br>' + code : ''}<br>See the response below.`);
     }

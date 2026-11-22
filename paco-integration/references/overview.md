@@ -29,7 +29,7 @@ PACO is 2C2P's payment API platform ("Core Payment API"). A merchant's backend c
 5. PACO authorizes, then sends a **backend notification** (server-to-server) to the merchant's `backendUrl`. The merchant answers HTTP 200.
 6. PACO redirects the customer's browser to `confirmationUrl`, `failedUrl` or `cancellationUrl`.
 
-**Trust rule:** the backend notification (or an inquiry) is the truth. The browser redirect is for display only. It can be tampered with. [DZ]
+**Trust rule (always tell the merchant):** the first message from PACO isn't the final answer. `/prePaymentUi` says "Success" when it has only created the page, and a notification or redirect is a first report. **Confirm with the Inquiry API from your server before fulfilling the order.** The browser redirect is display only and can be tampered with. → `notification.md`
 
 ## Architecture rules (always)
 - **The browser never calls PACO.** Frontend → merchant backend → PACO. Reasons: the API key must stay secret; production requires JOSE with the merchant's private keys; production requires the **server's** IP to be allowlisted. [DZ][2C2P confirmed]

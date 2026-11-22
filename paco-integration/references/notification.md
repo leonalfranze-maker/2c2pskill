@@ -2,12 +2,20 @@
 
 Sources [DZ]: https://devzone.2c2p.com/docs/payment-result-notification-1 · https://devzone.2c2p.com/reference/getpaymentstatusbyorderno
 
-There are three ways to learn the result. Use them in this order of trust:
+> ## ⚠️ Golden rule: the first message is not the final answer
+> **Always tell the merchant this.** The first thing PACO sends back can say **"Success"** even though the payment isn't complete:
+> - `/prePaymentUi` returns `PC-B050000` **"Success"**. That only means the payment page was created. The customer hasn't paid. [UAT]
+> - A backend notification or a `/nonUi` response is a first report. Treat it as a trigger to check, not as proof.
+> - The browser redirect carries no status at all.
+>
+> **Before fulfilling an order** (shipping, issuing a ticket, crediting an account), the merchant's **server must call the Inquiry API** and act only on the `paymentStatus` it returns (`A` or `S` = paid). Generated code always does this.
+
+There are three ways to learn the result:
 
 | | Backend notification | Inquiry API | Frontend redirect |
 |---|---|---|---|
 | Direction | PACO → merchant server | merchant server → PACO | PACO → customer browser → merchant site |
-| Trust | ✅ source of truth | ✅ source of truth | ❌ display only, can be tampered with |
+| Trust | ⚠️ first report. Confirm with inquiry. | ✅ **source of truth** | ❌ display only, can be tampered with |
 | Needs public URL | yes (`backendUrl`) | no | no |
 | Works on localhost | no (use a tunnel) | yes | yes |
 
@@ -37,7 +45,7 @@ A plain-JSON notification carries **no signature**. Treat it as a hint and confi
 **So the merchant must:**
 1. Answer **2xx immediately**, then process (queue it, or process fast).
 2. Make the handler **idempotent**: the same result may also arrive via inquiry or a manual resend.
-3. **Never depend on the notification alone.** Also inquire: on the result page, and in a scheduled job for orders still pending after a few minutes.
+3. **Never act on the notification alone.** On receipt, call the Inquiry API and update the order from its `paymentStatus`. Also inquire on the result page, and in a scheduled job for orders still pending after a few minutes.
 
 Key fields in `data.paymentResult`:
 | Field | Meaning |

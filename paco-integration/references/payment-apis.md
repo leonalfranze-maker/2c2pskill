@@ -78,6 +78,7 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
   - `data.paymentPage.paymentPageURL`: redirect the customer here. Optional `validTillDateTime` (UTC).
   - `data.paymentIncompleteResult`: `orderNo`, `controllerInternalID`, `paymentStatusInfo`, `availablePaymentTypes` (the methods this office offers), echoed `notificationURLs` (uppercase `URL` in responses).
 - **HTTP 400**: `apiResponse.responseCode` / `responseDescription` / `marketingDescription`. No `data`. Map the code with `troubleshooting.md`.
+- ⚠️ `PC-B050000 "Success"` here means **the payment page was created**, not that the customer paid. Store the order as *pending* and confirm later with the Inquiry API.
 - Observed [UAT]: the page URL looks like `https://payment-api.demo-paco.2c2p.com/payment/...?pid=<controllerInternalId>&lang=en-US`.
 
 ## /nonUi [DZ]
@@ -96,7 +97,7 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 | `cardHolderName` | 2–45 chars, **English letters and spaces only** (`PC-B050085`), not all digits (`PC-B050089`) |
 
 Responses:
-- **200**: complete → `data.paymentResult` (status, approval code, masked card, PSP response).
+- **200**: complete → `data.paymentResult` (status, approval code, masked card, PSP response). Still **confirm with the Inquiry API** before fulfilling the order.
 - **202**: incomplete, needs further action (e.g. 3DS challenge) → `data.paymentPage.paymentPageURL` (send the customer there) and/or `data.paymentIncompleteResult.aresACSChallenge` (`acsURL`, `challengeHtml`). Default: redirect to `paymentPageURL`.
 - **400**: error, as above.
 

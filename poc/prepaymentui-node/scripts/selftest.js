@@ -111,7 +111,7 @@ try {
   const r2 = await fetch(`${base}/paco/notification`, { method: 'POST', headers: { 'Content-Type': 'application/jose' }, body: note });
   ok(r2.status === 200, 'merchant answers HTTP 200');
   const page = await (await fetch(`${base}/payment/result?status=success&orderNo=${j1.orderNo}`)).text();
-  ok(page.includes('<b>A</b>'), 'result page shows backend status A (Authorized)');
+  ok(page.includes('<b>A (unconfirmed)</b>'), 'result page shows notification status as unconfirmed');
 
   console.log('\n3) error path: PACO rejects');
   cfg.officeId = '';
