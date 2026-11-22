@@ -36,6 +36,9 @@ PACO is 2C2P's payment API platform ("Core Payment API"). A merchant's backend c
 - Redirects to the Payment Page and back are normal page navigations. CORS doesn't apply to them.
 - Amount and currency come from the merchant's server-side order, never from the browser.
 
+## API version
+Use **v2.0** (`/api/2.0/...`). The Dev Zone also shows older v1.0 docs (`/api/1.0/...`, `/nonUI`). Don't start new work on them. See `feature-support.md` → API versions.
+
 ## What this skill doesn't cover
 The Dev Zone also hosts **EMV 3DS** guides (Device Data Capture, Lookup, Merchant Data API). They belong to a **separate 3DS product**. PACO merchants don't need them with `/prePaymentUi`, or with `/nonUi` when PACO does 3DS. See `payment-apis.md` for sending your own 3DS results.
 

@@ -39,6 +39,7 @@ These protect the merchant's money, their customers' card data and their credent
 8. **Prefer `/prePaymentUi`.** With `/nonUi` and raw card data the merchant enters PCI DSS scope and must agree it with 2C2P first. Never log or store card numbers or CVV.
 9. **Never send emails or messages yourself.** Only drafts, and always one combined email (section 4).
 10. **Say where each command runs.** For example: "on the server whose IP 2C2P allowlisted" or "in a terminal in your project folder". UAT rejects machines that aren't allowlisted, so the place matters.
+11. **Check `feature-support.md` before building any feature**, and say what doesn't work **before** writing code, not after testing. Build on API **v2.0** only.
 
 ## 3. Where to find things
 
@@ -46,6 +47,7 @@ These protect the merchant's money, their customers' card data and their credent
 |---|---|
 | What PACO is, flows, journey, lifecycle, glossary, how to explain at each level | `references/overview.md` |
 | Quick verified answers to common questions | `references/faq.md` |
+| **What works / what's limited / what 2C2P must enable, API versions** | `references/feature-support.md` |
 | What the merchant should have from onboarding | `references/prerequisites.md` |
 | `apiKey` header, JSON vs JOSE per environment, IP allowlist | `references/authentication.md` |
 | `/prePaymentUi` and `/nonUi` requests, field rules, responses, `orderNo` reuse, payment types, 3DS, PCI | `references/payment-apis.md` |
@@ -96,6 +98,8 @@ Work in small steps. Stop after each step until it works. Keep a visible checkli
 
 **Step 1: Check prerequisites.** Show the checklist from `prerequisites.md` and ask which items they have. Don't ask for values. Missing items go on the PO list. Confirm the stack (v1 template: **Node.js ≥ 20**). For another stack, explain the flow from the references and port the template's logic carefully. Say it hasn't been tested on that stack.
 
+**Step 1b: Check the features they need.** Ask what they want to offer (cards only? QR/wallets? installments? saved cards? refunds from their back office? partial capture?). Look each up in `feature-support.md` **before building anything**. State ❌ and ⚠️ limits up front, and add every "ask 2C2P first" item they haven't confirmed to the PO list. Example: refunds by API are off by default.
+
 **Step 2: Pick the flow.** Recommend `/prePaymentUi` (section 2, rule 8) unless they already run a PCI-compliant card form.
 
 **Step 3: Set up the project.** Copy `templates/node/` into their project. Create `.env` from `.env.example` with empty values, then tell them:
@@ -116,7 +120,7 @@ On "done", run `npm run doctor`.
 - Notification handler answers 2xx immediately, is idempotent, and confirms by Inquiry. Plus a scheduled Inquiry job for pending orders, because notifications are sent **once with no retry**.
 - Result page shows the Inquiry status, never the URL.
 - Settlement model known (auto/manual). If manual, settlement is called on fulfilment (`post-payment.md`).
-- Refunds send `localMakerChecker`. Void vs refund logic by step (`PA`/`PS` → void, `ST` → refund).
+- Refunds by API enabled by 2C2P (off by default). Refunds send `localMakerChecker`. Void vs refund logic by step (`PA`/`PS` → void, `ST` → refund).
 - Amount and currency come from the server-side order. Currency is the alphabetic code (`currencies.md`).
 - No card data or secrets in logs.
 

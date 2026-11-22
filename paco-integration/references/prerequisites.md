@@ -13,7 +13,7 @@ The skill reaches merchants **after onboarding**, so the AI checks these exist r
 | 6 | **Your 2 key pairs** (signing, encryption) | **you generate**, send only the **public** keys to 2C2P | RSA recommended for both. Public key format: **Base64 of the DER SubjectPublicKeyInfo**, i.e. the body of a `-----BEGIN PUBLIC KEY-----` PEM without the header/footer lines. **Never share private keys.** | private keys → `.env`. Public keys → 2C2P / Portal |
 | 7 | **PACO Merchant Portal admin user** | 2C2P creates it for your main contact | You get an email to set the first password. Then you create other users and permissions yourself. 2C2P sends the Portal link. The production Portal is usually opened about 2–3 weeks before go-live. | — |
 | 8 | **Result URLs on the office** (Backend Response URL, Redirect Response URL, auto redirect on/off) | you tell 2C2P, 2C2P configures them | Defaults used when a request doesn't send its own URLs (`notification.md`) | — |
-| 9 | **Payment methods enabled on the office**, incl. settlement model (auto/manual) | 2C2P | What the Payment Page offers. Settlement model: `post-payment.md`. | — |
+| 9 | **Features enabled on the office/company**: payment methods, settlement model (auto/manual), **refunds by API (off by default)**, tokenization, installments, recurring, currency conversion | 2C2P | What the Payment Page offers. Settlement model: `post-payment.md`. | — |
 | 10 | **Network access**: your server's public IP allowlisted (UAT and PRD) | you send the IP, 2C2P allowlists | Without it the connection is reset before any response (`troubleshooting.md`) | — |
 
 ## How the AI uses this

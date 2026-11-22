@@ -70,8 +70,8 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 | `autoRedirectDelayTimer` | seconds PACO's result page waits before redirecting back. `0` = immediately. See `notification.md`. |
 | `userDefined1`…`userDefined10` | ≤ 150 each, merchant's own data |
 | `paymentCategory` | `ECOM`, `VEDC`, `QUICKPAY`, `RPP`, `IPP`. Not needed for a basic payment [UAT]. |
-| `tokenizeDetails` | save the card (`tokenizeFlag` Y/N/F) and show saved cards (`tokenRefList`). prePaymentUi rules: `tokenizeFlag` required when the object is sent; `tokenRef` forbidden; `F` needs 3DS on. |
-| `installmentPaymentDetails`, `recurringPaymentDetails` | IPP / recurring plans |
+| `tokenizeDetails` | save the card and show saved cards (`tokenRefList`). ⚠️ Tokenization must be enabled on the office, or `Y` silently becomes a normal payment and `F` is rejected. Use `tokenizeFlag` `Y`, `N` or `F`. prePaymentUi rules: `tokenizeFlag` required when the object is sent; `tokenRef` forbidden; `F` needs 3DS on. |
+| `installmentPaymentDetails`, `recurringPaymentDetails` | installments / recurring. ⚠️ Both need 2C2P setup. Recurring is **cards only**, needs an auto-settlement office, can't be combined with installments, and renames the first charge to `<orderNo>-0001`. See `feature-support.md`. |
 
 ### Response
 - **HTTP 200** [DZ][UAT]:

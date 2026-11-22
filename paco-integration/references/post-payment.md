@@ -29,7 +29,7 @@ Status and step codes: `notification.md`.
 ### Settlement request [DZ][2C2P confirmed]
 - Required: `apiRequest`, `officeId`, `orderNo`, `settlementAmount`.
 - `settlementAmount`: > 0, same currency as the payment, **not more than the approved amount**.
-- **Partial settlement is allowed**, except for installment (IPP) payments, payments itemized by sub-merchant, and some special card types. Those must be settled in full.
+- **Partial settlement is allowed once**: whatever you don't capture in that call can't be captured later. Not allowed for installment (IPP) payments, payments itemized by sub-merchant, and some special card types. Those must be settled in full.
 - Currency-conversion payments: also send `originalSettlementAmount`.
 - The payment is found by `orderNo` within your company.
 
@@ -44,12 +44,15 @@ Status and step codes: `notification.md`.
 
 ## Void [DZ][2C2P confirmed]
 - Allowed only while the payment is approved and not settled (step `PA` or `PS`). After settlement → **refund**.
+- **Always the full amount.** There's no partial void: `voidAmount` / `voidItems` are ignored. For part of the money, settle less (manual model) or refund after settlement. [2C2P confirmed]
 - Body: `apiRequest` + `orderNo` **or** `paymentId` (at least one), plus `officeId`. Optional: `productDescription`, `issuerApprovalCode`.
 - Errors: not approved yet (`PC-B050045`), failed (`PC-B050046`), **already settled, use refund** (`PC-B050047`), already refunded/voided (`PC-B050048`), during settlement processing (`PC-B050060`), amount mismatch (`PC-B050051`).
 - Some wallet/QR payments are settled straight away, so they can't be voided. Use refund.
 
 ## Refund [DZ][2C2P confirmed]
 Allowed only for **settled** payments (step `ST`). For an approved, not-yet-settled payment, **void** instead.
+
+> **Refunds by API are OFF by default.** 2C2P must enable them on the merchant's company first, otherwise every call returns `PC-B050096`. Confirm this **before** building any refund feature. [2C2P confirmed]
 
 ### Request
 | Field | Rule |
@@ -97,7 +100,7 @@ You get **202** when:
 | `PC-B051939` | invalid email (e.g. `maker.email`) |
 | `PC-B050040` / `PC-B050052` | amount ≤ 0 or more than the refundable amount |
 | `PC-B050053` | this payment can't be refunded (e.g. not settled yet → void instead) |
-| `PC-B050096` | refund API not enabled for your company: ask 2C2P |
+| `PC-B050096` | refunds by API not enabled for your company (off by default): ask 2C2P to enable |
 | `PC-B050042` | itemized refund not enabled for your company |
 | `PC-B050054` | bank account details required |
 
