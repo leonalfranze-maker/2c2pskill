@@ -11,12 +11,33 @@ There are three ways to learn the result. Use them in this order of trust:
 | Needs public URL | yes (`backendUrl`) | no | no |
 | Works on localhost | no (use a tunnel) | yes | yes |
 
-## 1. Backend notification [DZ]
-- PACO `POST`s the result to `notificationUrls.backendUrl` after the payment concludes.
-- Body = same schema as the `/nonUi` result (`data.paymentResult` + `apiResponse`), encrypted the same way as API responses (JOSE). Decrypt + verify like a response (`jose.md`).
-- Merchant must: decrypt → verify → update the order → answer **HTTP 200** (enough as an acknowledgement).
-- Make the handler **idempotent**: the same notification may arrive more than once. Retry policy: **Unconfirmed**.
-- Whether `backendUrl` must also be registered with 2C2P, must be HTTPS, and whether UAT plain-JSON requests get plain-JSON notifications: **Unconfirmed**.
+## 1. Backend notification [DZ][2C2P confirmed]
+**Where it goes.** PACO uses `notificationUrls.backendUrl` from the request. If you omit it or send `"-"`, PACO uses the **Backend Response URL configured on your office** at onboarding. If neither exists, no notification is sent.
+- `"-"` does **not** switch notifications off when the office has a URL configured.
+- No pre-registration is needed for the URL you send in the request.
+- `http://` and `https://` are accepted. **Use HTTPS.**
+
+**When.** Once the payment has an outcome: approved, failed, abandoned, timed out, and so on. Not when `/prePaymentUi` is called.
+
+**What.** `POST` with body `{ "version", "apiResponse": {...}, "data": { "paymentResult": {...}, "autoRedirectDelayTimer" } }` (camelCase).
+
+**Format:**
+| Environment | Notification body |
+|---|---|
+| Production | **always JOSE** (`application/jose`): decrypt + verify like a response (`jose.md`). The body is in the `response` claim. |
+| UAT | JOSE when your request was JOSE. When your request was plain JSON it may arrive as plain JSON. **Handle both** (check `Content-Type`). |
+
+A plain-JSON notification carries **no signature**. Treat it as a hint and confirm with the Inquiry API.
+
+**Delivery: one attempt, no automatic retry.** [2C2P confirmed]
+- PACO counts **any HTTP 2xx** as delivered and ignores your response body.
+- PACO waits **up to 30 seconds**.
+- On a non-2xx answer or a timeout, PACO does **not** try again. If you need a notification resent, contact 2C2P.
+
+**So the merchant must:**
+1. Answer **2xx immediately**, then process (queue it, or process fast).
+2. Make the handler **idempotent**: the same result may also arrive via inquiry or a manual resend.
+3. **Never depend on the notification alone.** Also inquire: on the result page, and in a scheduled job for orders still pending after a few minutes.
 
 Key fields in `data.paymentResult`:
 | Field | Meaning |
@@ -70,10 +91,22 @@ Key fields in `data.paymentResult`:
 - 200 response schema isn't fully documented. 400 → `BaseApiResponseWrapper` with `apiResponse`. `PC-B050080` means more than one transaction matched.
 - `POST /api/2.0/Inquiry/transactionList` (JOSE) returns lists: max 500 results / past 12 months, filter with `advSearchParams`.
 
-## 3. Frontend redirect [DZ][UAT]
-- After the Payment Page, the browser goes to `confirmationUrl` (success), `failedUrl` or `cancellationUrl`.
-- Observed [UAT]: PACO keeps the merchant's query parameters and **appends** `productDescription` and `controllerInternalId`, and may add `:443` to the host. So read parameters by name. Don't compare the full URL.
-- GET or POST, and whether anything in it is signed: **Unconfirmed**. Never mark an order paid from the redirect alone. Show "processing", then confirm via notification or inquiry.
+## 3. Frontend redirect [DZ][UAT][2C2P confirmed]
+- After the Payment Page, the browser is sent with a **GET** (normal navigation) to `confirmationUrl` (success), `failedUrl` (failed) or `cancellationUrl` (cancelled).
+- PACO keeps your query parameters and **appends**: `orderNo`, `productDescription`, `controllerInternalId`. Some card/3DS paths also add `invoice2c2p`, `pspReferenceNo`, `pspInvoiceNo`. A parameter you already put in the URL isn't overwritten. Read parameters by name. Don't compare the full URL (PACO may add `:443`).
+- **No `paymentStatus` and no signature in the URL.** Anyone can edit it. The customer may also never come back (they closed the tab).
+- On the result page: take `orderNo` (or `controllerInternalId`) from the URL → **inquire from your server** → show the real status. Never mark an order paid from the redirect alone.
+- URLs must be absolute. `http(s)://` or an app deeplink scheme. Dangerous schemes (e.g. `javascript:`) are rejected.
+
+### Using PACO's own result page
+- Send `"-"` as the URL → PACO shows its own result page and doesn't redirect. Works for cards and APM.
+- `autoRedirectDelayTimer` (request field, seconds):
+  | Value | Effect |
+  |---|---|
+  | `0` | redirect to your URL immediately |
+  | > 0 | the customer sees PACO's result page for that many seconds, then is redirected |
+  | not sent | office setting: auto redirect on → `0`, otherwise 10 seconds |
+- If you don't send a redirect URL, the **Redirect Response URL configured on your office** may be used.
 
 ## 3DS authentication status (card details in results) [DZ]
 | Status | Meaning |

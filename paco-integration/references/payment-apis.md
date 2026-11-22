@@ -67,6 +67,7 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 | `request3dsFlag` | `N` no 3DS · `Y` relaxed · `Y-Strict` strict. Default comes from the office profile. |
 | `generalPayerDetails` | payer name / email / phone (`mobilePhone` 8–15 chars incl. country code) |
 | `statementDescriptor` | ≤ 20, text on the cardholder's statement |
+| `autoRedirectDelayTimer` | seconds PACO's result page waits before redirecting back. `0` = immediately. See `notification.md`. |
 | `userDefined1`…`userDefined10` | ≤ 150 each, merchant's own data |
 | `paymentCategory` | `ECOM`, `VEDC`, `QUICKPAY`, `RPP`, `IPP`. Not needed for a basic payment [UAT]. |
 | `tokenizeDetails` | save the card (`tokenizeFlag` Y/N/F) and show saved cards (`tokenRefList`). prePaymentUi rules: `tokenizeFlag` required when the object is sent; `tokenRef` forbidden; `F` needs 3DS on. |
@@ -111,4 +112,4 @@ Full channel/agent list (Apple Pay, Google Pay, PromptPay QR, TrueMoney, …): h
 ## APM notes [DZ APM flow]
 - With prePaymentUi, if the office offers only one method and it's an APM, the Payment Page skips the selection step.
 - The customer may finish on the wallet/bank app. The result still arrives by backend notification.
-- If the success URL is set to `"-"`, the Payment Page shows its own result page instead of redirecting (documented for APM. Cards: **Unconfirmed**).
+- If a redirect URL is set to `"-"`, the Payment Page shows its own result page instead of redirecting. This works for cards too (`notification.md`).

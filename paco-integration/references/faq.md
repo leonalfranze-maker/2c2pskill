@@ -38,6 +38,14 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **My connection to UAT is reset before any response.** Your IP isn't allowlisted. It's not your code. → `troubleshooting.md`
 
+**Will PACO retry a notification if my server was down?** No. One attempt, any 2xx counts, 30-second timeout. Always confirm with the Inquiry API too, and ask 2C2P if you need a resend. → `notification.md`
+
+**Does the redirect back to my site tell me if the payment succeeded?** No. It's a GET with `orderNo`, `productDescription` and `controllerInternalId` but no status and no signature. Use `orderNo` to inquire from your server. → `notification.md`
+
+**Can PACO show its own result page instead of redirecting?** Yes. Send `"-"` as the redirect URL, or use `autoRedirectDelayTimer` to show it for a few seconds first. → `notification.md`
+
+**What should I have received at onboarding?** API key, office ID(s), PACO public keys + `kid`, Portal admin login, IP allowlisting, and the payment methods / result URLs set on your office. You generate your own key pairs. → `prerequisites.md`
+
 **Can I test on localhost?** Yes, from an allowlisted network. PACO can't reach localhost for the backend notification, so use a tunnel or the Inquiry API to confirm results. → `testing-uat.md`
 
 **Which currency format?** ISO 4217 **alphabetic**, uppercase (`"THB"`), never numeric (`"764"`). It must be a currency your office is set up for. `decimalPlaces` per currency (THB 2, JPY 0, KWD 3). Full list of 155 currencies: `currencies.md`.

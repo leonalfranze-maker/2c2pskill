@@ -26,8 +26,8 @@ Sources [DZ]: https://devzone.2c2p.com/docs/test-card · https://devzone.2c2p.co
 | Piece | Works on localhost? |
 |---|---|
 | Backend → PACO call | yes, if this machine's IP is allowlisted |
-| Redirect back to `http://localhost:…` | yes in practice (browser navigation). Whether PACO requires HTTPS here: **Unconfirmed** |
-| Backend notification to `backendUrl` | **no**: PACO can't reach localhost. Use a tunnel (public HTTPS URL), or confirm the result with the Inquiry API |
+| Redirect back to `http://localhost:…` | yes: browser navigation, `http://` accepted [2C2P confirmed] |
+| Backend notification to `backendUrl` | **no**: PACO can't reach localhost, and it doesn't retry. Use a tunnel (public HTTPS URL), or confirm the result with the Inquiry API |
 
 ## Plain JSON in UAT [2C2P confirmed]
 UAT accepts `application/json` (no encryption). Use it for the **first** call to prove credentials, network and fields. Then switch to JOSE and test again before production. Production rejects plain JSON (HTTP 415).

@@ -11,7 +11,7 @@ Required in **production** for every Payment, Void, Settlement, Refund and Trans
 | PACO **encryption** public key | from 2C2P | encrypt requests (JWE) |
 | PACO **signing** public key | from 2C2P | verify responses & notifications |
 
-- The merchant generates **two RSA 4096** key pairs (signing, encryption). Private keys in **PKCS#8**, public keys in **X.509 (SPKI)**. The merchant uploads both **public** keys in the PACO Portal and keeps the private keys secret. [DZ]
+- The merchant generates **two RSA 4096** key pairs (signing, encryption). Private keys in **PKCS#8**, public keys in **X.509 (SPKI)**. The public keys go to 2C2P/Portal as **Base64 of the DER SubjectPublicKeyInfo** (the PEM body without the `-----BEGIN/END PUBLIC KEY-----` lines). Keep the private keys secret. [DZ][2C2P confirmed]
 - PACO's public keys are Base64 RSA public keys from 2C2P (UAT / PRD zip files on the Integration page, password from 2C2P). [DZ]
 - Key IDs (`kid`) published on the Integration page: UAT `7664a2ed0dee4879bdfca0e8ce1ac313`, PRD `19f84b5655f04e25a99b09f1ee2fac78`. [DZ]
 
