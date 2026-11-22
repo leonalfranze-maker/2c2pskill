@@ -103,7 +103,7 @@ On "done", run `npm run doctor`.
 
 **Step 5: Full payment, confirmed by Inquiry.** Start the server, open the checkout page, pay with the test card from `testing-uat.md` (OTP `123456`). Then **run Inquiry** (`npm run try -- inquiry <orderNo>`) and show that the order's status came from Inquiry, not from the redirect. Also run a decline test. Done = the criteria in `testing-uat.md` → "Definition of done".
 
-**Step 6: JOSE and go-live.** Generate their key pairs (`npm run keys`). They send the public keys to 2C2P and put PACO's public keys + `kid` in `.env`. Turn plain JSON off and repeat steps 4–5. Then go through the production checklist:
+**Step 6: JOSE and go-live.** Generate their key pairs (`npm run keys`, which writes `keys/` and git-ignores it). They send the two `keys/*.b64.txt` public keys to 2C2P and put PACO's public keys + `kid` in `.env`. `npm run doctor` must show all 4 keys loading. Use separate keys for production (`npm run keys -- keys-prd`). Turn plain JSON off and repeat steps 4–5. Then go through the production checklist:
 - JOSE on, PRD URLs and PRD `kid`, PRD keys separate from UAT
 - Production server IP allowlisted. HTTPS for all result URLs.
 - Notification handler answers 2xx immediately, is idempotent, and confirms by Inquiry. Plus a scheduled Inquiry job for pending orders, because notifications are sent **once with no retry**.
