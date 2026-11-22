@@ -7,178 +7,354 @@
 <!--
   PACO OVERVIEW: FIXED DECK
   Hand this to anyone who asks "What is PACO and what can it do?". Do NOT edit it: give it as-is.
-  One self-contained file: works offline, arrow keys / buttons to navigate, Ctrl+P → PDF.
+  One self-contained file: works offline, same look on every OS (inline SVG icons, no emoji, no web fonts).
+  Arrow keys / buttons to navigate. Ctrl+P → PDF (one slide per page).
   Content is public-safe and matches the paco-integration skill references.
 -->
 <style>
-  :root { --ink:#14213d; --muted:#5b6478; --line:#d9dee8; --bg:#eef1f6; --slide:#fff;
-    --accent:#0f766e; --accent-soft:#e6f4f2; --navy:#14213d; --navy-soft:#e8ecf5; }
+  :root {
+    --navy:#0f1b33; --navy-2:#16264a; --ink:#14213d; --muted:#5b6478; --line:#dfe4ee; --bg:#e9edf4;
+    --teal:#0f8b80; --teal-2:#14b8a6; --teal-soft:#e3f5f2; --amber:#f59e0b; --amber-soft:#fff4dc; --white:#fff;
+  }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
-    font: 22px/1.4 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-  .deck { position: fixed; inset: 0 0 52px 0; display: grid; place-items: center; overflow: hidden; }
-  .slide { position: absolute; width: 1280px; height: 720px; background: var(--slide); padding: 56px 72px 64px;
-    display: none; flex-direction: column; box-shadow: 0 10px 40px rgba(20,33,61,.15); transform-origin: center; }
-  .slide.active { display: flex; }
-  .kicker { font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
-  h1 { font-size: 60px; line-height: 1.08; margin: 0 0 20px; letter-spacing: -.01em; }
-  h2 { font-size: 40px; line-height: 1.15; margin: 0 0 28px; letter-spacing: -.01em; }
-  h3 { font-size: 22px; margin: 0 0 8px; }
-  p { margin: 0 0 12px; }
-  .lead { font-size: 27px; color: var(--muted); max-width: 1000px; }
-  .small { font-size: 18px; color: var(--muted); }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .card { border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; background: #fff; border-top: 5px solid var(--accent); }
-  .card.navy { border-top-color: var(--navy); }
-  .card .icon { font-size: 30px; line-height: 1; margin-bottom: 12px; }
-  .card p { font-size: 18px; color: var(--muted); margin: 0; }
-  .slide ul { margin: 0; padding-left: 24px; } .slide li { margin-bottom: 10px; }
-  .tag { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-bottom: 10px; }
-  .tag.navy { background: var(--navy-soft); color: var(--navy); }
-  .callout { margin-top: auto; border-left: 6px solid var(--accent); background: var(--accent-soft); padding: 14px 20px; border-radius: 8px; font-size: 21px; }
-  .footer { position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between;
-    font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
-  .journey { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-  .step { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 20px 18px; font-size: 19px; background: #fff; }
-  .step .n { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--navy); color: #fff; margin-bottom: 12px; }
-  .step.paco .n { background: var(--accent); }
-  .step.key { border: 2px solid var(--accent); background: var(--accent-soft); }
-  .step:not(:last-child)::after { content: "→"; position: absolute; right: -16px; top: 24px; color: var(--muted); }
-  .who { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .method { border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
-  .method b { display: block; font-size: 21px; margin-bottom: 4px; }
-  .method span { font-size: 17px; color: var(--muted); }
-  table { width: 100%; border-collapse: collapse; font-size: 19px; }
-  th { text-align: left; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); padding: 8px 12px; }
-  td { border-bottom: 1px solid var(--line); padding: 12px; vertical-align: top; }
-  .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-  .phase { border-top: 5px solid var(--accent); padding-top: 12px; }
-  .phase .n { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .08em; }
-  .controls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; z-index: 10; font: 14px system-ui, sans-serif; }
-  .controls button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 7px 12px; cursor: pointer; font: inherit; color: var(--ink); }
-  .controls span { color: var(--muted); min-width: 52px; text-align: center; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font: 22px/1.45 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .deck { position:fixed; inset:0 0 52px 0; display:grid; place-items:center; overflow:hidden; }
+  .slide { position:absolute; width:1280px; height:720px; background:var(--white); padding:60px 76px 70px;
+    display:none; flex-direction:column; overflow:hidden; box-shadow:0 18px 50px rgba(15,27,51,.18); transform-origin:center; }
+  .slide.active { display:flex; }
+  .slide.dark { background: radial-gradient(1200px 700px at 85% 110%, #12407a 0%, transparent 60%), linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); color:#fff; }
+  svg.i { width:1em; height:1em; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+
+  .eyebrow { display:flex; align-items:center; gap:12px; font-size:14px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--teal); margin-bottom:14px; }
+  .eyebrow b { font-variant-numeric: tabular-nums; color:var(--ink); opacity:.35; letter-spacing:.06em; }
+  .eyebrow::after { content:""; height:2px; width:46px; background:var(--teal); border-radius:2px; }
+  h1 { font-size:68px; line-height:1.04; margin:0; letter-spacing:-.02em; font-weight:800; }
+  h2 { font-size:42px; line-height:1.12; margin:0 0 30px; letter-spacing:-.015em; font-weight:800; }
+  h3 { font-size:21px; margin:0 0 6px; letter-spacing:-.005em; }
+  p { margin:0; }
+  .muted { color:var(--muted); }
+  .accent { color:var(--teal); }
+  .footer { position:absolute; left:76px; right:76px; bottom:24px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); letter-spacing:.04em; }
+  .footer .brand { display:flex; align-items:center; gap:8px; font-weight:700; color:var(--ink); }
+  .footer .brand i { width:8px; height:8px; border-radius:2px; background:var(--teal); display:inline-block; }
+
+  /* Icon badge */
+  .badge { width:52px; height:52px; border-radius:14px; display:grid; place-items:center; background:var(--teal-soft); color:var(--teal); font-size:26px; flex:none; }
+  .badge.navy { background:#e8ecf6; color:var(--navy-2); }
+  .badge.amber { background:var(--amber-soft); color:#b45309; }
+
+  /* 1. Cover */
+  .cover-art { position:absolute; right:-120px; top:-80px; width:760px; height:880px; opacity:.95; }
+  .pill { display:inline-flex; align-items:center; gap:8px; font-size:14px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    padding:8px 14px; border-radius:999px; background:rgba(20,184,166,.15); color:#7ee6d9; border:1px solid rgba(20,184,166,.35); }
+  .cover-sub { font-size:26px; color:#c3cde0; margin-top:26px; max-width:620px; }
+  .cover-meta { margin-top:auto; display:flex; gap:28px; font-size:16px; color:#9fb0cc; }
+  .cover-meta span { display:flex; align-items:center; gap:8px; }
+
+  /* 2. Hub */
+  .split { display:grid; grid-template-columns: 0.95fr 1.05fr; gap:40px; align-items:center; flex:1; }
+  .statement { font-size:30px; line-height:1.3; font-weight:700; letter-spacing:-.01em; }
+  .points { margin-top:28px; display:grid; gap:16px; }
+  .point { display:flex; gap:14px; align-items:flex-start; font-size:19px; }
+  .point .badge { width:40px; height:40px; border-radius:11px; font-size:20px; }
+  .point b { display:block; font-size:19px; }
+
+  /* 3. Capabilities */
+  .caps { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .cap { border:1px solid var(--line); border-radius:18px; padding:24px 24px 22px; background:linear-gradient(180deg,#fff 0%, #fbfcfe 100%); position:relative; }
+  .cap .badge { margin-bottom:16px; }
+  .cap p { font-size:17px; color:var(--muted); }
+  .cap .num { position:absolute; right:22px; top:20px; font-size:13px; font-weight:800; color:var(--line); letter-spacing:.06em; }
+
+  /* 4. Methods */
+  .methods { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .method { display:flex; gap:16px; align-items:flex-start; border:1px solid var(--line); border-radius:18px; padding:20px 22px; }
+  .method h3 { margin-bottom:8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:13px; font-weight:600; padding:4px 10px; border-radius:999px; background:#f1f4f9; color:#33405c; }
+  .note { margin-top:30px; display:flex; gap:12px; align-items:center; font-size:18px; color:var(--muted); }
+  .note .i { color:var(--teal); font-size:22px; }
+
+  /* 5. Journey */
+  .track { position:relative; display:grid; grid-template-columns:repeat(4,1fr); gap:26px; margin-top:8px; }
+  .track::before { content:""; position:absolute; left:40px; right:calc(25% - 59.5px); /* ends at the last step centre */ top:40px; height:3px; background:linear-gradient(90deg, var(--navy-2), var(--teal) 45%, var(--teal) 70%, var(--amber)); border-radius:3px; }
+  .node { position:relative; }
+  .node .dot { width:80px; height:80px; border-radius:50%; display:grid; place-items:center; background:#fff; border:3px solid var(--navy-2); color:var(--navy-2); font-size:34px; position:relative; z-index:1; }
+  .node.paco .dot { border-color:var(--teal); color:var(--teal); }
+  .node.key .dot { border-color:var(--amber); color:#b45309; background:var(--amber-soft); box-shadow:0 0 0 8px rgba(245,158,11,.15); }
+  .node .who { margin-top:18px; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .node h3 { margin-top:4px; }
+  .node p { font-size:17px; color:var(--muted); }
+  .rule { margin-top:56px; display:flex; gap:18px; align-items:center; background:var(--navy); color:#fff; border-radius:16px; padding:18px 24px; }
+  .rule .badge { background:rgba(245,158,11,.18); color:var(--amber); }
+  .rule p { font-size:19px; color:#d5ddeb; } .rule b { color:#fff; }
+
+  /* 6. Compare */
+  .compare { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; margin-top:8px; }
+  .option { border:1px solid var(--line); border-radius:20px; padding:26px 28px; position:relative; display:flex; flex-direction:column; }
+  .option.rec { border:2px solid var(--teal); box-shadow:0 14px 40px rgba(15,139,128,.14); }
+  .ribbon { position:absolute; top:-14px; left:26px; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; padding:6px 12px; border-radius:999px; background:var(--teal); color:#fff; }
+  .ribbon.alt { background:#e8ecf6; color:var(--navy-2); }
+  .option .head { display:flex; gap:14px; align-items:center; margin-bottom:18px; }
+  .option .head h3 { font-size:24px; margin:0; }
+  .row { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--line); font-size:18px; }
+  .row .i { margin-top:3px; font-size:20px; }
+  .row .ok { color:var(--teal); } .row .warn { color:#b45309; }
+  .row span b { display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+
+  /* 7. Security */
+  .sec { display:grid; grid-template-columns: 1fr 300px 1fr; gap:34px; align-items:center; flex:1; }
+  .sec .col { display:grid; gap:34px; }
+  .sec-item { display:flex; gap:16px; align-items:flex-start; }
+  .sec-item p { font-size:17px; color:var(--muted); }
+  .sec-item.right { flex-direction:row-reverse; text-align:right; }
+  .shield { width:300px; height:300px; position:relative; display:grid; place-items:center; }
+  .shield .ring { position:absolute; inset:0; border-radius:50%; border:2px dashed #cfe9e5; }
+  .shield .ring.r2 { inset:34px; border-style:solid; border-color:#e3f5f2; background:radial-gradient(circle, #f2fbf9 0%, #fff 70%); }
+  .shield .core { width:150px; height:150px; border-radius:40px; display:grid; place-items:center; color:#fff; font-size:74px;
+    background:linear-gradient(145deg, var(--teal-2), var(--teal) 55%, #0b5f58); box-shadow:0 20px 40px rgba(15,139,128,.35); position:relative; }
+
+  /* 8. Roadmap */
+  .road { display:grid; grid-template-columns:repeat(4,1fr); gap:22px; }
+  .stage { border-radius:18px; padding:22px 22px 20px; background:#f6f8fc; border:1px solid var(--line); position:relative; }
+  .stage .k { font-size:12px; font-weight:800; letter-spacing:.14em; color:var(--teal); text-transform:uppercase; margin:14px 0 4px; }
+  .stage p { font-size:16px; color:var(--muted); }
+  .stage:not(:last-child)::after { content:""; position:absolute; right:-17px; top:44px; width:12px; height:12px; border-top:3px solid var(--teal); border-right:3px solid var(--teal); transform:rotate(45deg); }
+  .cta { margin-top:44px; display:flex; gap:22px; align-items:center; border-radius:20px; padding:22px 28px; color:#fff;
+    background: radial-gradient(600px 200px at 100% 0%, rgba(20,184,166,.35), transparent 70%), linear-gradient(135deg, var(--navy), var(--navy-2)); }
+  .cta .badge { background:rgba(20,184,166,.18); color:#7ee6d9; width:58px; height:58px; font-size:28px; }
+  .cta h3 { font-size:22px; margin-bottom:4px; } .cta p { color:#c3cde0; font-size:17px; }
+  .cta .tags { margin-left:auto; display:flex; gap:8px; }
+  .cta .tags span { font-size:13px; font-weight:700; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); white-space:nowrap; }
+
+  /* Controls */
+  .controls { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:8px; align-items:center; z-index:10; font:14px system-ui, sans-serif; }
+  .controls button { border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 12px; cursor:pointer; font:inherit; color:var(--ink); }
+  .controls span { color:var(--muted); min-width:52px; text-align:center; }
   @media print {
-    @page { size: 1280px 720px; margin: 0; }
-    html, body { background: #fff; height: auto; }
-    .deck { position: static; display: block; }
-    .slide { position: relative; display: flex !important; transform: none !important; box-shadow: none; break-after: page; page-break-after: always; }
-    .controls { display: none; }
+    @page { size:1280px 720px; margin:0; }
+    html, body { background:#fff; height:auto; }
+    .deck { position:static; display:block; }
+    .slide { position:relative; display:flex !important; transform:none !important; box-shadow:none; break-after:page; page-break-after:always; }
+    .controls { display:none; }
   }
 </style>
 </head>
 <body>
+<!-- Icon set (line icons, 24×24) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5"/><circle cx="16.5" cy="13.5" r="1.3"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M20 17v4h-3M14 20v1"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 9.5 12 4l9 5.5M4 21h16M5.5 11v7M9.8 11v7M14.2 11v7M18.5 11v7M3 21h18"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16v10.5H4zM4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M10 20v-5h4v5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.7 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.8 7.5-9.5V6z"/><path d="m8.8 12 2.3 2.3 4.4-4.6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.3 12.2 2.6 2.6 4.9-5.2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.3 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0zM12 9.5v4.5M12 17.5h.01"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 12v-1a5 5 0 0 1 5-5h13M7 22l-4-4 4-4"/><path d="M21 12v1a5 5 0 0 1-5 5H3"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6.5L4.6 18.4A1.8 1.8 0 0 0 6.2 21h11.6a1.8 1.8 0 0 0 1.6-2.6L14 9.5V3M7.2 15h9.6"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2.5V7M15 2.5V7M6 7h12v3.5a6 6 0 0 1-12 0zM12 16.5v5"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/></symbol>
+    <symbol id="i-browser" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M2.5 9h19M6 6.5h.01M8.5 6.5h.01M11 6.5h.01"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M5 15.5c-1.6 1.4-2 5.5-2 5.5s4.1-.4 5.5-2c.8-.9.8-2.3-.1-3.2a2.4 2.4 0 0 0-3.4-.3z"/><path d="m12 15-3-3a22 22 0 0 1 2-4 12.9 12.9 0 0 1 11-6c0 2.7-.8 7.4-6 11a22 22 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.4-3.8 4.4-6 8-6s6.6 2.2 8 6"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6.5 2.5 8 2.5 8h-17S6 15.5 6 9M10 20.5a2.2 2.2 0 0 0 4 0"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M16.5 6.5l3 3M14 9l2 2"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7zM19 16c.3 1.6 1 2.4 2.5 2.7-1.5.3-2.2 1-2.5 2.6-.3-1.6-1-2.3-2.5-2.6 1.5-.3 2.2-1.1 2.5-2.7z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z"/></symbol>
+  </defs>
+</svg>
+
 <main class="deck">
 
-  <!-- 1 -->
-  <section class="slide">
-    <div style="margin-top:120px">
-      <div class="kicker">2C2P PACO</div>
-      <h1>Accept payments online,<br>simply and securely</h1>
-      <p class="lead">What PACO is and what it can do for your business</p>
+  <!-- 1 Cover -->
+  <section class="slide dark">
+    <svg class="cover-art" viewBox="0 0 760 880" aria-hidden="true">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14b8a6" stop-opacity=".9"/><stop offset="1" stop-color="#0f8b80" stop-opacity=".2"/></linearGradient>
+        <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#7ee6d9" opacity=".22"/></pattern>
+      </defs>
+      <rect x="120" y="60" width="640" height="820" fill="url(#dots)"/>
+      <circle cx="430" cy="470" r="300" fill="none" stroke="#2a4a7a" stroke-width="1.5"/>
+      <circle cx="430" cy="470" r="220" fill="none" stroke="#2a4a7a" stroke-width="1.5" stroke-dasharray="4 8"/>
+      <circle cx="430" cy="470" r="140" fill="none" stroke="url(#g1)" stroke-width="3"/>
+      <rect x="352" y="392" width="156" height="156" rx="40" fill="url(#g1)"/>
+      <g transform="translate(395 435) scale(3)" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></g>
+      <g fill="#0f1b33" stroke="#14b8a6" stroke-width="2">
+        <circle cx="430" cy="170" r="30"/><circle cx="730" cy="470" r="30"/><circle cx="430" cy="770" r="30"/><circle cx="218" cy="258" r="24"/><circle cx="642" cy="682" r="24"/>
+      </g>
+      <g stroke="#7ee6d9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="translate(418 158)"><path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5"/></g>
+        <g transform="translate(718 458)"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/></g>
+        <g transform="translate(418 758)"><path d="M3 9.5 12 4l9 5.5M4 21h16M5.5 11v7M9.8 11v7M14.2 11v7M18.5 11v7"/></g>
+        <g transform="translate(206 246)"><path d="M12 3 4.5 6v5.5c0 4.7 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.8 7.5-9.5V6z"/></g>
+        <g transform="translate(630 670)"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></g>
+      </g>
+    </svg>
+    <div style="position:relative; margin-top:96px; max-width:640px">
+      <span class="pill"><svg class="i"><use href="#i-sparkle"/></svg>2C2P PACO · Overview</span>
+      <h1 style="margin-top:28px">Accept payments online, <span style="color:#5eead4">simply</span> and <span style="color:#5eead4">securely</span></h1>
+      <p class="cover-sub">What PACO is, what it can do for your business, and how to get started.</p>
+    </div>
+    <div class="cover-meta" style="position:relative">
+      <span><svg class="i"><use href="#i-card"/></svg>Cards, wallets, QR &amp; more</span>
+      <span><svg class="i"><use href="#i-shield"/></svg>Secure hosted payment page</span>
+      <span><svg class="i"><use href="#i-plug"/></svg>One integration</span>
     </div>
   </section>
 
-  <!-- 2 -->
+  <!-- 2 What is PACO -->
   <section class="slide">
-    <div class="kicker">What is PACO</div>
-    <h2>One payment API for your whole checkout</h2>
-    <p class="lead" style="margin-bottom:34px">PACO is 2C2P's payment platform. Your systems connect to it once, and your customers can pay with cards, wallets, QR and more, on a secure 2C2P payment page.</p>
-    <div class="grid3">
-      <div class="card"><div class="icon">🔌</div><h3>Connect once</h3><p>One integration for many payment methods and markets</p></div>
-      <div class="card"><div class="icon">🛡️</div><h3>Pay securely</h3><p>Customers enter card details on 2C2P's page, not on your systems</p></div>
-      <div class="card"><div class="icon">⚙️</div><h3>Manage everything</h3><p>Check, cancel, capture and refund payments by API or in the portal</p></div>
+    <div class="eyebrow"><b>01</b>What is PACO</div>
+    <div class="split">
+      <div>
+        <p class="statement">PACO is 2C2P's payment platform: <span class="accent">one connection</span> that lets your customers pay with cards, wallets, QR and more.</p>
+        <div class="points">
+          <div class="point"><span class="badge"><svg class="i"><use href="#i-plug"/></svg></span><div><b>Connect once</b><span class="muted">One integration for many payment methods and markets</span></div></div>
+          <div class="point"><span class="badge"><svg class="i"><use href="#i-shield"/></svg></span><div><b>Pay securely</b><span class="muted">Customers enter card details on 2C2P's page, not on your systems</span></div></div>
+          <div class="point"><span class="badge"><svg class="i"><use href="#i-grid"/></svg></span><div><b>Manage everything</b><span class="muted">Check, cancel, capture and refund by API or in the portal</span></div></div>
+        </div>
+      </div>
+      <svg viewBox="0 0 560 440" width="100%" aria-label="Your website connects to PACO, which connects to cards, wallets, QR and banking">
+        <defs><linearGradient id="hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14b8a6"/><stop offset="1" stop-color="#0b5f58"/></linearGradient></defs>
+        <g stroke="#cfd7e4" stroke-width="2" fill="none">
+          <path d="M120 220 H210"/>
+          <path d="M350 220 C 400 220 400 70 450 70"/><path d="M350 220 C 400 220 400 170 450 170"/>
+          <path d="M350 220 C 400 220 400 270 450 270"/><path d="M350 220 C 400 220 400 370 450 370"/>
+        </g>
+        <g fill="#14b8a6"><circle cx="210" cy="220" r="5"/><circle cx="450" cy="70" r="5"/><circle cx="450" cy="170" r="5"/><circle cx="450" cy="270" r="5"/><circle cx="450" cy="370" r="5"/></g>
+        <!-- merchant -->
+        <rect x="6" y="160" width="114" height="120" rx="20" fill="#fff" stroke="#dfe4ee" stroke-width="2"/>
+        <g transform="translate(43 178) scale(1.7)" stroke="#16264a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M2.5 9h19"/></g>
+        <text x="63" y="248" text-anchor="middle" font-size="15" font-weight="700" fill="#14213d">Your site</text>
+        <text x="63" y="267" text-anchor="middle" font-size="13" fill="#5b6478">&amp; app</text>
+        <!-- hub -->
+        <rect x="210" y="150" width="140" height="140" rx="34" fill="url(#hub)"/>
+        <text x="280" y="214" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" letter-spacing="1">PACO</text>
+        <text x="280" y="240" text-anchor="middle" font-size="13" font-weight="600" fill="#c6f3ee">by 2C2P</text>
+        <!-- methods -->
+        <g font-size="16" font-weight="700" fill="#14213d">
+          <g transform="translate(462 46)"><rect width="92" height="48" rx="14" fill="#f1f4f9"/><g transform="translate(10 12)" stroke="#0f8b80" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></g><text x="38" y="30">Cards</text></g>
+          <g transform="translate(462 146)"><rect width="92" height="48" rx="14" fill="#f1f4f9"/><g transform="translate(10 12)" stroke="#0f8b80" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5"/></g><text x="38" y="30">Wallets</text></g>
+          <g transform="translate(462 246)"><rect width="92" height="48" rx="14" fill="#f1f4f9"/><g transform="translate(10 12)" stroke="#0f8b80" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></g><text x="38" y="30">QR</text></g>
+          <g transform="translate(462 346)"><rect width="92" height="48" rx="14" fill="#f1f4f9"/><g transform="translate(10 12)" stroke="#0f8b80" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5M4 21h16M5.5 11v7M9.8 11v7M14.2 11v7M18.5 11v7"/></g><text x="38" y="30">Banks</text></g>
+        </g>
+      </svg>
     </div>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
-  <!-- 3 -->
+  <!-- 3 Capabilities -->
   <section class="slide">
-    <div class="kicker">What you can do</div>
-    <h2>What PACO can do for you</h2>
-    <div class="grid3">
-      <div class="card"><div class="icon">💳</div><h3>Take payments</h3><p>Online payments from your website or app, in many currencies</p></div>
-      <div class="card"><div class="icon">🧾</div><h3>Hosted payment page</h3><p>Ready-made, mobile-friendly page with bank OTP (3-D Secure) built in</p></div>
-      <div class="card"><div class="icon">🔍</div><h3>Check status anytime</h3><p>Ask PACO for the real status of any payment</p></div>
-      <div class="card"><div class="icon">↩️</div><h3>Cancel &amp; refund</h3><p>Void before capture, refund after, in full or in part</p></div>
-      <div class="card"><div class="icon">🔁</div><h3>Save cards &amp; installments</h3><p>Card tokenization, installment and recurring plans, where enabled</p></div>
-      <div class="card"><div class="icon">🧪</div><h3>Sandbox &amp; portal</h3><p>Test safely with test cards, then manage live payments in the Merchant Portal</p></div>
+    <div class="eyebrow"><b>02</b>What you can do</div>
+    <h2>Everything you need to get paid</h2>
+    <div class="caps">
+      <div class="cap"><span class="num">01</span><span class="badge"><svg class="i"><use href="#i-card"/></svg></span><h3>Take payments</h3><p>Online payments from your website or app, in many currencies</p></div>
+      <div class="cap"><span class="num">02</span><span class="badge"><svg class="i"><use href="#i-browser"/></svg></span><h3>Hosted payment page</h3><p>Ready-made, mobile-friendly page with bank OTP (3-D Secure) built in</p></div>
+      <div class="cap"><span class="num">03</span><span class="badge"><svg class="i"><use href="#i-search"/></svg></span><h3>Real-time status</h3><p>Ask PACO for the true status of any payment, at any time</p></div>
+      <div class="cap"><span class="num">04</span><span class="badge"><svg class="i"><use href="#i-undo"/></svg></span><h3>Cancel &amp; refund</h3><p>Void before capture, refund after, in full or in part</p></div>
+      <div class="cap"><span class="num">05</span><span class="badge"><svg class="i"><use href="#i-repeat"/></svg></span><h3>Saved cards &amp; installments</h3><p>Card tokenization, installment and recurring plans, where enabled</p></div>
+      <div class="cap"><span class="num">06</span><span class="badge"><svg class="i"><use href="#i-flask"/></svg></span><h3>Sandbox &amp; portal</h3><p>Test safely with test cards, then manage live payments in the Merchant Portal</p></div>
     </div>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
-  <!-- 4 -->
+  <!-- 4 Methods -->
   <section class="slide">
-    <div class="kicker">Payment methods</div>
+    <div class="eyebrow"><b>03</b>Payment methods</div>
     <h2>Let customers pay the way they like</h2>
     <div class="methods">
-      <div class="method"><b>💳 Cards</b><span>Visa, Mastercard, Amex, JCB, UnionPay, Diners, Discover</span></div>
-      <div class="method"><b>📱 Wallets</b><span>e.g. Apple Pay, Google Pay, Alipay, TrueMoney, ShopeePay</span></div>
-      <div class="method"><b>🔳 QR payments</b><span>e.g. PromptPay, DuitNow and other national QR schemes</span></div>
-      <div class="method"><b>🏦 Internet banking</b><span>Pay directly from a bank account</span></div>
-      <div class="method"><b>🏪 Counter &amp; ATM</b><span>Pay at a bank counter, convenience store, ATM or kiosk</span></div>
-      <div class="method"><b>📆 Installments</b><span>Spread card payments over several months</span></div>
+      <div class="method"><span class="badge"><svg class="i"><use href="#i-card"/></svg></span><div><h3>Cards</h3><div class="chips"><span class="chip">Visa</span><span class="chip">Mastercard</span><span class="chip">Amex</span><span class="chip">JCB</span><span class="chip">UnionPay</span><span class="chip">Diners</span><span class="chip">Discover</span></div></div></div>
+      <div class="method"><span class="badge"><svg class="i"><use href="#i-wallet"/></svg></span><div><h3>Wallets</h3><div class="chips"><span class="chip">Apple Pay</span><span class="chip">Google Pay</span><span class="chip">Alipay</span><span class="chip">TrueMoney</span><span class="chip">ShopeePay</span></div></div></div>
+      <div class="method"><span class="badge"><svg class="i"><use href="#i-qr"/></svg></span><div><h3>QR payments</h3><div class="chips"><span class="chip">PromptPay</span><span class="chip">DuitNow</span><span class="chip">National QR</span></div></div></div>
+      <div class="method"><span class="badge navy"><svg class="i"><use href="#i-bank"/></svg></span><div><h3>Internet banking</h3><p class="muted" style="font-size:16px">Pay directly from a bank account</p></div></div>
+      <div class="method"><span class="badge navy"><svg class="i"><use href="#i-store"/></svg></span><div><h3>Counter &amp; ATM</h3><p class="muted" style="font-size:16px">Bank counter, convenience store, ATM or kiosk</p></div></div>
+      <div class="method"><span class="badge navy"><svg class="i"><use href="#i-calendar"/></svg></span><div><h3>Installments</h3><p class="muted" style="font-size:16px">Spread card payments over several months</p></div></div>
     </div>
-    <div class="callout">Available methods and currencies depend on what 2C2P enables on your account.</div>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <p class="note"><svg class="i"><use href="#i-globe"/></svg>Available methods and currencies depend on what 2C2P enables on your account.</p>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
-  <!-- 5 -->
+  <!-- 5 How it works -->
   <section class="slide">
-    <div class="kicker">How it works</div>
+    <div class="eyebrow"><b>04</b>How it works</div>
     <h2>A payment in four steps</h2>
-    <div class="journey">
-      <div class="step"><div class="n">1</div><div class="who">Your site</div>Customer clicks <b>Pay</b>. Your server asks PACO for a payment page.</div>
-      <div class="step paco"><div class="n">2</div><div class="who">2C2P page</div>Customer chooses a method and pays. OTP if the bank asks.</div>
-      <div class="step paco"><div class="n">3</div><div class="who">PACO</div>Tells your server the result and sends the customer back to you.</div>
-      <div class="step key"><div class="n">4</div><div class="who">Your server</div><b>Confirms the final status with PACO</b>, then fulfils the order.</div>
+    <div class="track">
+      <div class="node"><div class="dot"><svg class="i"><use href="#i-browser"/></svg></div><div class="who">Your site</div><h3>Customer clicks Pay</h3><p>Your server asks PACO for a secure payment page</p></div>
+      <div class="node paco"><div class="dot"><svg class="i"><use href="#i-card"/></svg></div><div class="who">2C2P payment page</div><h3>Customer pays</h3><p>Chooses a method and pays, with OTP if the bank asks</p></div>
+      <div class="node paco"><div class="dot"><svg class="i"><use href="#i-bell"/></svg></div><div class="who">PACO</div><h3>Result is sent</h3><p>PACO notifies your server and returns the customer to you</p></div>
+      <div class="node key"><div class="dot"><svg class="i"><use href="#i-check"/></svg></div><div class="who">Your server</div><h3>Confirm, then deliver</h3><p>Check the final status with PACO before fulfilling the order</p></div>
     </div>
-    <div class="callout">Always confirm the status with PACO before delivering. A first "success" message or the customer's return to your site isn't proof of payment.</div>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <div class="rule"><span class="badge"><svg class="i"><use href="#i-alert"/></svg></span><p><b>Golden rule: confirm before you deliver.</b> A first "success" message or the customer's return to your site isn't proof of payment. Always check the status with PACO.</p></div>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
-  <!-- 6 -->
+  <!-- 6 Two ways to connect -->
   <section class="slide">
-    <div class="kicker">Integration options</div>
+    <div class="eyebrow"><b>05</b>Integration options</div>
     <h2>Two ways to connect</h2>
-    <table>
-      <tr><th style="width:24%"></th><th><span class="tag">Recommended</span><br>2C2P payment page</th><th><span class="tag navy">Advanced</span><br>Your own payment form</th></tr>
-      <tr><td><b>Who collects card details</b></td><td>2C2P's secure page</td><td>Your own form</td></tr>
-      <tr><td><b>Card data on your servers</b></td><td>No</td><td>Yes: PCI DSS applies, agree with 2C2P first</td></tr>
-      <tr><td><b>Payment methods</b></td><td>All methods on your account, on one page</td><td>The ones you build into your form</td></tr>
-      <tr><td><b>Effort</b></td><td>Fastest to launch</td><td>More build and compliance work</td></tr>
-      <tr><td><b>Best for</b></td><td>Most businesses</td><td>Teams with an existing PCI-compliant checkout</td></tr>
-    </table>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <div class="compare">
+      <div class="option rec"><span class="ribbon">Recommended</span>
+        <div class="head"><span class="badge"><svg class="i"><use href="#i-browser"/></svg></span><h3>2C2P payment page</h3></div>
+        <div class="row"><svg class="i ok"><use href="#i-check"/></svg><span><b>Card details</b>Collected on 2C2P's secure page</span></div>
+        <div class="row"><svg class="i ok"><use href="#i-check"/></svg><span><b>Compliance</b>Card data never touches your servers</span></div>
+        <div class="row"><svg class="i ok"><use href="#i-check"/></svg><span><b>Payment methods</b>Everything on your account, on one page</span></div>
+        <div class="row"><svg class="i ok"><use href="#i-check"/></svg><span><b>Best for</b>Most businesses: fastest to launch</span></div>
+      </div>
+      <div class="option"><span class="ribbon alt">Advanced</span>
+        <div class="head"><span class="badge navy"><svg class="i"><use href="#i-code"/></svg></span><h3>Your own payment form</h3></div>
+        <div class="row"><svg class="i ok"><use href="#i-check"/></svg><span><b>Card details</b>Collected on your own form, full control of the design</span></div>
+        <div class="row"><svg class="i warn"><use href="#i-alert"/></svg><span><b>Compliance</b>PCI DSS applies. Agree it with 2C2P first.</span></div>
+        <div class="row"><svg class="i warn"><use href="#i-alert"/></svg><span><b>Payment methods</b>The ones you build into your form</span></div>
+        <div class="row"><svg class="i ok"><use href="#i-check"/></svg><span><b>Best for</b>Teams with an existing PCI-compliant checkout</span></div>
+      </div>
+    </div>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
-  <!-- 7 -->
+  <!-- 7 Security -->
   <section class="slide">
-    <div class="kicker">Security</div>
-    <h2>Security built in</h2>
-    <div class="grid2">
-      <div class="card"><h3>🛡️ Card data stays with 2C2P</h3><p>With the payment page, card numbers never touch your systems, which keeps your PCI DSS scope small.</p></div>
-      <div class="card"><h3>🔐 Encrypted and signed</h3><p>Production messages are signed and encrypted (JOSE), with keys you generate and keep.</p></div>
-      <div class="card"><h3>🌐 Approved servers only</h3><p>Only your allowlisted servers can connect to PACO.</p></div>
-      <div class="card"><h3>✅ Double-checked results</h3><p>Every payment can be confirmed with PACO's status API before you deliver.</p></div>
+    <div class="eyebrow"><b>06</b>Security</div>
+    <h2>Security built in, end to end</h2>
+    <div class="sec">
+      <div class="col">
+        <div class="sec-item right"><span class="badge"><svg class="i"><use href="#i-card"/></svg></span><div><h3>Card data stays with 2C2P</h3><p>With the payment page, card numbers never touch your systems, so your PCI DSS scope stays small.</p></div></div>
+        <div class="sec-item right"><span class="badge"><svg class="i"><use href="#i-server"/></svg></span><div><h3>Approved servers only</h3><p>Only your allowlisted servers can connect to PACO.</p></div></div>
+      </div>
+      <div class="shield"><div class="ring"></div><div class="ring r2"></div><div class="core"><svg class="i" style="stroke-width:1.6"><use href="#i-shield"/></svg></div></div>
+      <div class="col">
+        <div class="sec-item"><span class="badge"><svg class="i"><use href="#i-lock"/></svg></span><div><h3>Encrypted &amp; signed</h3><p>Production messages are signed and encrypted (JOSE) with keys you generate and keep.</p></div></div>
+        <div class="sec-item"><span class="badge"><svg class="i"><use href="#i-check"/></svg></span><div><h3>Double-checked results</h3><p>Every payment can be confirmed with PACO's status API before you deliver.</p></div></div>
+      </div>
     </div>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
-  <!-- 8 -->
+  <!-- 8 Getting started -->
   <section class="slide">
-    <div class="kicker">Getting started</div>
-    <h2>From sandbox to live</h2>
-    <div class="timeline">
-      <div class="phase"><div class="n">1 · ONBOARD</div><h3>Get set up</h3><p class="small">2C2P provides your API key, office ID and account setup. You share your server IPs and public keys.</p></div>
-      <div class="phase"><div class="n">2 · BUILD</div><h3>Connect</h3><p class="small">Your server creates payments and confirms results with PACO.</p></div>
-      <div class="phase"><div class="n">3 · TEST</div><h3>Try it safely</h3><p class="small">Pay with test cards in the sandbox: success, decline, OTP, refund.</p></div>
-      <div class="phase"><div class="n">4 · LAUNCH</div><h3>Go live</h3><p class="small">Encryption on, production credentials, and you're taking real payments.</p></div>
+    <div class="eyebrow"><b>07</b>Getting started</div>
+    <h2>From sandbox to live in four stages</h2>
+    <div class="road">
+      <div class="stage"><span class="badge navy"><svg class="i"><use href="#i-key"/></svg></span><div class="k">1 · Onboard</div><h3>Get set up</h3><p>2C2P provides your API key, office ID and account setup. You share your server IPs and public keys.</p></div>
+      <div class="stage"><span class="badge navy"><svg class="i"><use href="#i-code"/></svg></span><div class="k">2 · Build</div><h3>Connect</h3><p>Your server creates payments and confirms each result with PACO.</p></div>
+      <div class="stage"><span class="badge navy"><svg class="i"><use href="#i-flask"/></svg></span><div class="k">3 · Test</div><h3>Try it safely</h3><p>Use test cards in the sandbox: success, decline, OTP and refund.</p></div>
+      <div class="stage"><span class="badge"><svg class="i"><use href="#i-rocket"/></svg></span><div class="k">4 · Launch</div><h3>Go live</h3><p>Encryption on, production credentials, and you're taking real payments.</p></div>
     </div>
-    <div class="callout">Your AI assistant can answer questions, prepare a proposal for your management, and guide your developers step by step through the integration.</div>
-    <div class="footer"><span>PACO overview</span><span class="pg"></span></div>
+    <div class="cta">
+      <span class="badge"><svg class="i"><use href="#i-sparkle"/></svg></span>
+      <div><h3>Your AI assistant is ready to help</h3><p>Ask questions, prepare a proposal for management, or build the integration step by step.</p></div>
+      <div class="tags"><span>Ask</span><span>Present</span><span>Integrate</span></div>
+    </div>
+    <div class="footer"><span class="brand"><i></i>PACO overview</span><span class="pg"></span></div>
   </section>
 
 </main>
@@ -188,7 +364,7 @@
 <script>
 (() => {
   const slides = [...document.querySelectorAll('.slide')]; let i = 0;
-  slides.forEach((s, n) => s.querySelectorAll('.pg').forEach((p) => (p.textContent = `${n + 1} / ${slides.length}`)));
+  slides.forEach((s, n) => s.querySelectorAll('.pg').forEach((p) => (p.textContent = `${String(n + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`)));
   const fit = () => { const k = Math.min(innerWidth / 1280, (innerHeight - 52) / 720) * 0.97; slides.forEach((s) => (s.style.transform = `scale(${k})`)); };
   const show = (n) => { i = Math.max(0, Math.min(slides.length - 1, n)); slides.forEach((s, j) => s.classList.toggle('active', j === i));
     document.getElementById('count').textContent = `${i + 1} / ${slides.length}`; try { history.replaceState(null, '', `#${i + 1}`); } catch {} };
