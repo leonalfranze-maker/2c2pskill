@@ -10,7 +10,7 @@ Sources [DZ]: https://devzone.2c2p.com/docs/test-card · https://devzone.2c2p.co
 | Rejected card (for decline tests) | `4444333322221111` | | | |
 | Amex | `374340095639074` | | | |
 
-- The docs say test cards are for **simulator testing only** and the simulator "needs to be set up before testing". What setup an office needs is **Unconfirmed**. If cards are declined unexpectedly in UAT, ask the PO.
+- Test cards work in UAT only and may need to be enabled for your office first. If they are declined unexpectedly, ask the PO.
 - Country pages list extra test accounts (wallets, i-banking, IPP cards). Use the merchant's country page.
 - Never use test cards in production. Never use real cards in UAT.
 
@@ -19,7 +19,7 @@ Sources [DZ]: https://devzone.2c2p.com/docs/test-card · https://devzone.2c2p.co
 - To see the OTP step in a demo, send `request3dsFlag: "Y"`. That this always works on every UAT office is **Unconfirmed**.
 
 ## Network
-- UAT only accepts allowlisted source IPs. A blocked machine gets **TLS connection reset** with no HTTP status. [PACO team][UAT]
+- UAT only accepts allowlisted source IPs. A blocked machine gets **TLS connection reset** with no HTTP status. [2C2P confirmed][UAT]
 - Test from the machine whose IP was allowlisted at onboarding (often the server, not a laptop). Or use the network/VPN the merchant registered.
 
 ## Testing on localhost
@@ -29,7 +29,7 @@ Sources [DZ]: https://devzone.2c2p.com/docs/test-card · https://devzone.2c2p.co
 | Redirect back to `http://localhost:…` | yes in practice (browser navigation). Whether PACO requires HTTPS here: **Unconfirmed** |
 | Backend notification to `backendUrl` | **no**: PACO can't reach localhost. Use a tunnel (public HTTPS URL), or confirm the result with the Inquiry API |
 
-## Plain JSON in UAT [PACO team]
+## Plain JSON in UAT [2C2P confirmed]
 UAT accepts `application/json` (no encryption). Use it for the **first** call to prove credentials, network and fields. Then switch to JOSE and test again before production. Production rejects plain JSON (HTTP 415).
 
 ## Definition of done for a UAT test

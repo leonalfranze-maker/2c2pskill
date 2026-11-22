@@ -1,7 +1,7 @@
 # PACO authentication & connectivity
 
 Applies to the Payment API (`/api/2.0/Payment/prePaymentUi`, `/api/2.0/Payment/nonUi`).
-Sources: [Integration](https://devzone.2c2p.com/docs/integration-1), [/prePaymentUi spec](https://devzone.2c2p.com/reference/payviapaymentpage). Points marked *(PACO team)* were confirmed by the PACO team on 2026-11-16 where the public docs were unclear.
+Sources: [Integration](https://devzone.2c2p.com/docs/integration-1), [/prePaymentUi spec](https://devzone.2c2p.com/reference/payviapaymentpage). Points marked *(2C2P confirmed)* were confirmed by 2C2P where the public docs were unclear.
 
 ## What the merchant needs
 | Item | Where it comes from | Where it goes |
@@ -13,12 +13,12 @@ Sources: [Integration](https://devzone.2c2p.com/docs/integration-1), [/prePaymen
 
 Never put any of these values in source code, in this skill, or in chat.
 
-## Auth header: only `apiKey` *(PACO team)*
+## Auth header: only `apiKey` *(2C2P confirmed)*
 - Send `apiKey: <API key>` on every Payment API call, in UAT and PRD.
 - The Integration page also mentions a `token` header and BASIC HTTP auth. **Neither is used by the Payment API.** `token` and the API key are the same value. Don't send extra headers.
 - A missing or wrong `apiKey` gets the request rejected.
 
-## Body format: JOSE in PRD, JSON or JOSE in UAT *(PACO team)*
+## Body format: JOSE in PRD, JSON or JOSE in UAT *(2C2P confirmed)*
 | Env | `application/json` (plain) | `application/jose` (signed + encrypted) |
 |---|---|---|
 | UAT | accepted | accepted |
@@ -29,11 +29,10 @@ How to use this:
 2. Then switch to JOSE in UAT and pass the full test again.
 3. Only JOSE goes to production. Generated code must refuse plain JSON when `PACO_ENV=PRD`.
 
-## Network: UAT accepts allowlisted IPs only *(PACO team)*
+## Network: UAT accepts allowlisted IPs only *(2C2P confirmed)*
 - Symptom: `curl: (35) ... Connection reset by peer` during the TLS handshake to `core.demo-paco.2c2p.com` or `payment-api.demo-paco.2c2p.com`. No HTTP status is returned at all.
 - Meaning: the source IP isn't allowed in UAT. **It is not a code or JOSE problem.** Don't debug the payload.
 - Action: find the server's public egress IP (e.g. `curl https://ifconfig.me` run **on the server that will call PACO**) and send it to the merchant's 2C2P integration contact. Use the helpdesk ticket template.
-- Production hosts (`core.paco.2c2p.com`) complete the TLS handshake normally.
 - Docs: IP whitelisting is mandatory in production.
 
 ## Quick diagnosis

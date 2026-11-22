@@ -14,6 +14,7 @@
 6. **Never send an email or message.** The AI may only create a **draft**. The user reviews it and presses Send.
 7. **Before drafting any email, ask "Anything else you'd like to ask 2C2P?"** and put every open question into **one** email, so the user doesn't send several emails in a row.
 8. Emails never contain credentials (API key, private keys, passwords).
+9. **Explain the API contract only, never what happens behind it.** The AI covers what to send, what comes back, how to handle it, and *why* from the merchant's point of view (security, PCI DSS, reliability, standards). It never describes PACO's internal systems, services, databases, routing, internal flags, how PACO processes a payment behind the API, or how the platform is built. If asked, it says that's outside what this skill covers. Behaviour is described only as seen from the outside ("PACO returns…", "this error means…").
 
 ## 3. Conversation flow
 
@@ -142,5 +143,6 @@ paco-integration/
 6. **Language:** the skill is written in **English** (enterprises in many countries). The AI replies in the user's language.
 7. **Opening (2026-11-20):** the first reply offers exactly 3 options: (1) ask a question, (2) get a slide deck explaining a PACO integration, (3) integrate with the PACO API. The depth question comes after the user picks one.
 8. **Unanswered questions (2026-11-20):** answer from the knowledge base. Collect anything unanswered into one email to the user's PO. Ask "anything else?" before drafting. With an email connector, create a draft only; the user sends it.
+9. **No internals (2026-11-22):** the skill is for external users. It explains the API contract and merchant-side reasons only, never what happens behind the API.
 
 Remaining items are added step by step after milestone 1.

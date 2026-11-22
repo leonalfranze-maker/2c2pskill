@@ -5,7 +5,7 @@ Use this file to answer general questions and to pitch explanations at the user'
 **Source tags** used in every reference file:
 - **[DZ]** public Dev Zone (https://devzone.2c2p.com, index: https://devzone.2c2p.com/llms.txt)
 - **[UAT]** observed in a real UAT call
-- **[PACO team]** confirmed by the PACO team as public-safe
+- **[2C2P confirmed]** confirmed by 2C2P where the public docs were unclear
 - **Unconfirmed** not verified yet. Say so to the user and offer to add it to the PO question list.
 
 ## What PACO is
@@ -21,11 +21,9 @@ PACO is 2C2P's payment API platform ("Core Payment API"). A merchant's backend c
 | Payment methods | everything enabled on the office (card, wallet, QR…) shown on one page | the one the merchant sends (`paymentType`) |
 | Time to market | fastest | more work |
 
-Under the hood the Payment Page itself calls `/nonUi`. Authorization always happens at `/nonUi`. [DZ]
-
 ## The payment journey (prePaymentUi) [DZ]
 1. Customer clicks Pay on the merchant site → the **merchant frontend** calls the **merchant backend**.
-2. Merchant backend calls `/prePaymentUi` → PACO stores the "incomplete payment" and returns `paymentPageURL`.
+2. Merchant backend calls `/prePaymentUi` → PACO returns a `paymentPageURL`.
 3. Frontend redirects the customer to the 2C2P Payment Page.
 4. Customer chooses a method and enters card details. 3DS/OTP happens here if required.
 5. PACO authorizes, then sends a **backend notification** (server-to-server) to the merchant's `backendUrl`. The merchant answers HTTP 200.
@@ -34,7 +32,7 @@ Under the hood the Payment Page itself calls `/nonUi`. Authorization always happ
 **Trust rule:** the backend notification (or an inquiry) is the truth. The browser redirect is for display only. It can be tampered with. [DZ]
 
 ## Architecture rules (always)
-- **The browser never calls PACO.** Frontend → merchant backend → PACO. Reasons: the API key must stay secret; production requires JOSE with the merchant's private keys; production requires the **server's** IP to be allowlisted. [DZ][PACO team]
+- **The browser never calls PACO.** Frontend → merchant backend → PACO. Reasons: the API key must stay secret; production requires JOSE with the merchant's private keys; production requires the **server's** IP to be allowlisted. [DZ][2C2P confirmed]
 - Redirects to the Payment Page and back are normal page navigations. CORS doesn't apply to them.
 - Amount and currency come from the merchant's server-side order, never from the browser.
 
@@ -53,7 +51,7 @@ failed (F) / pending (P) are other outcomes
 ```
 - **Void** = cancel an authorized payment that is **not settled yet**. After settlement, use **refund**.
 - **Settlement (capture)** can be **automatic or manual depending on the PSP's settlement model**. Error `PC-B050055`: "Transaction using auto settlement cannot manual settled before cut off time. Check settlement model of its PSP." Which model a given office uses is **Unconfirmed**: ask the PO.
-- Wallet/QR (APM) payments may be settled immediately ("VoidAble = N" → step goes to ST Settled). [DZ APM flow]
+- Some wallet/QR (APM) payments are settled straight away, so they can't be voided. Use refund instead. [DZ]
 
 ## Glossary
 | Term | Meaning |
@@ -61,7 +59,7 @@ failed (F) / pending (P) are other outcomes
 | Office / `officeId` | The merchant account inside PACO that a payment belongs to. Issued at onboarding. |
 | API key | Company credential. Sent in the `apiKey` header and as JWT `iss`. |
 | `orderNo` | Merchant's order number, max 40. Also called "Transaction Invoice No." |
-| `controllerInternalId` / `paymentId` | PACO's internal payment ID (UUID). |
+| `controllerInternalId` / `paymentId` | PACO's payment ID (UUID) returned in responses. |
 | PSP / acquirer | The bank or provider that actually processes the payment behind PACO. |
 | JOSE | Signed + encrypted message format (JWS inside JWE). Required in production. See `jose.md`. |
 | 3DS / OTP | Card holder authentication by the issuing bank (the OTP page). |

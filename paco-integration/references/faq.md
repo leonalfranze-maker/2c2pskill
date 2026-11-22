@@ -10,7 +10,7 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **What do I need from 2C2P?** API key, office ID, UAT/PRD IP allowlisting, PACO public keys (+ zip password), PACO Portal access to upload your public keys. → `authentication.md`, `jose.md`
 
-**Which header carries the API key?** `apiKey`. No `token` header and no Basic auth. [PACO team]
+**Which header carries the API key?** `apiKey`. No `token` header and no Basic auth. [2C2P confirmed]
 
 **Do I need encryption?** Production: yes, JOSE is mandatory. UAT: plain JSON is accepted, so use it for your first test, then test with JOSE. → `jose.md`
 
