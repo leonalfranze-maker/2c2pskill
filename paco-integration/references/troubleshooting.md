@@ -77,4 +77,8 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050025` on void | `paymentId` not found | send `controllerInternalID` unchanged (32 hex, no dashes), or void by `orderNo` (`fields/void.md`) |
 | `PC-B050060` | void while settlement is running | retry later; if it got settled, refund |
 | `PC-B050053` | refund not possible (e.g. not settled yet) | void instead |
+| `PC-B050040` | refund amount wrong currency, ≤ 0, or more than what's left | `fields/refund.md` |
+| `PC-B053558` | refund: `refundLinkExpiryDatetime` in the past | leave it out |
+| `PC-B054514` (refund) | `refundNote` too long or has `; < > & / \ "` | ≤ 150, remove those characters |
+| `PC-T999999` on refund | a wrong-format value, often `refundNotificationURLs` or a `bankId` that isn't a UUID | don't send `refundNotificationURLs`; `fields/refund.md` |
 | Other void / settlement / refund errors | see `post-payment.md` | |

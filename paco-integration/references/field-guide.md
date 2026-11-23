@@ -62,7 +62,7 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 | All date-time fields | **UTC with `Z`**: `2026-11-23T08:15:30Z`. Invalid values may be ignored, so always send valid ISO 8601. |
 | `paymentExpiryDateTime`, `linkExpiryDateTime` | At least a few minutes in the future (too soon → `PC-B050061`, payment rejected). Omit them to use your account's defaults. Ask your PO what those are if it matters. |
 | `recurringEndDate` | Required unless the plan is one-time. Not in the past. |
-| `refundLinkExpiryDatetime` | In the future. Omit it for your account's default. |
+| `refundLinkExpiryDatetime` | **Leave it out** (account default). If sent it must be in the future, or every refund fails (`PC-B053558`). |
 | `transactionList` `fromDate` / `toDate` | ISO 8601 with `Z` or an offset (none = UTC), both inclusive. Invalid values are ignored and the default is used, so check the results. Whole day: `…T00:00:00Z` to `…T23:59:59Z` (`fields/inquiry-transactionlist.md`). |
 
 ## URLs
@@ -74,10 +74,12 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 ## Refund-specific
 | Field | Do this |
 |---|---|
-| `localMakerChecker.*.username`, `pspMakerChecker.*.username` | ≤ 80 characters: your admin user's login, or your system's name for automated refunds. |
-| Emails (`maker.email`, `refundToBankAccount.clientEmail`) | Plain ASCII address, e.g. `ops@shop.example`. |
-| `refundToBankAccount.bankId` | ≤ 40 characters, an ID from the bank list (Dev Zone "Bank Code" page). |
-| `refundToBankAccount.accountNumber` | ≤ 30 characters. |
+| `localMakerChecker.*.username` | ≤ 80 characters (≤ 50 recommended): your admin user's login, or your system's name for automated refunds. |
+| Emails (`maker.email`, `refundToBankAccount.clientEmail`) | Plain ASCII address, e.g. `ops@shop.example`, ≤ 100 recommended. |
+| `refundToBankAccount.bankId` | A **2C2P bank ID in UUID form**, not a bank code like `002`. Get the list from 2C2P. |
+| `refundToBankAccount.accountName` / `accountNumber` | ≤ 150 (Thai OK) / ≤ 30, digits only. |
+| `refundNote` | ≤ 150, none of `; < > & / \ "`. |
 
 ## Leave out
 - `issuerApprovalCode` on settlement, refund and void: not used. Leave it out.
+- Refund: `refundNotificationURLs` (not used, and an invalid URL fails the refund), `pspMakerChecker`, `customFieldList`.

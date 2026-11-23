@@ -37,8 +37,8 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | **Void (partial)** | ❌ | – | `voidAmount` / `voidItems` are ignored: void always cancels the full amount. For part of the money, settle less or refund later. |
 | Settlement (full) | ✅ | Yes: **manual** settlement model | Auto-settlement offices don't call it (`PC-B050055`) |
 | Settlement (partial) | ⚠️ | Yes: manual settlement model | **Once only:** one settlement call per payment, the rest can't be captured later. Not for installments, payments with purchase items, or UATP cards. |
-| **Refund** (full, partial, multiple, itemized) | ✅ | **Yes: refunds by API are OFF by default** | Without it every refund returns `PC-B050096`. Payment must be settled first. Itemized needs items on the payment. |
-| Refund to a bank account | ⚠️ | Yes | Only for cash-type APM methods (e.g. counter payments) |
+| **Refund** (full, partial, multiple, itemized) | ✅ | **Yes: refunds by API are OFF by default** | Without it every refund returns `PC-B050096`. Payment must be settled first. **Max 99 refunds per payment.** No refund callback. Itemized needs items on the payment. |
+| Refund to a bank account | ⚠️ | Yes | Only for cash-type APM methods (e.g. counter payments). Needs 2C2P's bank ID list (`bankId` is a UUID, not a bank code). |
 
 ## Must know before building
 1. **Refunds by API are off by default.** Ask 2C2P to enable them before building any refund feature.

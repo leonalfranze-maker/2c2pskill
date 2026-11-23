@@ -61,13 +61,17 @@ Allowed only for **settled** payments (step `ST`). For an approved, not-yet-sett
 ### Request
 | Field | Rule |
 |---|---|
-| `officeId` | required |
+| `officeId` | required: the payment's office |
 | `orderNo` | required, ≤ 40 |
-| `refundAmount` | > 0 and ≤ the amount still refundable. **Partial refunds allowed**, several times, up to the full amount. |
-| `originalRefundAmount` | currency-conversion payments only |
+| `refundAmount` | > 0 and ≤ the amount still refundable. **Partial refunds allowed**, several times, up to the full amount, **max 99 refunds per payment**. |
+| `originalRefundAmount` | currency-conversion (DCC/MCP) payments only, in your base currency. Don't send for normal payments. |
 | `localMakerChecker` | **required on every refund**: who requested it (and who approved it), for the audit trail. See below. |
-| `refundToBankAccount` | refund paid out to the customer's bank account (only where that method applies) |
-| `refundItems`, `refundNote`, `customFieldList`, `pspMakerChecker` | optional |
+| `refundToBankAccount` | only for refunds paid out by bank transfer (e.g. counter/cash payments). `bankId` is a 2C2P bank ID (UUID), not a bank code. |
+| `refundItems` | required for a **partial** refund of a payment with purchase items. Leave out for a full refund. |
+| `refundNote` | optional, ≤ 150, no `; < > & / \ "` |
+| **Don't send** | `refundNotificationURLs` (not used, and an invalid URL fails the refund), `refundLinkExpiryDatetime` (a past value fails every refund), `pspMakerChecker`, `customFieldList` |
+
+Full rules: `fields/refund.md`.
 
 `localMakerChecker` shape:
 ```json
@@ -93,7 +97,7 @@ You get **202** when:
 2. **Refund to a bank account** without complete bank details: PACO emails the customer to fill in their account details. Step `RI`.
 
 ### Getting the final refund result
-- **There is no backend notification for refunds.** The request accepts `refundNotificationURLs`, but don't rely on it: no callback is sent today.
+- **There is no backend notification for refunds.** Don't send `refundNotificationURLs`: it isn't used.
 - After **200**: the response is the result.
 - After **202**: follow up in the PACO Portal or by inquiry. `transactionStatus` lists **each refund as its own entry** (status `R`/`PCRP`), but without a refund number. With several refunds on one order, match them by status and `lastUpdatedDttm`.
 - Refund steps: `RP` → (approved) → `RF` refunded → `RS` refund settled. `RR` rejected, `RE` expired before approval.
@@ -107,9 +111,13 @@ You get **202** when:
 | `PC-B050096` | refunds by API not enabled for your company (off by default): ask 2C2P to enable |
 | `PC-B050042` | itemized refund not enabled for your company |
 | `PC-B050054` | bank account details required |
+| `PC-B054507` | refund items don't add up to the refund amount |
+| `PC-B053558` | `refundLinkExpiryDatetime` in the past: leave it out |
+| `PC-B054514` | `refundNote` too long or forbidden character |
+| `PC-T999999` | a value in the wrong format (UUID, date, URL) |
 
 ## Rules of thumb for generated code
 - Store `orderNo`, `controllerInternalId`, `approvalCode`, the latest `paymentStatus`/`paymentStep` and the settlement model for every payment.
 - **Cancel button logic:** step `PA`/`PS` → void. Step `ST` → refund. Anything else → not possible.
 - **Manual model:** call settlement when the order is fulfilled. Retry safely: on `PC-B050057` (already settled), treat it as done.
-- Make void/refund idempotent on your side: one API call per business action. Always send `localMakerChecker` on refunds.
+- Make void/refund idempotent on your side: one API call per business action. If a call times out, inquire before retrying (a blind refund retry can refund twice). Always send `localMakerChecker` on refunds.

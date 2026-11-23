@@ -10,7 +10,7 @@ One file per block in `kiro-questions/`. Send `0-shared.md` first, then one API 
 | `3-inquiry.md` ✅ answered 2026-11-23 → `references/fields/inquiry-*.md` | transactionStatus + transactionList | incl. 500 vs 5000 results, `UpldatedDate` typo |
 | `4-void.md` ✅ answered 2026-11-23 → `references/fields/void.md` | void | |
 | `5-settlement.md` ✅ answered 2026-11-23 → `references/fields/settlement.md` | settlement | incl. `Ticket` vs `ticket` |
-| `6-refund.md` | refund | |
+| `6-refund.md` ✅ answered 2026-11-23 → `references/fields/refund.md` | refund | |
 
 Field tables in the skill: `paco-integration/references/fields/*.md`. Regenerate with `tools/gen-field-spec.py`.
 How answers will be used: the skill states the limit and gives a recommendation. It never explains internal logic.

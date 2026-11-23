@@ -1,66 +1,91 @@
-# Refund: request fields
+# Refund: request (confirmed)
 
-`POST {base}/api/2.0/Refund/refund` · Source: Dev Zone reference (updated 2026-07-23), API v2.0.
-Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
-⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
+`POST {base}/api/2.0/Refund/refund` · API v2.0 · Rules confirmed by 2C2P (2026-11-23).
+JOSE in production, plain JSON allowed in UAT (`../authentication.md`). Responses (200 / 202), refund steps and how to track the result: `../post-payment.md`.
 
-| Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |
-|---|---|---|---|---|---|---|
-| `apiRequest` | **yes** | object |  |  |  |  |
-| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | Identifier that idenentify this specific message. Should globally unique but this is up to the cally party. Re-attempt of the same request should also has a … e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` **Confirmed:** new UUID per call; key spelled exactly `requestMessageID` (`../field-guide.md`) | |
-| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | Request DateTime e.g. `2023-08-29T09:12:34.001Z` **Confirmed:** UTC `yyyy-MM-ddTHH:mm:ss.fffZ` (`../field-guide.md`) | |
-| `apiRequest.language` |  | string |  |  | Value representing the preferred language as defined in IETF BCP47. Returned from navigator.language property. e.g. `en-US` **Confirmed:** ≤ 20, `ll-CC` e.g. `en-US` (`../field-guide.md`) | |
-| `officeId` | **yes** | string (paco-CODE) | ≤ 20 |  | Office ID **Confirmed:** exact office code from 2C2P (`../field-guide.md`) | |
-| `orderNo` | **yes** | string | ≤ 40 |  | Order No. (a.k.a Transaction Invoice No.) e.g. `684105191128073630` **Confirmed:** 1–40 of `A–Z a–z 0–9 - _ +` (≤ 35 for recurring) (`../field-guide.md`) | |
-| `productDescription` |  | string | ≤ 50 |  | Product Description (a.k.a. PNR) e.g. `URRT55` **Confirmed:** ≤ 50, one line, no emoji (`../field-guide.md`) | |
-| `issuerApprovalCode` |  | string | ≤ 20 |  | Issuer approval code that obtained from authorization e.g. `657300` **Confirmed:** not used: leave out (`../field-guide.md`) | |
-| `originalRefundAmount` |  | object |  |  | Refund amount in the base currency (used only for currency-conversion transactions). |  |
-| `originalRefundAmount.amountText` | **yes** | string | 12 |  | Authorization amount including leading zero. The decimal point is based on the currency exponent in ISO4217. (eg. If currency is THB, exponent is 2 so the la… e.g. `000000999950` |  |
-| `originalRefundAmount.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `originalRefundAmount.decimalPlaces` | **yes** | integer |  |  | The position of a digit to the right of the decimal point. For example, the number 1234.56 has 2 decimal places. e.g. `2` |  |
-| `originalRefundAmount.amount` | **yes** | number (double) |  |  | Converted amount in decimal number. Rouding may applied to fit decimalPlaces value. e.g. `9999.5` |  |
-| `refundAmount` |  | object |  |  | Refund amount submitted in either the base currency (for standard transactions) or the converted/cardholder currency (for currency-conversion transactions). … |  |
-| `refundAmount.amountText` | **yes** | string | 12 |  | Authorization amount including leading zero. The decimal point is based on the currency exponent in ISO4217. (eg. If currency is THB, exponent is 2 so the la… e.g. `000000999950` |  |
-| `refundAmount.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `refundAmount.decimalPlaces` | **yes** | integer |  |  | The position of a digit to the right of the decimal point. For example, the number 1234.56 has 2 decimal places. e.g. `2` |  |
-| `refundAmount.amount` | **yes** | number (double) |  |  | Converted amount in decimal number. Rouding may applied to fit decimalPlaces value. e.g. `9999.5` |  |
-| `refundItems` |  | array |  |  |  | max items |
-| `refundItems[].purchaseItemType` | **yes** | string |  | Ticket, Insurance |  |  |
-| `refundItems[].purchaseItemPriceBase` | **yes** | object |  |  |  |  |
-| `refundItems[].purchaseItemPriceBase.amountText` | **yes** | string | 12 |  | Authorization amount including leading zero. The decimal point is based on the currency exponent in ISO4217. (eg. If currency is THB, exponent is 2 so the la… e.g. `000000999950` |  |
-| `refundItems[].purchaseItemPriceBase.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `refundItems[].purchaseItemPriceBase.decimalPlaces` | **yes** | integer |  |  | The position of a digit to the right of the decimal point. For example, the number 1234.56 has 2 decimal places. e.g. `2` |  |
-| `refundItems[].purchaseItemPriceBase.amount` | **yes** | number (double) |  |  | Converted amount in decimal number. Rouding may applied to fit decimalPlaces value. e.g. `9999.5` |  |
-| `refundItems[].purchaseItemPriceQuote` |  | object |  |  |  |  |
-| `refundItems[].purchaseItemPriceQuote.amountText` | **yes** | string | 12 |  | Authorization amount including leading zero. The decimal point is based on the currency exponent in ISO4217. (eg. If currency is THB, exponent is 2 so the la… e.g. `000000999950` |  |
-| `refundItems[].purchaseItemPriceQuote.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `refundItems[].purchaseItemPriceQuote.decimalPlaces` | **yes** | integer |  |  | The position of a digit to the right of the decimal point. For example, the number 1234.56 has 2 decimal places. e.g. `2` |  |
-| `refundItems[].purchaseItemPriceQuote.amount` | **yes** | number (double) |  |  | Converted amount in decimal number. Rouding may applied to fit decimalPlaces value. e.g. `9999.5` |  |
-| `refundToBankAccount` |  | object |  |  | Bank account details. Required when PSP profile has IsBankDetailsRequired enabled. When required, all fields (clientEmail, bankId, accountName, accountNumber… |  |
-| `refundToBankAccount.clientEmail` |  | string (paco-Email) |  |  | E-mail address of client e.g. `John@2c2p.com` | format paco-Email, length |
-| `refundToBankAccount.bankId` |  | string (paco-CODE) |  |  | Bank Id | format paco-CODE, length |
-| `refundToBankAccount.accountName` |  | string (paco-NameTitle) |  |  | Bank account name e.g. `John Walker` | format paco-NameTitle, length |
-| `refundToBankAccount.accountNumber` |  | string (paco-CODE) |  |  | Bank account number e.g. `0043966810385` | format paco-CODE, length |
-| `refundNotificationURLs` |  | object |  |  |  |  |
-| `refundNotificationURLs.confirmationURL` |  | string (paco-URL) |  |  | After payment is processed successful, redirect and send response back to Confirmation URL. e.g. `http://.../ConfirmationURL.aspx` | format paco-URL, length |
-| `refundNotificationURLs.failedURL` |  | string (paco-URL) |  |  | If payment is failed, redirect and send response back to Failed URL. e.g. `http://.../ErrorURL.aspx` | format paco-URL, length |
-| `refundNotificationURLs.cancellationURL` |  | string (paco-URL) |  |  | If payment is cancelled by end-customer, redirect and send response back to Cancellation URL. e.g. `http://.../CancellationURL.aspx` | format paco-URL, length |
-| `localMakerChecker` |  | object |  |  | Local Maker/Checker name of the actor(s) that will be tracked in audit log. Required for all refund requests. |  |
-| `localMakerChecker.maker` | **yes** | object |  |  | Human actor that perform action on the system such as refunding a payment transaction. |  |
-| `localMakerChecker.maker.username` | **yes** | string (paco-UserName) |  |  | Username of a user that supposed to be unique within an organization. This info will be used for auditing purpose and will only be validated if there is a ma… e.g. `John` | format paco-UserName, length |
-| `localMakerChecker.maker.email` |  | string | ≤ 100 |  | E-Mail e.g. `John@2c2p.com` |  |
-| `localMakerChecker.checker` |  | object |  |  | Human actor that perform action on the system such as refunding a payment transaction. |  |
-| `localMakerChecker.checker.username` | **yes** | string (paco-UserName) |  |  | Username of a user that supposed to be unique within an organization. This info will be used for auditing purpose and will only be validated if there is a ma… e.g. `John` | format paco-UserName, length |
-| `localMakerChecker.checker.email` |  | string | ≤ 100 |  | E-Mail e.g. `John@2c2p.com` |  |
-| `pspMakerChecker` |  | object |  |  | Some PSP may required Maker/Checker information when doing refund. The username will represents unique maker ID/Key on the PSP side in which it must be regis… |  |
-| `pspMakerChecker.maker` | **yes** | object |  |  | Human actor that perform action on the system such as refunding a payment transaction. |  |
-| `pspMakerChecker.maker.username` | **yes** | string (paco-UserName) |  |  | Username of a user that supposed to be unique within an organization. This info will be used for auditing purpose and will only be validated if there is a ma… e.g. `John` | format paco-UserName, length |
-| `pspMakerChecker.maker.email` |  | string | ≤ 100 |  | E-Mail e.g. `John@2c2p.com` |  |
-| `pspMakerChecker.checker` |  | object |  |  | Human actor that perform action on the system such as refunding a payment transaction. |  |
-| `pspMakerChecker.checker.username` | **yes** | string (paco-UserName) |  |  | Username of a user that supposed to be unique within an organization. This info will be used for auditing purpose and will only be validated if there is a ma… e.g. `John` | format paco-UserName, length |
-| `pspMakerChecker.checker.email` |  | string | ≤ 100 |  | E-Mail e.g. `John@2c2p.com` |  |
-| `refundLinkExpiryDatetime` |  | string (date-time) |  |  | Custom expiry datetime for the refund payout link. If not provided, the system uses the company-configured default. |  |
-| `customFieldList` |  | array |  |  | Additonal auxiliary information of the payment transaction. Mostly for informative purpose alone. | max items |
-| `customFieldList[].fieldName` | **yes** | string | ≤ 30 |  | e.g. `ExternalID5` |  |
-| `customFieldList[].fieldValue` | **yes** | string | ≤ 500 |  | e.g. `AMADEUS` |  |
-| `refundNote` |  | string |  |  | Optional note for the refund request. | length |
+- **Refunds by API are off by default.** 2C2P must enable them for your company, otherwise `PC-B050096`.
+- Only for **settled** payments (step `ST`). Before settlement → void (`PC-B050053`).
+- Partial refunds can be repeated, up to the settled amount and **at most 99 refunds per payment**.
+- A value in the wrong format (bad UUID, date or URL) fails the whole request with the generic `PC-T999999`. Validate before sending.
+
+## Request
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `apiRequest` | `requestMessageID` (UUID) + `requestDateTime` (ISO UTC), as on every call (`../field-guide.md`) | send it | must be a valid UUID / date if sent, else `PC-T999999` |
+| `officeId` | the payment's office code | **yes**, non-empty | send the same `officeId` you used for the payment. Missing → `PC-B050410`. |
+| `orderNo` | 1–40 of `A–Z a–z 0–9 - _ +`, exact, case-sensitive | **yes** | missing `PC-B050015` · bad format `PC-B050004` · not refundable `PC-B050053` |
+| `refundAmount` | amount object (`../field-guide.md`), > 0, **same currency as the payment**, ≤ settled minus already refunded | **yes** for normal payments | missing, wrong currency, ≤ 0 or too high → `PC-B050040` |
+| `originalRefundAmount` | amount object in your **base (pricing) currency**, ≤ what's still refundable | **only for currency-conversion (DCC/MCP) payments** | don't send for normal payments. Missing / wrong currency / too high → `PC-B050040`. |
+| `localMakerChecker` | who requested (and approved) the refund | **yes, always** | see below. Missing → `PC-B050039`. |
+| `refundItems` | see below | for a **partial refund of a payment with purchase items** | leave out for a full refund |
+| `refundToBankAccount` | see below | only for refunds paid by **bank transfer** | leave out for card refunds |
+| `refundNote` | ≤ 150 (after trimming spaces). **Not allowed: `; < > & / \ "`** | no | `PC-B054514`. Other special characters come back HTML-encoded (`'` → `&#39;`). |
+| `productDescription` | ≤ 50 (longer is cut) | no | shown in the e-mail for bank-transfer refunds |
+| `refundLinkExpiryDatetime` | ISO 8601 with `Z` or an offset (none = UTC), **must be in the future** | no | **Leave it out** (2C2P sets a default per account). A past value fails **every** refund, card refunds too (`PC-B053558`). |
+| `refundNotificationURLs` | not used | – | **Don't send it.** No refund callback is sent, and an invalid URL here fails the whole refund (`PC-T999999`). |
+| `pspMakerChecker` | not used | – | leave out |
+| `customFieldList` | not used (not stored) | – | leave out |
+| `issuerApprovalCode` | not used | – | leave out |
+
+Minimum request (normal card payment, partial refund of 25.00 THB):
+```json
+{
+  "apiRequest": { "requestMessageID": "<uuid>", "requestDateTime": "<ISO UTC now>" },
+  "officeId": "<your office>",
+  "orderNo": "ORD123",
+  "refundAmount": { "amount": 25.0, "amountText": "000000002500", "currencyCode": "THB", "decimalPlaces": 2 },
+  "localMakerChecker": { "maker": { "username": "shop-backoffice" } }
+}
+```
+
+## `localMakerChecker`
+| Field | Rule | Do this |
+|---|---|---|
+| `maker.username` | ≤ 80, any characters | **always required** (`PC-B050039`). Your admin's login, or your system's name for automated refunds. ≤ 50 recommended. |
+| `maker.email` | valid e-mail | optional. Invalid → `PC-B051939`. ≤ 100 recommended. |
+| `checker` | the approver | optional. If sent, `checker.username` (≤ 80) is required. |
+| `checker.email` | valid e-mail | optional |
+
+## `refundItems` (payments with purchase items)
+- **Full refund: leave it out.**
+- **Partial refund of a payment with purchase items: required.**
+
+| Field | Rule | If wrong |
+|---|---|---|
+| `refundItems` | each type once; item prices **add up to the refund amount** | duplicate type `PC-B050087` · sum ≠ amount `PC-B054507` |
+| `[].purchaseItemType` | ≤ 50, a type **settled on that payment** (case doesn't matter) | missing `PC-B050087` · not settled `PC-B050041` |
+| `[].purchaseItemPriceBase` | amount object, same currency and decimals as the refund amount, ≤ that item's settled minus already refunded | currency `PC-B050006` · decimals `PC-B050093` · too high `PC-B050040` |
+| `[].purchaseItemPriceQuote` | not needed | leave out |
+
+## `refundToBankAccount` (bank-transfer refunds)
+Needed only for payment methods that refund by bank transfer (e.g. counter/cash payments). Which methods those are is set by 2C2P: ask the PO. For card refunds, leave the object out. If you send it, `clientEmail` is always checked.
+
+| Field | Rule | Do this |
+|---|---|---|
+| `clientEmail` | ASCII e-mail (`name@domain`) | required when the object is sent (`PC-B051939`). ≤ 100 recommended. |
+| `bankId` | **a 2C2P bank ID in UUID form**, not a bank code like `002` | get the list from 2C2P. Not a UUID → `PC-T999999`. |
+| `accountName` | ≤ 150, Thai allowed | ≤ 100 recommended |
+| `accountNumber` | ≤ 30 | digits only, no `-` or spaces |
+
+Missing bank details where they're required → `PC-B050054` (or PACO e-mails the customer to fill them in: HTTP 202, step `RI`).
+
+## Errors
+| Code | Meaning | Do this |
+|---|---|---|
+| `PC-B050096` | refunds by API not enabled | ask 2C2P to enable them |
+| `PC-B050053` | payment can't be refunded (e.g. not settled) | inquire: `PA`/`PS` → void |
+| `PC-B050040` | refund amount missing, wrong currency, ≤ 0 or more than what's left | check settled minus already refunded |
+| `PC-B050039` | `localMakerChecker` / `maker.username` missing | send it on every refund |
+| `PC-B051939` | invalid e-mail | fix the e-mail field |
+| `PC-B054507` | refund items don't add up to the refund amount | |
+| `PC-B050041` / `PC-B050087` | item type not on the payment / missing or duplicated | |
+| `PC-B050054` | bank account details required | send `refundToBankAccount` |
+| `PC-B053558` | `refundLinkExpiryDatetime` is in the past | leave it out |
+| `PC-B054514` | `refundNote` too long or has a forbidden character | ≤ 150, no `; < > & / \ "` |
+| `PC-B050410` | `officeId` missing | send the payment's office |
+| `PC-T999999` | a value in the wrong format (UUID, date, URL), or a text too long (username > 80, account number > 30) | validate before sending; don't send `refundNotificationURLs` |
+
+## Good practice
+- Inquire first: refund only at step `ST`.
+- One refund call per business action. If a call times out, **inquire before retrying**: refunds are separate entries in `transactionStatus`, so a blind retry can refund twice.
+- Keep your own refund log (amount, time, maker): the 99-per-payment limit and "what's left to refund" are easy to check on your side.
