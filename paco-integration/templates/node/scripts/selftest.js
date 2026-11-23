@@ -149,6 +149,9 @@ try {
   inquiryState.set(j1.orderNo, [entry(j1.orderNo, 'R', 'RS'), entry(j1.orderNo, 'S', 'ST'), entry(j1.orderNo, 'F', 'PR')]);
   page = await (await fetch(`${base}/payment/result?orderNo=${j1.orderNo}`)).text();
   ok(page.includes('<b>S / ST</b>') && page.includes('Payment successful'), 'picks the first non-refund entry (S/ST), not data[0] (refund)');
+  inquiryState.set(j1.orderNo, [entry(j1.orderNo, 'S', 'RR'), entry(j1.orderNo, 'S', 'ST')]);
+  page = await (await fetch(`${base}/payment/result?orderNo=${j1.orderNo}`)).text();
+  ok(page.includes('<b>S / ST</b>'), 'rejected refund (step RR, status not R) is recognised by its step, not taken as the payment');
 
   console.log('\n2c) unknown orderNo');
   page = await (await fetch(`${base}/payment/result?orderNo=NOPE123`)).text();

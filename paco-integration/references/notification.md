@@ -116,8 +116,8 @@ Other steps can appear (e.g. `TA`, `TI`, `TS` for airline ticketing). On an unkn
       "paymentExpiryDateTime": "…", "userDefined1": "…" }
   ] }
 ```
-- **`data` is an array.** One entry per payment attempt with this `orderNo` (a failed try plus a retry = 2 entries), **newest first**. **Every refund is a separate entry** with its own `paymentStatusInfo` (status `R` / `PCRP`). Refund entries have **no `refundNo`**.
-- **Don't just take `data[0]`.** It may be a refund. To get the payment's status: take the **first entry whose `paymentStatus` is not `R` or `PCRP`**. Refund entries tell you about refunds.
+- **`data` is an array.** One entry per payment attempt with this `orderNo` (a failed try plus a retry = 2 entries), **newest attempt first**. **Every refund is a separate entry** with the same `orderNo` / `controllerInternalId` and its own `paymentStatusInfo`. The entry with the most recent change comes first, so a refund can come before its payment. Refund entries have **no refund number**. [2C2P confirmed]
+- **Don't just take `data[0]`.** It may be a refund. To get the payment's status: take the **first entry whose `paymentStep` is not a refund step** (`RI`, `RP`, `RP2`, `RP3`, `RF`, `RS`, `RR`, `RE`, `RX`). Check the step, not the status: a rejected refund may not carry status `R`/`PCRP`. Full guide: `responses/inquiry.md`.
 - `apiResponse` is about this inquiry call. `priorPaymentResponseDetails.responseCode` is the result of the payment attempt itself.
 - An unpaid payment past its `paymentExpiryDateTime` is reported as `F` / step `PT` (payment timeout).
 - Field names here: **`controllerInternalId`** (lower-case `d`) and `paymentStatusInfo.lastUpdatedDttm`. Payment responses and notifications use `controllerInternalID` and `lastUpdatedDateTime` (`responses/shared.md`). [2C2P confirmed]
@@ -127,6 +127,8 @@ Other steps can appear (e.g. `TA`, `TI`, `TS` for airline ticketing). On an unkn
 | HTTP 400 `PC-B052201` | `orderNo` not valid or doesn't exist (wrong environment? wrong company key?) |
 | HTTP 401 `PC-B050088` | API key missing or wrong |
 | `PC-T999999` | `orderNo` empty or not in the allowed format |
+
+`transactionStatus` has **no amounts, payment type or approval code**: get those from `transactionList` (`responses/inquiry.md`).
 
 `POST /api/2.0/Inquiry/transactionList` (JOSE) returns lists for reports and reconciliation: **max 500 per call, no paging** (split by date window), newest first. By default it searches the last 12 months. Wrong filter values are ignored without an error, and some documented filters aren't supported: read `fields/inquiry-transactionlist.md` before using it. [2C2P confirmed]
 

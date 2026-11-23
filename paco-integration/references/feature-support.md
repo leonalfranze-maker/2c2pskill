@@ -31,7 +31,7 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | Purchase items / itemized, sub-merchants | ✅ | **Yes: item types are configured per merchant** | Without configured types, don't send purchase items (`PC-B050041`). Items must add up to the amount. Not with DCC. |
 | Custom fields (`customFieldList`) | ⚠️ | No | Not returned by `transactionStatus`. Read them from the notification or `transactionList`. |
 | Backend notification | ✅ | No | Sent once, no retry (`notification.md`) |
-| Inquiry `transactionStatus` | ✅ | No | Confirms one payment. Your `orderNo` only (not the 2C2P invoice number). |
+| Inquiry `transactionStatus` | ✅ | No | Confirms one payment. Your `orderNo` only (not the 2C2P invoice number). No amounts, payment type or approval code (use `transactionList`). No refund number in either inquiry: store it from the refund response. |
 | Inquiry `transactionList` (reports) | ⚠️ | No | Max **500 per call, no paging**: split by date. May lag a little. Not filterable by `referenceNo`, `pspMerchantId`, `amountType`, `currencyCode`, `statementDescriptor`, `transactionInitiator`, `previousPaymentID`: filter the results yourself. `orderNo` matches by prefix. |
 | Void (full) | ✅ | Depends on settlement model | Only before settlement |
 | **Void (partial)** | ❌ | – | `voidAmount` / `voidItems` are ignored: void always cancels the full amount. For part of the money, settle less or refund later. |

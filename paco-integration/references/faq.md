@@ -42,7 +42,7 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **Why don't I see the OTP page?** 3DS depends on `request3dsFlag` and your office setting. `"Y"` requests 3DS, but the card can still pass without a challenge. → `testing-uat.md`
 
-**How do I check a payment's real status?** `GET /api/2.0/Inquiry/transactionStatus?orderNo=…` with your `apiKey` header (plain JSON, even in production). `data` is an **array**: retries and refunds each have their own entry, newest first. Use the first entry that isn't a refund (`R`/`PCRP`). → `notification.md`
+**How do I check a payment's real status?** `GET /api/2.0/Inquiry/transactionStatus?orderNo=…` with your `apiKey` header (plain JSON, even in production). `data` is an **array**: retries and refunds each have their own entry, newest first. Use the first entry whose `paymentStep` isn't a refund step (`RI`, `RP…`, `RF`, `RS`, `RR`, `RE`, `RX`). → `responses/inquiry.md`
 
 **Do I need the EMV 3DS guides on the Dev Zone?** No for `/prePaymentUi` (the payment page handles 3DS) and no for `/nonUi` when PACO does 3DS. Only if you authenticate cards with your own 3DS provider and send the results to `/nonUi`. → `payment-apis.md`
 

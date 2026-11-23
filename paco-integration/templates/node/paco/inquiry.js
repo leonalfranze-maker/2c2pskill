@@ -1,8 +1,11 @@
 // Inquiry = the source of truth for a payment's status.
 // GET /api/2.0/Inquiry/transactionStatus?orderNo=...  (apiKey header, plain JSON in UAT and PRD, no officeId)
-// `data` is an ARRAY, newest first: one entry per payment attempt, plus one entry per refund (status R / PCRP).
+// `data` is an ARRAY: payment attempts newest first; each attempt is followed or preceded by one entry per refund
+// (the entry with the most recent change comes first). Refund entries are recognised by their STEP:
+// a rejected refund may not carry status R / PCRP. Refund entries have no refund number.
 
-const REFUND_STATUSES = new Set(['R', 'PCRP']);
+const REFUND_STEPS = new Set(['RI', 'RP', 'RP2', 'RP3', 'RF', 'RS', 'RR', 'RE', 'RX']);
+const isRefund = (e) => REFUND_STEPS.has(e?.paymentStatusInfo?.paymentStep);
 const PAID = new Set(['A', 'S']);
 const NOT_PAID = new Set(['F', 'C', 'E', 'V']);
 
@@ -25,11 +28,11 @@ export async function inquireOrder(orderNo, { cfg }) {
   return interpretInquiry(body);
 }
 
-/** Pick the payment entry (first non-refund entry) and classify it. Exported for tests. */
+/** Pick the payment entry (first entry whose step is not a refund step) and classify it. Exported for tests. */
 export function interpretInquiry(body) {
   const entries = body.data;
-  const payment = entries.find((e) => !REFUND_STATUSES.has(e?.paymentStatusInfo?.paymentStatus));
-  const refunds = entries.filter((e) => REFUND_STATUSES.has(e?.paymentStatusInfo?.paymentStatus));
+  const payment = entries.find((e) => !isRefund(e));
+  const refunds = entries.filter(isRefund);
   const paymentStatus = payment?.paymentStatusInfo?.paymentStatus;
   const outcome = PAID.has(paymentStatus) ? 'PAID' : NOT_PAID.has(paymentStatus) ? 'NOT_PAID' : 'PENDING';
   return { found: Boolean(payment), paymentStatus, paymentStep: payment?.paymentStatusInfo?.paymentStep, outcome, payment, refunds, raw: body };

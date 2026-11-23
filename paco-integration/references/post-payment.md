@@ -99,7 +99,10 @@ You get **202** when:
 ### Getting the final refund result
 - **There is no backend notification for refunds.** Don't send `refundNotificationURLs`: it isn't used.
 - After **200**: the response is the result.
-- After **202**: follow up in the PACO Portal or by inquiry. `transactionStatus` lists **each refund as its own entry** (status `R`/`PCRP`), but without a refund number. With several refunds on one order, match them by status and `lastUpdatedDttm`.
+- After **202**: follow up in the PACO Portal or by inquiry. `transactionStatus` lists **each refund as its own entry** (recognise it by a refund step), but **neither inquiry API returns the refund number**. So:
+  - **store `refundNo` (`orderNo-R01`, …) from the refund response**, with its amount and result;
+  - when you need to follow a pending refund by inquiry, **make refunds on one order one at a time** and read the newest refund-step entry.
+  - `transactionList` `refundableAmount` shows what's still refundable (a hint; the refund API has the final say).
 - Refund steps: `RP` → (approved) → `RF` refunded → `RS` refund settled. `RR` rejected, `RE` expired before approval.
 
 | Error | Meaning |

@@ -1,6 +1,6 @@
 # Responses: rules for every API (confirmed)
 
-API v2.0 · Confirmed by 2C2P (2026-11-23). Per-API "what to use" guides: `prepaymentui.md`, `nonui.md` (more follow: inquiry, post-payment).
+API v2.0 · Confirmed by 2C2P (2026-11-23). Per-API "what to use" guides: `prepaymentui.md`, `nonui.md`, `inquiry.md` (more follow: post-payment).
 Use this file to read **any** PACO response and to explain it to the merchant.
 
 ## 1. Decide the result from `responseCode`, not the HTTP status
