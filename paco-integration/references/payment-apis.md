@@ -94,8 +94,10 @@ Full confirmed rules for every field: **`fields/prepaymentui.md`**.
 |---|---|
 | `cardNumber` | 13–19 digits (`PC-B050007`) |
 | `cardExpiryMMYY` | 4 chars MMYY (`PC-B050009`) |
-| `cvvCode` | ≤ 3 (`PC-B050008`) |
-| `cardHolderName` | 2–45 chars, **English letters and spaces only** (`PC-B050085`), not all digits (`PC-B050089`) |
+| `cvvCode` | 3 or 4 digits, Amex CID OK (`PC-B050008`) |
+| `cardHolderName` | ≤ 45, **English letters only** (non-Latin letters are removed, longer is cut), not all digits (`PC-B050089`) |
+
+Full confirmed rules (card, 3DS, device data, DCC/MCP, merchant-initiated): **`fields/nonui.md`**.
 
 Responses:
 - **200**: complete → `data.paymentResult` (status, approval code, masked card, PSP response). Still **confirm with the Inquiry API** before fulfilling the order.
@@ -111,7 +113,7 @@ Responses:
 | Setup | What the merchant does |
 |---|---|
 | PACO handles 3DS (default) | Send card data + `request3dsFlag`. If a challenge is needed, PACO answers **HTTP 202**. Send the customer to `paymentPageURL`, or render the challenge from `aresACSChallenge`. |
-| Merchant already authenticated the card with its own 3DS provider | Send the results in `creditCardDetails`: `eciValue`, `cAvvValue`, `dsTransID`, `threeDSServerTransID`, `authentication3DSVersion` (e.g. `2.2.0`), `authenticationStatus` (+ optional `xidValue`, `acsTransId`, `sdkTransId`, `authenticationStatusReason`). With `dsTransID` + `eciValue` + `cAvvValue` + `authentication3DSVersion` all present, PACO skips its own 3DS. |
+| Merchant already authenticated the card with its own 3DS provider | Send the results in `creditCardDetails`: `eciValue`, `cAvvValue`, `dsTransID`, `threeDSServerTransID`, `authentication3DSVersion` (e.g. `2.2.0`), `authenticationStatus` (+ optional `xidValue`, `acsTransId`, `sdkTransId`, `authenticationStatusReason`). With `dsTransID` + `eciValue` + `cavvValue` + `authentication3DSVersion` all present, PACO skips its own 3DS. ECI as 2 digits (`05`). |
 
 Errors: full/attempt ECI without CAVV → `PC-B050010`. `dsTransID` without version → `PC-B050076`.
 

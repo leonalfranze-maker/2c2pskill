@@ -39,6 +39,12 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B051402` | payment type not supported | the `paymentType` isn't available for this payment. Check `availablePaymentTypes`. |
 | `PC-B052201` | inquiry: orderNo not valid or doesn't exist | check `orderNo`, environment (UAT vs PRD) and API key |
 | `PC-B050076` | invalid 3DS version | `/nonUi` with external 3DS: send `authentication3DSVersion` with `dsTransID` |
+| `PC-B050007` / `08` / `09` (nonUi) | card number / CVV / expiry | 13–19 digits; CVV 3–4 digits (or `-` only where allowed); `MMYY` not expired (`fields/nonui.md`) |
+| `PC-B050010` (nonUi, external 3DS) | authenticated/attempted ECI sent without CAVV | send `cavvValue` with `eciValue` |
+| `PC-B050019` | currency conversion type not supported | `DCC` or `MCP` only (not `MCC`) |
+| `PC-B054201` / `PC-B054204` / `PC-B054205` / `PC-B054206` | DCC/MCP: missing quote ID / same-currency amounts differ / amounts don't match the quote / missing `originalTransactionAmount` | `fields/nonui.md` → Currency conversion |
+| `PC-B055501` / `PC-B055502` / `PC-B055503` | merchant-initiated payment: bad or missing `previousPaymentId` / 3DS requested with `M` | `fields/nonui.md` → Merchant-initiated |
+| `PC-B052010` | `terminalId` doesn't match your setup | leave `terminalId` out |
 | `PC-B050033` | duplicate payment | this `orderNo` already has an approved/settled/voided payment, or one still in progress. See *orderNo reuse* in `payment-apis.md`. |
 | `PC-B050030` | 3DS authentication failed | customer failed OTP. Show failed, allow retry. |
 | `PC-B050031` / `PC-B050032` | authorization failed / call to acquirer failed | declined or acquirer down. Show failed. |

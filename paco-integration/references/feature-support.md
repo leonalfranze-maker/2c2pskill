@@ -24,9 +24,9 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | Installments (IPP) | ✅ | Yes: installment plans | Can't be combined with recurring. Settle in full only. |
 | Recurring (RPP) | ⚠️ | Yes, and the office must use **auto** settlement | **Cards only.** The first charge's `orderNo` becomes `<orderNo>-0001`: use that value for inquiry, void and refund. |
 | Saved cards / tokenization | ⚠️ | **Yes** | Use `tokenizeFlag` `Y` or `F` only. If not enabled, `Y` silently becomes a normal payment and `F` is rejected. |
-| Currency conversion: MCP | ✅ | Yes | |
-| Currency conversion: DCC | ⚠️ ❓ | Yes | May not work with every acquirer: confirm with 2C2P before building |
-| Currency conversion: MCC | ❓ | Yes | Confirm with 2C2P before building |
+| Currency conversion: MCP | ✅ | Yes | Needs a rate-quote `messageId`: ask 2C2P how to get it before building |
+| Currency conversion: DCC | ⚠️ ❓ | Yes | May not work with every acquirer. Needs a rate-quote `messageId` and `originalTransactionAmount`. Confirm with 2C2P before building. |
+| Currency conversion: MCC | ❌ on `/nonUi` (`PC-B050019`) · ❓ elsewhere | – | Use DCC or MCP |
 | Airline data | ✅ | No | Send `billingAddress` too. The flag is `bypassForwarding`. |
 | Purchase items / itemized, sub-merchants | ✅ | **Yes: item types are configured per merchant** | Without configured types, don't send purchase items (`PC-B050041`). Items must add up to the amount. Not with DCC. |
 | Custom fields (`customFieldList`) | ⚠️ | No | Not returned by `transactionStatus`. Read them from the notification or `transactionList`. |
