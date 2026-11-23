@@ -102,6 +102,18 @@ For each missing 2C2P item, the AI offers a ready-to-send ticket/email draft.
 - AI runs `npm run try`. Expected: a `paymentPageURL`.
 - On failure, the AI uses the diagnosis table (TLS reset → IP allowlist; access denied → apiKey; field error → which field) and offers a ticket draft when it's on 2C2P's side.
 
+### After every test call: explain the result (proposed 2026-11-23, waiting for Max's go)
+Goal: the merchant fires a call, gets a response, and the AI immediately says **what to use from it**, in plain words.
+For each response the AI covers, briefly:
+1. **Result in one line**: worked or not, and what it means (e.g. "`PC-B050000` here = page created, not paid").
+2. **Use this now**: the 1–3 fields that drive the next step (prePaymentUi → `paymentPageURL`: redirect the customer there).
+3. **Store this**: what to save on the order (`orderNo`, `controllerInternalID`, …).
+4. **Ignore for now**: fields they don't need yet, in one line.
+5. **Next step**: the next command or code change.
+On an error: the code, the field named, and the fix (`troubleshooting.md`).
+Source: new `references/responses/<api>.md` (one per API, written after Kiro's answers in `kiro-questions/responses/`).
+`try.js` may also print a short "Use this / Store this" block under the raw JSON.
+
 ### Step 5: Full payment
 - AI starts the server and tells the user to open the checkout page, click Pay, and use test card `4111111111111111`, CVV `123`, OTP `123456`.
 - AI confirms the backend notification arrived and the order shows the right status. **Done = success page + backend status confirmed.**
