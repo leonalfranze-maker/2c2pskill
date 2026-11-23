@@ -1,12 +1,15 @@
 // Offline end-to-end test of OUR side against a local MOCK of PACO.
 // Proves: request shape (required fields), JOSE sign+encrypt, response decrypt+verify,
 // paymentPageURL extraction, backend notification handling.
-// It does NOT prove PACO accepts our JOSE headers. Only a real UAT call can (see GAPS.md).
+// It does NOT prove PACO accepts your JOSE setup. Only a real UAT call with JOSE on can.
 import http from 'node:http';
 import net from 'node:net';
 import { generateKeyPairSync } from 'node:crypto';
 import * as jose from 'jose';
-import { startServer } from '../server.js';
+import { startServer, CATALOG } from '../server.js';
+import { buildAmount } from '../paco/prepayment.js';
+// Uses the first product of YOUR catalog, so it keeps working after you replace the demo products.
+const [PRODUCT_ID, PRODUCT] = Object.entries(CATALOG)[0];
 import { loadKeys } from '../paco/jose.js';
 import { payNonUi } from '../paco/prepayment.js';
 
@@ -103,11 +106,12 @@ const base = cfg.publicBaseUrl;
 
 try {
   console.log('\n1) checkout -> prePaymentUi');
-  const r1 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: 'demo-mug', amount: 0.01 }) }); // amount from the browser must be ignored
+  const r1 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: PRODUCT_ID, amount: 0.01 }) }); // amount from the browser must be ignored
   const j1 = await r1.json();
   ok(r1.status === 200, `HTTP 200 (got ${r1.status} ${JSON.stringify(j1).slice(0, 200)})`);
   ok(j1.paymentPageURL?.startsWith('https://mock-paco.invalid/'), 'paymentPageURL returned: ' + j1.paymentPageURL);
-  ok(lastRequest.transactionAmount.amountText === '000000005050', 'price from the server catalog (50.50 THB -> 000000005050), browser amount ignored');
+  const expected = buildAmount(PRODUCT.amount, cfg.currencyCode).amountText;
+  ok(lastRequest.transactionAmount.amountText === expected, `price from the server catalog (${PRODUCT.amount} ${cfg.currencyCode} -> ${expected}), browser amount ignored`);
   const bad = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: 'nope' }) });
   ok(bad.status === 400, 'unknown product rejected');
   ok(lastRequest.officeId === OFFICE && lastRequest.orderNo.length <= 40, 'officeId + orderNo ok');
@@ -139,12 +143,12 @@ try {
 
   console.log('\n3) error path: PACO rejects');
   cfg.officeId = '';
-  const r3 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: 'demo-tshirt' }) });
+  const r3 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: PRODUCT_ID }) });
   ok(r3.status === 502, 'PACO error surfaced to frontend as 502 with details');
 
   console.log('\n4) UAT plain-JSON debug mode (no JOSE)');
   cfg.officeId = OFFICE; cfg.plainJson = true;
-  const r4 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: 'demo-tshirt' }) });
+  const r4 = await fetch(`${base}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: PRODUCT_ID }) });
   const j4 = await r4.json();
   ok(r4.status === 200 && j4.paymentPageURL, 'paymentPageURL returned without JOSE');
 

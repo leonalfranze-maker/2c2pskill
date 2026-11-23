@@ -8,7 +8,6 @@
 //              verify with PACO signing public key
 //              claims: iss = "PacoIssuer", aud = apiKey
 //
-// Items marked GAP are not fully specified in the public docs. See /GAPS.md.
 
 import * as jose from 'jose';
 

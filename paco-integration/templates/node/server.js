@@ -1,5 +1,7 @@
 // Minimal merchant backend for PACO /prePaymentUi. Zero framework, Node >= 20.6.
 // Replace the in-memory CATALOG and `orders` with your product data and database.
+// Merging into an existing app: copy the 3 routes below into your server (Express etc.), keep
+// `export { CATALOG, startServer }` working so `npm run selftest` can run, or adapt selftest.js.
 //
 //   GET  /                      checkout page (public/index.html)
 //   GET  /api/products          products and prices (from the SERVER, never from the browser)

@@ -18,7 +18,7 @@ When the skill starts, reply with exactly these three options, in the user's lan
 > 2. **Get a slide deck** explaining how a PACO integration works, ready to share with your team
 > 3. **Integrate with the PACO API**: I'll guide you step by step, write the code in your project, and test it with you in the sandbox
 
-If the user's first message already asks something specific, skip the menu and help them directly, then mention the other options once.
+If the user's first message already clearly picks one of the three (e.g. "I want to connect my shop to PACO" = option 3) or asks a specific question, skip the menu, go straight to it, and mention the other options in one line.
 
 **After they pick**, set the depth with one question (skip it if their message already makes it obvious):
 > Which describes you best? **(a)** business / project side · **(b)** developer, new to payment gateways · **(c)** developer who has integrated payment APIs before
@@ -96,18 +96,20 @@ Afterwards, say where the file is, how many items are still to fill, and offer o
 
 Work in small steps. Stop after each step until it works. Keep a visible checklist of where the user is.
 
-**Step 1: Check prerequisites.** Show the checklist from `prerequisites.md` and ask which items they have. Don't ask for values. Missing items go on the PO list. Confirm the stack (v1 template: **Node.js ≥ 20**). For another stack, explain the flow from the references and port the template's logic carefully. Say it hasn't been tested on that stack.
+**Step 1: Check prerequisites.** Show the checklist from `prerequisites.md` and ask which items they have. Don't ask for values. Missing items go on the PO list. Confirm the stack (v1 template: **Node.js ≥ 20.6**). For another stack, explain the flow from the references and port the template's logic carefully. Say it hasn't been tested on that stack.
 
 **Step 1b: Check the features they need.** Ask what they want to offer (cards only? QR/wallets? installments? saved cards? refunds from their back office? partial capture?). Look each up in `feature-support.md` **before building anything**. State ❌ and ⚠️ limits up front, and add every "ask 2C2P first" item they haven't confirmed to the PO list. Example: refunds by API are off by default.
 
 **Step 2: Pick the flow.** Recommend `/prePaymentUi` (section 2, rule 8) unless they already run a PCI-compliant card form.
 
-**Step 3: Set up the project.** Copy `templates/node/` into their project. Create `.env` from `.env.example` with empty values, then tell them:
+**Step 3: Set up the project.**
+- **New/empty project:** copy `templates/node/` in.
+- **Existing project:** don't overwrite their files. Copy `paco/` and `scripts/` in, merge the template's npm scripts, `engines` and the `jose` dependency into their `package.json`, and add the template's three routes (`/api/checkout`, `/paco/notification`, `/payment/result`) to their server, using their own products as the catalog. Keep the template's README as `PACO-README.md`. Create `.env` from `.env.example` with empty values, then tell them:
 > I've created `.env` in your project. Open it, paste your **API key** after `PACO_API_KEY=` and your **Office ID** after `PACO_OFFICE_ID=`, save, and tell me "done". Please don't paste them here.
 
-On "done", run `npm run doctor`.
+If they don't have PACO's public keys yet, set `PACO_UAT_PLAIN_JSON=true` in `.env` (UAT only) so the first call can work without keys. On "done", run `npm run doctor`.
 
-**Step 4: First UAT call.** On the allowlisted machine, run the tester to create a payment page (`npm run try -- prepayment`).
+**Step 4: First UAT call.** First check **where the command will run**: it must be the machine whose IP 2C2P allowlisted. If you (the assistant) run in a different environment, such as a cloud sandbox or a laptop that isn't allowlisted, give the user the commands to run there instead. On the allowlisted machine, run the tester to create a payment page (`npm run try -- prepayment`).
 - Success = a `paymentPageURL`. Remind them this "Success" only means the page exists (rule 5).
 - Plain JSON is the quickest first call in UAT. If UAT answers HTTP 415, go straight to JOSE (step 6), then come back.
 - On failure, use `troubleshooting.md`. A TLS reset before any HTTP response means the IP isn't allowlisted: not a code problem, it goes on the PO list.

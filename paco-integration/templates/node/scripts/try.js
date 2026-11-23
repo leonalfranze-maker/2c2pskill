@@ -55,8 +55,12 @@ try {
   const net = e.cause?.code || e.cause?.message;
   console.error(`✗ ${e.message}${net ? ` [${net}]` : ''}`);
   if (e.details) console.error(JSON.stringify(e.details, null, 2));
-  if (/ECONNRESET|socket hang up|ECONNREFUSED|ENOTFOUND|ETIMEDOUT/.test(String(net))) {
-    console.error('  Network problem before any HTTP response. In UAT this usually means your IP is not allowlisted (or you are off VPN).');
+  if (/ECONNRESET|socket hang up/.test(String(net))) {
+    console.error('  Connection reset before any HTTP response: this machine\'s IP is probably not allowlisted by 2C2P (or you are off the VPN you registered).');
+  } else if (/ENOTFOUND|EAI_AGAIN/.test(String(net))) {
+    console.error('  DNS lookup failed: this machine can\'t resolve the PACO host. Check internet/DNS/proxy, or run this on your server.');
+  } else if (/ECONNREFUSED|ETIMEDOUT/.test(String(net))) {
+    console.error('  Can\'t connect: check firewall/proxy/VPN, or run this on the machine 2C2P allowlisted.');
   }
   process.exitCode = 1;
 }
