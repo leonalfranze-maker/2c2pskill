@@ -4,6 +4,11 @@ Recommendations for fields used across the APIs. Follow them and requests pass f
 Per-API tables: `fields/<api>.md`. This guide wins where they differ.
 Explain these to merchants as recommendations ("use …"). There's no need to explain why.
 
+## General
+- Copy field names exactly. Unknown names are ignored, so a typo means the value isn't used.
+- An empty string `""` counts as "not sent".
+- A wrong format or length usually returns **`PC-B051800`**. The message names the field (JSON path).
+
 ## Request envelope
 | Field | Do this |
 |---|---|
@@ -28,6 +33,16 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 | `productDescription` | **≤ 50 characters, one line, no emoji.** Longer text is cut to 50. It's shown on the Payment Page and may reach the acquirer, so make it readable, e.g. `Order SO-0042: 2 items`. |
 | `statementDescriptor` | **5–20 characters of `A–Z 0–9 . - &` and spaces**, e.g. `ACME SHOP`. Other characters are removed and values shorter than 5 characters are dropped. It may not appear on every card statement: depends on the acquirer and issuer. |
 | `generalPayerDetails.personName.title` | ≤ 20 characters. |
+| `personName.fullName` | **English letters only**, ≤ 50 recommended (Thai and other non-Latin letters are removed). |
+| `personName.firstName` / `middleName` / `lastName` | ≤ 30 each. Thai allowed. |
+
+## Phones and addresses
+| Field | Do this |
+|---|---|
+| `mobilePhoneCountryCode` | digits only, no `+`: `66` |
+| `mobilePhone` | national number **without** the country code: `0861234567` |
+| Country codes (`billAddrCountry`, airline `countryCode`) | **ISO 3166-1 numeric**, 3 digits: `764` for Thailand. Not `TH`/`THA`. |
+| `billAddrState` | ISO 3166-2 code without the country prefix: `10` Bangkok |
 | Card holder / payer names (`/nonUi`) | English letters and spaces only (`PC-B050085`), not all digits (`PC-B050089`). |
 
 ## Your own data

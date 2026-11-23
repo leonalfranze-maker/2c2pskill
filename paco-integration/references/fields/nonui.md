@@ -1,7 +1,7 @@
 # /nonUi: request fields
 
 `POST {base}/api/2.0/Payment/nonUi` · Source: Dev Zone reference (updated 2026-07-31), API v2.0.
-Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
+Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first. Every field that also exists in `/prePaymentUi` follows the confirmed rules in `prepaymentui.md`.** ⚠️ below still applies to the nonUi-only fields (card, 3DS, device, shipping). **Length** = characters for strings. `[]` = array item.
 ⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
 
 | Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |

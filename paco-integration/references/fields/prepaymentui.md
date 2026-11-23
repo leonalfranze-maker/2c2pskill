@@ -1,211 +1,146 @@
-# /prePaymentUi: request fields
+# /prePaymentUi: request fields (confirmed)
 
-`POST {base}/api/2.0/Payment/prePaymentUi` · Source: Dev Zone reference (updated 2026-07-31), API v2.0.
-Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
-⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
+`POST {base}/api/2.0/Payment/prePaymentUi` · API v2.0 · Rules confirmed by 2C2P (2026-11-23). Where the Dev Zone differs, follow this table.
+Shared fields (envelope, `orderNo`, amounts, dates, `userDefined`): also see `../field-guide.md`.
 
-| Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |
-|---|---|---|---|---|---|---|
-| `apiRequest` | **yes** | object |  |  |  |  |
-| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` **Confirmed:** new UUID per call; key spelled exactly `requestMessageID` (`../field-guide.md`) | |
-| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | e.g. `2025-08-28T09:12:34.001Z` **Confirmed:** UTC `yyyy-MM-ddTHH:mm:ss.fffZ` (`../field-guide.md`) | |
-| `apiRequest.language` |  | string |  |  | e.g. `en-US` **Confirmed:** ≤ 20, `ll-CC` e.g. `en-US` (`../field-guide.md`) | |
-| `officeId` | **yes** | string (paco-CODE) | ≤ 20 |  |  **Confirmed:** exact office code from 2C2P (`../field-guide.md`) | |
-| `orderNo` | **yes** | string | ≤ 40 |  |  **Confirmed:** 1–40 of `A–Z a–z 0–9 - _ +` (≤ 35 for recurring) (`../field-guide.md`) | |
-| `productDescription` | **yes** | string | ≤ 50 |  |  **Confirmed:** ≤ 50, one line, no emoji (`../field-guide.md`) | |
-| `paymentCategory` |  | string | ≤ 20 | ECOM, VEDC, QUICKPAY, RPP, IPP | e.g. `ECOM` |  |
-| `paymentType` |  | string | ≤ 20 | CC, IPP, CC-VI, CC-CA, CC-AX, CC-DC, CC-DS, CC-UP, CC-JC, CC-MP, CC-KP, CC-TP, QR, DEEPLINK, WALLET, OTC, SSM, WEBPAY, IMBANK, EXT | e.g. `CC-VI` |  |
-| `paymentExpiryDateTime` |  | string (date-time) |  |  |  |  |
-| `linkExpiryDateTime` |  | string (date-time) |  |  |  |  |
-| `channelCode` |  | string | ≤ 20 |  |  | values |
-| `agentCode` |  | string | ≤ 20 |  |  | values |
-| `preferredPaymentTypes` |  | array of string |  | CC, IPP, CC-VI, CC-CA, CC-AX, CC-DC, CC-DS, CC-UP, CC-JC, CC-MP, CC-KP, CC-TP, QR, DEEPLINK, WALLET, OTC, SSM, WEBPAY, IMBANK, EXT |  | max items |
-| `currencyConversionDetails` |  | object |  |  |  |  |
-| `currencyConversionDetails.enabledFlag` | **yes** | boolean |  |  |  |  |
-| `currencyConversionDetails.conversionType` |  | string |  | None, DCC, MCC, MCP |  |  |
-| `request3dsFlag` |  | string |  |  |  | length, values |
-| `tokenizeDetails` |  | object |  |  | Card tokenization (stored card) configuration for the transaction. This replaces the legacy 'storeCardDetails' object. Tokenization allows saving card detail… |  |
-| `tokenizeDetails.tokenizeFlag` |  | string |  | Y, N, F | Controls tokenization behavior for this transaction: - Y = Tokenize card upon successful authorization. If tokenRef is not provided, a new token is created a… e.g. `Y` |  |
-| `tokenizeDetails.profileRef` |  | string | ≤ 255 |  | Profile reference for grouping tokens under a customer profile. Used to organize multiple stored cards belonging to the same cardholder. When provided during… |  |
-| `tokenizeDetails.tokenRef` |  | string |  |  | Reference to an existing stored card token. - Forbidden when tokenizeFlag is 'F' (Force). tokenRef must NOT be provided. - Forbidden when tokenizeFlag is 'N'… | length |
-| `tokenizeDetails.tokenRefList` |  | array |  |  | List of token references to be validated and made available on the Payment Page. - Only allowed in prepayment (prePaymentUi) flow. - Forbidden in nonUI flow … | max items |
-| `tokenizeDetails.tokenRefList[].tokenRef` | **yes** | string |  |  | Token reference string identifying a previously stored card. | length |
-| `installmentPaymentDetails` |  | object |  |  |  |  |
-| `installmentPaymentDetails.ippFlag` | **yes** | string |  |  | e.g. `Y` | length, values |
-| `installmentPaymentDetails.installmentPlanGroup` |  | string |  |  |  | length |
-| `installmentPaymentDetails.installmentPlan` |  | string |  |  |  | length |
-| `installmentPaymentDetails.interestType` |  | string |  |  | e.g. `C` | length, values |
-| `installmentPaymentDetails.installmentPeriod` |  | integer (int32) |  |  | e.g. `10` | range |
-| `installmentPaymentDetails.bankProductCode` |  | string |  |  |  | length, values |
-| `recurringPaymentDetails` |  | object |  |  |  |  |
-| `recurringPaymentDetails.rppFlag` | **yes** | string |  |  | e.g. `Y` | length, values |
-| `recurringPaymentDetails.orderNoPrefix` |  | string |  |  |  | length |
-| `recurringPaymentDetails.recurringIntervalNumber` |  | integer (int32) |  |  | e.g. `1` | range |
-| `recurringPaymentDetails.recurringInterval` |  | string |  |  | e.g. `Monthly` | length |
-| `recurringPaymentDetails.recurringTimes` |  | integer (int32) |  |  |  | range |
-| `recurringPaymentDetails.recurringAutoAccumulate` |  | string |  |  |  | length |
-| `recurringPaymentDetails.recurringStartDate` |  | string (date) |  |  |  |  |
-| `recurringPaymentDetails.recurringEndDate` |  | string (date) |  |  |  |  |
-| `transactionAmount` | **yes** | object |  |  |  |  |
-| `transactionAmount.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `transactionAmount.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `transactionAmount.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `transactionAmount.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `notificationUrls` | **yes** | object |  |  |  |  |
-| `notificationUrls.confirmationUrl` | **yes** | string (uri) |  |  | e.g. `https://example.com` |  |
-| `notificationUrls.failedUrl` | **yes** | string (uri) |  |  | e.g. `https://example.com` |  |
-| `notificationUrls.cancellationUrl` | **yes** | string (uri) |  |  | e.g. `https://example.com` |  |
-| `notificationUrls.backendUrl` | **yes** | string (uri) |  |  | e.g. `https://example.com` |  |
-| `autoRedirectDelayTimer` |  | number |  |  |  | range |
-| `generalPayerDetails` |  | object |  |  |  |  |
-| `generalPayerDetails.personType` |  | string |  | general, passenger, guest |  |  |
-| `generalPayerDetails.seqNo` |  | integer |  |  |  | range |
-| `generalPayerDetails.personName` |  | object |  |  |  |  |
-| `generalPayerDetails.personName.fullName` |  | string |  |  |  | length |
-| `generalPayerDetails.personName.title` |  | string |  |  |  | length |
-| `generalPayerDetails.personName.firstName` |  | string |  |  |  | length |
-| `generalPayerDetails.personName.middleName` |  | string |  |  |  | length |
-| `generalPayerDetails.personName.lastName` |  | string |  |  |  | length |
-| `generalPayerDetails.email` |  | string | ≤ 100 |  |  |  |
-| `generalPayerDetails.mobilePhoneCountryCode` |  | string | ≤ 4 |  | e.g. `+66` | values |
-| `generalPayerDetails.mobilePhone` |  | string | 8–15 |  | e.g. `+66861234567` |  |
-| `generalPayerDetails.businessPhoneCountryCode` |  | string | ≤ 4 |  | e.g. `+66` | values |
-| `generalPayerDetails.businessPhone` |  | string | 8–15 |  | e.g. `+6621167000` |  |
-| `generalPayerDetails.emailForFxReceipt` |  | string | ≤ 100 |  |  |  |
-| `purchaseItemize` |  | array |  |  |  | max items |
-| `purchaseItemize[].purchaseItemType` | **yes** | string |  | ticket, insurance |  |  |
-| `purchaseItemize[].purchaseItemDescription` |  | string |  |  |  | length |
-| `purchaseItemize[].purchaseItemPrice` |  | object |  |  |  |  |
-| `purchaseItemize[].purchaseItemPrice.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `purchaseItemize[].purchaseItemPrice.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `purchaseItemize[].purchaseItemPrice.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `purchaseItemize[].purchaseItemPrice.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `purchaseItemize[].subMerchantID` |  | string |  |  |  | length |
-| `billingAddress` |  | object |  |  |  |  |
-| `billingAddress.billAddrCity` |  | string | ≤ 50 |  |  |  |
-| `billingAddress.billAddrCountry` |  | string | 3 |  | e.g. `764` |  |
-| `billingAddress.billAddrLine1` |  | string | ≤ 50 |  |  |  |
-| `billingAddress.billAddrLine2` |  | string | ≤ 50 |  |  |  |
-| `billingAddress.billAddrLine3` |  | string | ≤ 50 |  |  |  |
-| `billingAddress.billAddrPostCode` |  | string | ≤ 16 |  |  | values |
-| `billingAddress.billAddrState` |  | string | ≤ 3 |  | e.g. `40` |  |
-| `airlineData` |  | object |  |  |  |  |
-| `airlineData.bypassForward` |  | boolean |  |  |  |  |
-| `airlineData.bookingReference` | **yes** | object |  |  |  |  |
-| `airlineData.bookingReference.pnrCode` | **yes** | string | 6 |  | e.g. `DEF456` | values |
-| `airlineData.bookingReference.bookingDateTime` | **yes** | string (date-time) |  |  |  |  |
-| `airlineData.bookingReference.status` |  | string | ≤ 2 |  | e.g. `HK` |  |
-| `airlineData.agency` |  | object |  |  |  |  |
-| `airlineData.agency.name` |  | string | ≤ 50 |  |  |  |
-| `airlineData.agency.code` |  | string | ≤ 20 |  |  |  |
-| `airlineData.agency.id` |  | string | ≤ 20 |  |  |  |
-| `airlineData.agency.invoiceNo` |  | string | ≤ 50 |  |  |  |
-| `airlineData.agency.planName` |  | string | ≤ 30 |  |  |  |
-| `airlineData.flightSegments` | **yes** | array |  |  |  | max items |
-| `airlineData.flightSegments[].sequenceNo` | **yes** | integer |  |  | e.g. `1` | range |
-| `airlineData.flightSegments[].marketingAirlineName` |  | string | ≤ 50 |  | e.g. `Thai Airways` |  |
-| `airlineData.flightSegments[].marketingAirlineCode` | **yes** | string | 2 |  | e.g. `TG` | values |
-| `airlineData.flightSegments[].marketingFlightNo` | **yes** | string | ≤ 4 |  | e.g. `1234` |  |
-| `airlineData.flightSegments[].operatingAirlineName` |  | string | ≤ 50 |  | e.g. `Thai Smile` |  |
-| `airlineData.flightSegments[].operatingAirlineCode` |  | string | ≤ 2 |  | e.g. `WE` | values |
-| `airlineData.flightSegments[].operatingflightNo` |  | string | ≤ 4 |  | e.g. `5678` |  |
-| `airlineData.flightSegments[].flightType` |  | string | ≤ 20 |  |  | values |
-| `airlineData.flightSegments[].isChartered` |  | boolean |  |  |  |  |
-| `airlineData.flightSegments[].departure` | **yes** | object |  |  |  |  |
-| `airlineData.flightSegments[].departure.airportCode` |  | string | 3 |  | e.g. `DMK` | values |
-| `airlineData.flightSegments[].departure.cityCode` |  | string | 3 |  | e.g. `BKK` | values |
-| `airlineData.flightSegments[].departure.cityName` |  | string | ≤ 50 |  |  |  |
-| `airlineData.flightSegments[].departure.countryCode` |  | string | 3 |  | e.g. `764` | values |
-| `airlineData.flightSegments[].departure.countryName` |  | string | ≤ 70 |  |  |  |
-| `airlineData.flightSegments[].departure.dateTime` |  | string (date-time) |  |  |  |  |
-| `airlineData.flightSegments[].arrival` | **yes** | object |  |  |  |  |
-| `airlineData.flightSegments[].arrival.airportCode` |  | string | 3 |  | e.g. `DMK` | values |
-| `airlineData.flightSegments[].arrival.cityCode` |  | string | 3 |  | e.g. `BKK` | values |
-| `airlineData.flightSegments[].arrival.cityName` |  | string | ≤ 50 |  |  |  |
-| `airlineData.flightSegments[].arrival.countryCode` |  | string | 3 |  | e.g. `764` | values |
-| `airlineData.flightSegments[].arrival.countryName` |  | string | ≤ 70 |  |  |  |
-| `airlineData.flightSegments[].arrival.dateTime` |  | string (date-time) |  |  |  |  |
-| `airlineData.flightSegments[].isStopOver` |  | boolean |  |  |  |  |
-| `airlineData.flightSegments[].fareClass` |  | string | ≤ 1 |  | e.g. `Y` |  |
-| `airlineData.flightSegments[].fareBasisCode` |  | string | ≤ 15 |  | e.g. `B2NR` | values |
-| `airlineData.flightSegments[].endorsementOrRestriction` |  | string | ≤ 100 |  | e.g. `NOT REFUNDABLE` |  |
-| `airlineData.flightSegments[].isReturnFlight` |  | boolean |  |  |  |  |
-| `airlineData.tickets` |  | array |  |  |  | max items |
-| `airlineData.tickets[].passengerSequenceNo` |  | integer |  |  |  | range |
-| `airlineData.tickets[].ticketNo` |  | string | ≤ 64 |  |  |  |
-| `airlineData.tickets[].ticketIssueDate` |  | string (date-time) |  |  |  |  |
-| `airlineData.tickets[].ticketReservationSystemCode` |  | string | ≤ 4 |  | e.g. `AMAD` | values |
-| `airlineData.tickets[].isSeatSale` |  | boolean |  |  |  |  |
-| `airlineData.tickets[].isWithChild` |  | boolean |  |  |  |  |
-| `airlineData.tickets[].purchaseType` |  | string | ≤ 40 |  |  | values |
-| `airlineData.tickets[].isPackageTravel` |  | boolean |  |  |  |  |
-| `airlineData.tickets[].isFlexTicket` |  | boolean |  |  |  |  |
-| `airlineData.tickets[].isInsurancePurchased` |  | boolean |  |  |  |  |
-| `airlineData.tickets[].securityProgramTravelCode` |  | string | ≤ 30 |  |  | values |
-| `airlineData.tickets[].taxAmount` |  | object |  |  |  |  |
-| `airlineData.tickets[].taxAmount.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].taxAmount.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].taxAmount.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].taxAmount.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].ticketFare` |  | object |  |  |  |  |
-| `airlineData.tickets[].ticketFare.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].ticketFare.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].ticketFare.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].ticketFare.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].ticketFareTax` |  | object |  |  |  |  |
-| `airlineData.tickets[].ticketFareTax.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].ticketFareTax.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].ticketFareTax.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].ticketFareTax.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].airportTax` |  | object |  |  |  |  |
-| `airlineData.tickets[].airportTax.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].airportTax.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].airportTax.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].airportTax.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].agentFee` |  | object |  |  |  |  |
-| `airlineData.tickets[].agentFee.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].agentFee.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].agentFee.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].agentFee.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].agentFeeVat` |  | object |  |  |  |  |
-| `airlineData.tickets[].agentFeeVat.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].agentFeeVat.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].agentFeeVat.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].agentFeeVat.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].baseRefundVat` |  | object |  |  |  |  |
-| `airlineData.tickets[].baseRefundVat.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].baseRefundVat.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].baseRefundVat.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].baseRefundVat.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.tickets[].agentFeeBaseRefundVat` |  | object |  |  |  |  |
-| `airlineData.tickets[].agentFeeBaseRefundVat.amountText` | **yes** | string | 12 |  | e.g. `000000005050` |  |
-| `airlineData.tickets[].agentFeeBaseRefundVat.currencyCode` | **yes** | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `airlineData.tickets[].agentFeeBaseRefundVat.decimalPlaces` | **yes** | integer |  |  | e.g. `2` |  |
-| `airlineData.tickets[].agentFeeBaseRefundVat.amount` | **yes** | number (decimal) |  |  | e.g. `50.5` |  |
-| `airlineData.passengers` | **yes** | array |  |  |  | max items |
-| `airlineData.passengers[].sequenceNo` | **yes** | integer |  |  |  | range |
-| `airlineData.passengers[].identificationNo` |  | string | ≤ 30 |  |  |  |
-| `airlineData.passengers[].documentType` |  | string | ≤ 30 |  |  | values |
-| `airlineData.passengers[].isPurchaser` |  | boolean |  |  |  |  |
-| `airlineData.passengers[].title` |  | string | ≤ 10 |  |  |  |
-| `airlineData.passengers[].firstName` | **yes** | string | ≤ 64 |  |  |  |
-| `airlineData.passengers[].middleName` |  | string | ≤ 64 |  |  |  |
-| `airlineData.passengers[].lastName` | **yes** | string | ≤ 64 |  |  |  |
-| `airlineData.passengers[].gender` |  | string | ≤ 1 | F, M, X | e.g. `M` |  |
-| `airlineData.passengers[].email` | **yes** | string (email) | ≤ 100 |  |  |  |
-| `airlineData.passengers[].mobileNo` |  | string | 8–50 |  |  |  |
-| `airlineData.passengers[].type` |  | string | ≤ 3 |  | Passenger type code (IATA standard, e.g., ADT=Adult, CHD=Child, INF=Infant). e.g. `ADT` |  |
-| `airlineData.passengers[].isFrequentFlyer` |  | boolean |  |  |  |  |
-| `airlineData.passengers[].frequentFlyerStatus` |  | string | ≤ 64 |  |  | values |
-| `airlineData.passengers[].frequentFlyerNumber` |  | string | ≤ 64 |  |  |  |
-| `statementDescriptor` |  | string | ≤ 20 |  |  **Confirmed:** 5–20 of `A–Z 0–9 . - &` and spaces (`../field-guide.md`) | |
-| `userDefined1` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined2` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined3` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined4` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined5` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined6` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined7` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined8` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined9` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
-| `userDefined10` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+**General rules**
+- Unknown fields are ignored, so a typo in a field name means the field is silently not used. Copy names exactly.
+- An empty string `""` counts as "not sent".
+- A value with the wrong format or length usually returns **`PC-B051800`**, and the message names the field (JSON path).
+
+## Core
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `officeId` | office code from 2C2P | always | copy exactly (`PC-B050410` if wrong) |
+| `orderNo` | 1–40 of `A–Z a–z 0–9 - _ +` | always | ≤ 35 for recurring (`PC-B050004`) |
+| `productDescription` | ≤ 50 (longer is cut) | send it | one line, no emoji |
+| `paymentCategory` | `ECOM`, `VEDC`, `RPP`, `IPP`, `QUICKPAY` (uppercase) | no, default `ECOM` | omit it or send `ECOM`. `VEDC` (mail/phone order) only if 2C2P enabled it. Don't send `QUICKPAY` or `RPP`/`IPP` (set automatically). A bad value fails later, at payment (`PC-B050012`). |
+| `paymentType` | `TYPE`, `TYPE-CHANNEL` or `TYPE-CHANNEL-AGENT` (e.g. `CC`, `QR`, `WALLET-…`), only codes enabled on your office | no | omit to show every method. Unknown → `PC-B051401`, not enabled → `PC-B051402`. |
+| `channelCode` | ≤ 20, no `-`, a channel enabled for you | no | usually omit. Ignored for `CC`/`IPP`. Must match `paymentType` if both carry a channel (`PC-B051401`). |
+| `agentCode` | ≤ 20, no `-` | no | same as `channelCode` |
+| `preferredPaymentTypes[]` | same codes as `paymentType` | no | ≤ 20 items. **Ignored if `paymentType` is sent.** Display order is fixed by PACO. If nothing matches, all methods are shown. |
+| `paymentExpiryDateTime`, `linkExpiryDateTime` | UTC ISO 8601, ≥ a few minutes ahead | no | see `../field-guide.md` (`PC-B050061`) |
+| `request3dsFlag` | `N`, `Y`, `Y-Strict` (case-sensitive) | no | must be `Y`/`Y-Strict` when `tokenizeFlag` = `F` (`PC-B056305`) |
+| `statementDescriptor` | 5–20 of `A–Z 0–9 . - &` and spaces | no | see `../field-guide.md` |
+| `userDefined1`–`10` | ≤ 150 each | no | `PC-B054513` |
+| `autoRedirectDelayTimer` | whole number ≥ 0 (seconds) | no, office default | 0–100. `0` = straight back to your URL. |
+
+## Amount and URLs
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `transactionAmount.*` | see `../currencies.md` and `../field-guide.md` | always | `PC-B050005` / `06` / `93` / `99` |
+| `notificationUrls` | all 4 keys present | always | `PC-B050018` |
+| `confirmationUrl`, `failedUrl`, `cancellationUrl` | absolute `http(s)://` URL, app deeplink, or `-` (PACO result page) | always | **≤ 1,000 characters each**: PACO adds up to ~800 characters of parameters |
+| `backendUrl` | absolute `http(s)://` URL, or `-` (office default) | always | ≤ 1,000 characters, use https |
+
+## Currency conversion
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `currencyConversionDetails.enabledFlag` | JSON `true` / `false` | no, office default | |
+| `currencyConversionDetails.conversionType` | `None`, `DCC`, `MCP` (`MCC`: ask 2C2P) | when `enabledFlag` = true | `PC-B054508` |
+
+## Saved cards (`tokenizeDetails`)
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `tokenizeFlag` | `Y`, `N`, `F` | no | `N`/empty → the whole object is ignored |
+| `profileRef` | ≤ 255 | no | your customer ID (`PC-B056301`) |
+| `tokenRef` | **not allowed here** | – | use `tokenRefList` (`PC-B056309`) |
+| `tokenRefList[]` | ≤ 50 items, only with flag `Y` | no | `PC-B056304` / `PC-B056303` |
+| `tokenRefList[].tokenRef` | not blank | per item | send the token PACO returned, unchanged (`PC-B056302`). Unknown or expired tokens are dropped from the list, not reported. |
+
+## Installments (`installmentPaymentDetails`)
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `ippFlag` | `Y` / `N` | – | `N`/empty → the whole object is ignored |
+| `installmentPlanGroup` | ≤ 50 | no | a plan group 2C2P set up for you |
+| `installmentPlan` | ≤ 60 | no | a plan name 2C2P set up. An unknown name shows all plans instead. |
+| `bankProductCode` | ≤ 20 | no | from your plan setup |
+| `interestType` | `M` (merchant pays interest), `C` (customer pays) | no | |
+| `installmentPeriod` | whole number, a period in your plans (typically 3, 6, 10, 12) | no | |
+Not combinable with DCC (`PC-B054511`) or recurring (`PC-B050014`).
+
+## Recurring (`recurringPaymentDetails`)
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `rppFlag` | `Y` / `N` | – | `N`/empty → ignored. With `Y`, `orderNo` ≤ 35. |
+| `recurringInterval` | `Daily`, `Monthly`, `Yearly` (exact case) | with `Y` | `PC-B050014` |
+| `recurringIntervalNumber` | whole number | with `Y` | use 1–12, e.g. `1` + `Monthly` = every month |
+| `recurringTimes` | whole number ≥ 0 | no | number of charges |
+| `recurringAutoAccumulate` | `Y` / `N` | no | |
+| `recurringEndDate` | date, not in the past | with `Y` | `PC-B051943` if in the past |
+| `orderNoPrefix`, `recurringStartDate` | not used | – | leave out: the plan starts with the first payment |
+The office must use auto settlement (`PC-B050411`). Recurring rules are checked when the customer pays.
+
+## Payer (`generalPayerDetails`)
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `personName.fullName` | ≤ 100, **English letters only** (Thai and other non-Latin letters are removed) | no | send the English name, ≤ 50 |
+| `personName.firstName` / `middleName` / `lastName` | ≤ 30 each, Thai allowed | no | |
+| `personName.title` | ≤ 20 | no | |
+| `email`, `emailForFxReceipt` | ASCII email | no | ≤ 100 |
+| `mobilePhoneCountryCode`, `businessPhoneCountryCode` | ≤ 4, **digits only, no `+`** | no | e.g. `66` |
+| `mobilePhone`, `businessPhone` | **national number without country code**, 7–16 characters (spaces/dashes removed) | no | e.g. `0861234567` with country code `66` |
+| `seqNo` | whole number ≥ 0 | no | not needed |
+| `personType` | not used | – | leave out |
+
+## Billing address (`billingAddress`)
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `billAddrLine1`–`3`, `billAddrCity` | ≤ 50 each | Line1 + City with airline data | |
+| `billAddrPostCode` | ≤ 16 | with airline data | |
+| `billAddrCountry` | **ISO 3166-1 numeric, 3 digits** | with airline data | `764` for Thailand, not `TH`/`THA` (`PC-B051800` / `PC-B054502`) |
+| `billAddrState` | ≤ 3, ISO 3166-2 code without country prefix | no | `10` Bangkok, `40` Khon Kaen |
+Missing required parts with airline data → `PC-B054514` / `PC-B054515`.
+
+## Purchase items (`purchaseItemize[]`)
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| (list) | items must add up to the transaction amount | no | ≤ 20 items. Not with DCC (`PC-B054512`). Sum mismatch → `PC-B054504`. |
+| `purchaseItemType` | ≤ 50, **only types 2C2P configured for your account**, each type once | per item | ask 2C2P which types you have. **Not configured → don't send purchase items** (`PC-B050041`). Duplicate → `PC-B050087`. Case doesn't matter. |
+| `purchaseItemDescription` | ≤ 255 (longer is cut) | no | |
+| `purchaseItemPrice.*` | ≥ 0, same currency and decimals as the transaction | per item | `PC-B054505` |
+| `subMerchantID` | ≤ 25, an ID from 2C2P | no | |
+
+## Airline data (`airlineData`): airlines and travel agents only
+Send `billingAddress` (Line1, City, PostCode, Country) with it. Missing required parts → `PC-B050083`. Bad format → `PC-B050085`.
+
+| Field | Rule | Required |
+|---|---|---|
+| `bypassForwarding` | JSON boolean (**this is the real name**, not `bypassForward`) | no |
+| `bookingReference.pnrCode` | exactly 6 of `A–Z a–z 0–9` | yes |
+| `bookingReference.bookingDateTime` | ISO 8601 **with offset**, e.g. `2026-11-16T09:30:00Z` | yes |
+| `bookingReference.status` | 2-letter IATA PNR status, e.g. `HK` | no |
+| `agency.name` / `code` / `id` / `invoiceNo` / `planName` | ≤ 50 / 20 / 20 / 50 / 30 | no |
+| `flightSegments[]` | ≥ 1 | yes |
+| `flightSegments[].sequenceNo` | 1, 2, 3… unique | yes |
+| `marketingAirlineCode` | exactly 2 (IATA airline) | yes |
+| `marketingFlightNo` | 1–4 digits | yes |
+| `marketingAirlineName` / `operatingAirlineName` | ≤ 50 | no |
+| `operatingAirlineCode` / `operatingflightNo` | ≤ 2 / ≤ 4 | no |
+| `flightType` | ≤ 20, free text | no |
+| `departure` / `arrival` | object | yes |
+| `…airportCode`, `…cityCode` | exactly 3 **uppercase** IATA letters | airport yes, city no |
+| `…countryCode` | 3 **digits** (ISO numeric, `764`) | yes |
+| `…cityName` / `…countryName` | ≤ 50 / ≤ 70 | no |
+| `…dateTime` | **local time, no offset**: `2026-12-01T08:30:00` | yes |
+| `fareClass` | 1 letter | no |
+| `fareBasisCode` | ≤ 15 of `A–Z a–z 0–9 - / +` | no |
+| `endorsementOrRestriction` | 1–100 of letters, digits, space and `. , ' - / & ( ) : +` | no |
+| `isChartered` / `isStopOver` / `isReturnFlight` | JSON boolean | no |
+| `tickets[].ticketNo` | ≤ 64 | no |
+| `tickets[].ticketIssueDate` | ISO 8601 with offset | no |
+| `tickets[].ticketReservationSystemCode` / `purchaseType` / `securityProgramTravelCode` | ≤ 4 / 40 / 30, free text | no |
+| `tickets[]` amounts (`taxAmount`, `ticketFare`, …) | amount objects | no |
+| `tickets[]` booleans | JSON boolean | no |
+| `passengers[]` | ≥ 1 | yes |
+| `passengers[].sequenceNo` | 1, 2, 3… unique | yes |
+| `passengers[].firstName` / `lastName` | ≤ 64 | yes |
+| `passengers[].middleName` | ≤ 64 | no |
+| `passengers[].email` | email, ≤ 100 recommended | yes |
+| `passengers[].mobileNo` | 8–15 digits | no |
+| `passengers[].gender` | `F`, `M`, `X` | no |
+| `passengers[].type` | IATA passenger type: `ADT`, `CNN`, `INF` | no |
+| `passengers[].identificationNo` / `documentType` / `title` | ≤ 30 / 30 / 10 | no |
+| `passengers[].frequentFlyerStatus` / `frequentFlyerNumber` | ≤ 64 | no |
+| `passengers[].isPurchaser` / `isFrequentFlyer` | JSON boolean | no |
+Use the exact values listed for `gender`, `type` and `status`: other values are accepted but stored as invalid.

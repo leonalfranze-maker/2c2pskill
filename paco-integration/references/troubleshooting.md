@@ -45,7 +45,17 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050059` | ACS timeout | 3DS page timed out. Retry. |
 | `PC-B050061` / `PC-B050077` / `PC-B050091` | payment / link expired, or expiry set too close to now | create a new payment. Set expiry times at least a few minutes ahead, or omit them. |
 | `PC-B054513` | a `userDefined` field is too long | ≤ 150 characters each |
-| Generic error that doesn't name a field | a value has the wrong format | check `field-guide.md`: `officeId`, `orderNo`, emails, URLs, names |
+| `PC-B051800` | a value has the wrong format or length. The message names the field. | fix that field (`field-guide.md`, `fields/<api>.md`). Common: country code not numeric (`764`), phone with country code, name too long. |
+| `PC-B050410` | `officeId` not recognised | copy the office code exactly |
+| `PC-B051401` / `PC-B051402` | `paymentType` unknown / not enabled on your office | check `availablePaymentTypes`. Don't mix a channel in `paymentType` with a different `channelCode`. |
+| `PC-B054508` | `conversionType` missing while conversion is enabled | send `conversionType` |
+| `PC-B056301`–`PC-B056309` | saved-card (`tokenizeDetails`) rule broken | in prePaymentUi: `tokenRefList` (≤ 50, flag `Y`), never `tokenRef` (`fields/prepaymentui.md`) |
+| `PC-B050014` / `PC-B051943` / `PC-B050411` | recurring: bad plan / end date in the past / office not on auto settlement | `fields/prepaymentui.md` → Recurring |
+| `PC-B054504` / `PC-B054505` / `PC-B054512` | purchase items: sum ≠ amount / bad item price / not allowed with DCC | |
+| `PC-B050041` / `PC-B050087` / `PC-B054405` | purchase item type not configured for you / used twice / missing | ask 2C2P which types you have. If none, don't send purchase items. |
+| `PC-B054502` | unknown country code | ISO numeric (`764`) |
+| `PC-B054514` / `PC-B054515` | airline data without the required billing address parts | send Line1, City, PostCode, Country |
+| `PC-B050083` / `PC-B050085` | airline data: required field missing / bad format (also: bad card holder name) | `fields/prepaymentui.md` → Airline data |
 | `PC-B050013` | payment not found | wrong `orderNo` / office / environment |
 | `PC-B050055` | settlement called on an **auto**-settlement payment | don't call settlement. PACO captures automatically. |
 | `PC-B050039` | refund without a valid `localMakerChecker` | send `maker.username` (see `post-payment.md`) |

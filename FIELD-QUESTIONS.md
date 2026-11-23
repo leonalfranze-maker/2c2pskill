@@ -5,7 +5,7 @@ One file per block in `kiro-questions/`. Send `0-shared.md` first, then one API 
 | File | API | What Kiro checks |
 |---|---|---|
 | `0-shared.md` ✅ answered 2026-11-23 → `references/field-guide.md` | all | requestMessageID/DateTime/language, custom `paco-*` formats, orderNo/productDescription characters, amounts, dates |
-| `1-prepaymentui.md` | /prePaymentUi | every field: ⚠️ = find the real limit (or the risk if unlimited), ✓ = confirm the docs |
+| `1-prepaymentui.md` ✅ answered 2026-11-23 → `references/fields/prepaymentui.md` | /prePaymentUi | every field: ⚠️ = find the real limit (or the risk if unlimited), ✓ = confirm the docs |
 | `2-nonui.md` | /nonUi | fields not already in 1 (card, 3DS, device, shipping, conversion) |
 | `3-inquiry.md` | transactionStatus + transactionList | incl. 500 vs 5000 results, `UpldatedDate` typo |
 | `4-void.md` | void | |

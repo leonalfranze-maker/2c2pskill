@@ -60,6 +60,7 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 - **Recommendation:** never reuse the `orderNo` of a payment that succeeded (including refunded ones). For a customer retry after a failure, either reuse it (allowed above) or use `ORDER-123-2` style suffixes. Pick one and be consistent.
 
 ### Useful optional fields (send only when needed)
+Full confirmed rules for every field: **`fields/prepaymentui.md`**.
 | Field | Use |
 |---|---|
 | `preferredPaymentTypes` | array of payment types to show first/only on the page, e.g. `["CC"]` |

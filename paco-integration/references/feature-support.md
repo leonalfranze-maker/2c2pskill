@@ -27,8 +27,8 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | Currency conversion: MCP | ✅ | Yes | |
 | Currency conversion: DCC | ⚠️ ❓ | Yes | May not work with every acquirer: confirm with 2C2P before building |
 | Currency conversion: MCC | ❓ | Yes | Confirm with 2C2P before building |
-| Airline data | ✅ | No | Send `billingAddress` too |
-| Purchase items / itemized, sub-merchants | ✅ | Yes, if items are paid out to different merchants | |
+| Airline data | ✅ | No | Send `billingAddress` too. The flag is `bypassForwarding`. |
+| Purchase items / itemized, sub-merchants | ✅ | **Yes: item types are configured per merchant** | Without configured types, don't send purchase items (`PC-B050041`). Items must add up to the amount. Not with DCC. |
 | Custom fields (`customFieldList`) | ⚠️ | No | Not returned by `transactionStatus`. Read them from the notification or `transactionList`. |
 | Backend notification | ✅ | No | Sent once, no retry (`notification.md`) |
 | Inquiry `transactionStatus` / `transactionList` | ✅ | No | `transactionList` may lag a little. Use `transactionStatus` to confirm a payment. |
