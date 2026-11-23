@@ -1,41 +1,77 @@
-# Inquiry: transactionList: request fields
+# Inquiry: transactionList: request (confirmed)
 
-`POST {base}/api/2.0/Inquiry/transactionList` · Source: Dev Zone reference (updated 2026-07-23), API v2.0.
-Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
-⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
+`POST {base}/api/2.0/Inquiry/transactionList` · API v2.0 · Rules confirmed by 2C2P (2026-11-23).
+Use it for **reports and reconciliation** (lists of payments). To confirm one payment, use `transactionStatus` instead: `transactionList` can lag a little.
+Same body format rules as the payment APIs: **JOSE in production**, plain JSON allowed in UAT (`../authentication.md`).
 
-| Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |
-|---|---|---|---|---|---|---|
-| `apiRequest` | **yes** | object |  |  |  |  |
-| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | Identifier that idenentify this specific message. Should globally unique but this is up to the cally party. Re-attempt of the same request should also has a … e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` **Confirmed:** new UUID per call; key spelled exactly `requestMessageID` (`../field-guide.md`) | |
-| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | Request DateTime e.g. `2025-08-29T09:12:34.001Z` **Confirmed:** UTC `yyyy-MM-ddTHH:mm:ss.fffZ` (`../field-guide.md`) | |
-| `apiRequest.language` |  | string |  |  | Value representing the preferred language as defined in IETF BCP47. Returned from navigator.language property. e.g. `en-US` **Confirmed:** ≤ 20, `ll-CC` e.g. `en-US` (`../field-guide.md`) | |
-| `advSearchParams` | **yes** | object |  |  | Parameters for advanced search |  |
-| `advSearchParams.officeId` |  | array of string |  |  | Office ID | max items |
-| `advSearchParams.referenceNo` |  | array of string |  |  | Reference No. of purchanse item, e.g. Ticket Number and Insurance Policy No. | max items |
-| `advSearchParams.paymentStatus` |  | array of string |  |  | Payment Status | max items |
-| `advSearchParams.paymentStep` |  | array of string |  |  | Payment Step | max items |
-| `advSearchParams.orderNo` |  | array of string |  |  | Order No. (a.k.a Transaction Invoice No.) | max items |
-| `advSearchParams.productDescription` |  | array of string |  |  | Product Description (a.k.a. PNR) | max items |
-| `advSearchParams.invoiceNo2C2P` |  | array of string |  |  | 2C2P Invoice No. (a.k.a. EP Number) | max items |
-| `advSearchParams.pspReferenceNo` |  | array of string |  |  | PSP Reference No. (a.k.a. PSP Invoice No.) | max items |
-| `advSearchParams.controllerInternalID` |  | array of string |  |  | Internal ID (UUID format) for PACO internal used | max items |
-| `advSearchParams.paymentCategory` |  | array of string |  | ECOM, VEDC, QUICKPAY, RPP |  | max items |
-| `advSearchParams.paymentType` |  | array of string |  | CC, IPP, CC-VI, CC-CA, CC-AX, CC-UP, CC-JC, QR, DEEPLINK, WALLET, OTC, SSM, WEBPAY, IMBANK |  | max items |
-| `advSearchParams.channelCode` |  | array of string |  | ATM, IBANKING, OVERTHECOUNTER, WEBPAY |  | max items |
-| `advSearchParams.agentCode` |  | array of string |  |  |  | max items |
-| `advSearchParams.cardFormat` |  | string |  | First6Digits, Last4Digits, FullPAN | Spedific format of querying card, i.e. First 6 digits, Last 4 digits and Full PAN. |  |
-| `advSearchParams.cardNumber` |  | array of string |  |  | Credit card number (PAN) | max items |
-| `advSearchParams.issuerBankCountry` |  | array of string |  |  | Country of issuer bank in ISO3166 (2 alphabet format). It will be used for fraud checking. | max items |
-| `advSearchParams.pspMerchantId` |  | array of string |  |  | Merchant ID (MID) | max items |
-| `advSearchParams.dateOption` |  | string |  | CreatedDate, UpldatedDate | Which type of date-time coloumns to be look up. CreatedDate will lookup on transactionDateTime whereas UpdatedDate will lookup on lastUpdatedDTTM e.g. `CreatedDate` |  |
-| `advSearchParams.fromDate` |  | string (date-time) |  |  | From date to lookup. Also affected by dateOption. e.g. `2025-08-29T09:12:34.001Z` |  |
-| `advSearchParams.toDate` |  | string (date-time) |  |  | To date to lookup. Must not before fromDate. Also affected by dateOption. e.g. `2025-08-29T09:12:34.001Z` |  |
-| `advSearchParams.amountType` |  | string |  | Transaction, Settlement | Amount type: Transaction or Settlement e.g. `Transaction` |  |
-| `advSearchParams.amountFrom` |  | string | 12 |  | Look up amount from. Must not more than amountTo. Authorization amount including leading zero. The decimal point is based on the currency exponent in ISO4217… e.g. `00000099995` |  |
-| `advSearchParams.amountTo` |  | string | 12 |  | Look up amount to. Must not less than amountFrom. Authorization amount including leading zero. The decimal point is based on the currency exponent in ISO4217… e.g. `00000099995` |  |
-| `advSearchParams.currencyCode` |  | string | 3 | ISO 4217 alphabetic, see `../currencies.md` | e.g. `THB` |  |
-| `advSearchParams.statementDescriptor` |  | string | ≤ 20 |  | Dynamic statement description displayed on the customer's account. Restrictions: cannot contain the following special characters: < > ' " * Note: Feature ava… |  |
-| `advSearchParams.transactionInitiator` |  | string | ≤ 1 |  | Code of transaction initiator: C = Customer (default), M = Merchant |  |
-| `advSearchParams.previousPaymentID` |  | string | ≤ 255 |  |  |  |
-| `advSearchParams.maxResults` |  | integer (int32) | min 1, max 5000 |  | Maximum number of results to be inquiried. Avoid using too big number here for performance reason. The maximum limit is 500. e.g. `100` |  |
+## ⚠️ Read this first
+1. **Wrong values don't return an error.** A bad date, a misspelled option or a wrong amount format is quietly ignored (or the default is used) and you get results that look valid but aren't filtered the way you meant. Validate your own request before sending, and check the results.
+2. **Max 500 results per call, no paging.** You always get the newest 500 that match. To get more, split the search into smaller `fromDate`/`toDate` windows (e.g. per day) and make sure each window returns fewer than 500.
+3. **Some documented filters are not supported** and are ignored (you get unfiltered results): `referenceNo`, `pspMerchantId`, `amountType`, `currencyCode`, `statementDescriptor`, `transactionInitiator`, `previousPaymentID`. Filter on these yourself in the results.
+4. Results are sorted **newest first** (by creation time). No results → `PC-B050013`.
+
+## Envelope
+| Field | Rule | If wrong |
+|---|---|---|
+| `apiRequest.requestMessageID` | new UUID per call (`../field-guide.md`) | `PC-B050017` |
+| `apiRequest.requestDateTime` | ISO 8601 UTC, current time | missing or unreadable → `PC-B050016` |
+| `apiRequest.language` | not used here | leave out |
+| `advSearchParams` | **required** object (may be `{}`) | missing → `PC-T051903` |
+
+## Search filters (`advSearchParams`)
+All filters are optional. Arrays have no fixed maximum, but **keep each array ≤ 100 items** (very large arrays can fail with `PC-T999999`). Several values in one array = any of them.
+
+| Field | How it matches | Values / format | Do this |
+|---|---|---|---|
+| `officeId[]` | exact, case-sensitive | your office codes | ≤ 50 items |
+| `orderNo[]` | **starts with**: `ORD1` also returns `ORD10`, `ORD123` | each 1–40 of `A–Z a–z 0–9 - _ +` (else `PC-B050004`) | **check `orderNo` in the results** if you need an exact match |
+| `controllerInternalID[]` | exact | UUID, with or without `-` | |
+| `paymentStatus[]` | exact, case-sensitive | status codes (`../notification.md`) | unknown code → no match, no error |
+| `paymentStep[]` | exact, case-sensitive | step codes (`../notification.md`) | |
+| `paymentCategory[]` | exact, **uppercase** | `ECOM`, `VEDC`, `QUICKPAY`, `RPP`, `IPP` (`IPP` also finds installment payments) | lowercase → no match |
+| `paymentType[]` | exact, case-sensitive | `CC` also finds every `CC-xx`. Others exact (`IPP`, `QR`, `WALLET`, …) | |
+| `channelCode[]` | exact, case-sensitive | APM channel codes, or card scheme codes (`VI`, `CA`, …) | |
+| `productDescription[]` | **word match**, not exact | text | check the results if you need an exact match |
+| `invoiceNo2C2P[]` | word match | 2C2P invoice number | |
+| `pspReferenceNo[]` | word match | | |
+| `agentCode[]` | word match | | |
+| `issuerBankCountry[]` | word match | | |
+| `cardFormat` | exact, **case-sensitive** | `First6Digits`, `Last4Digits`, `First8Digits`, `Last2Digits`, `FullPAN` | **required for `cardNumber`**. Missing or misspelled → the card filter is skipped without an error. |
+| `cardNumber[]` | per `cardFormat` | digits only (no spaces). `First6Digits`: 6 digits · `Last4Digits`: 4 digits · `FullPAN`: the full number, exact | shorter than the format needs → that number is skipped. ≤ 20 items. |
+
+### Dates
+| Field | Rule | Do this |
+|---|---|---|
+| `dateOption` | `CreatedDate` (default) or `UpdatedDate`, **exact spelling** | the Dev Zone spelling `UpldatedDate` is treated as `CreatedDate`. Any unknown value = `CreatedDate`. |
+| `fromDate` | ISO 8601, **inclusive** | always send it with `Z` or an offset (no offset = UTC). If omitted: the 1st day of the month, 12 months before `toDate`. |
+| `toDate` | ISO 8601, **inclusive** | always send it. A date without a time means `00:00:00`, so for a whole day send `…T23:59:59Z`. If omitted: now. |
+- No maximum range. An unreadable date is ignored and the default is used.
+
+### Amounts
+| Field | Rule | Do this |
+|---|---|---|
+| `amountFrom` / `amountTo` | **exactly the 12-digit `amountText` format**: 100.00 THB → `000000010000` (`../field-guide.md`) | any other format (`100.00`, unpadded) gives **wrong results without an error**. Both inclusive; either may be sent alone. Matches the payment amount or the original (pre-conversion) amount. |
+- `currencyCode` is not a filter: with several currencies, check the currency in the results.
+
+### Results
+| Field | Rule | Do this |
+|---|---|---|
+| `maxResults` | 1–**500** (the Dev Zone says 5000) | above 500, `0` or missing = 500, no error. Use date windows for more. |
+
+## Not supported as filters (ignored)
+`referenceNo`, `pspMerchantId`, `amountType`, `currencyCode`, `statementDescriptor`, `transactionInitiator`, `previousPaymentID`. Leave them out and filter the results yourself. (`transactionInitiator` still appears in results as `C`, `M` or empty.)
+
+## Recommended request for daily reconciliation
+```json
+{
+  "apiRequest": { "requestMessageID": "<uuid>", "requestDateTime": "<ISO UTC now>" },
+  "advSearchParams": {
+    "officeId": ["<your office>"],
+    "dateOption": "CreatedDate",
+    "fromDate": "2026-11-22T00:00:00Z",
+    "toDate": "2026-11-22T23:59:59Z",
+    "maxResults": 500
+  }
+}
+```
+If a window returns 500 results, split it (e.g. by hour) and query again.

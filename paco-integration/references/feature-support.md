@@ -31,7 +31,8 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | Purchase items / itemized, sub-merchants | ✅ | **Yes: item types are configured per merchant** | Without configured types, don't send purchase items (`PC-B050041`). Items must add up to the amount. Not with DCC. |
 | Custom fields (`customFieldList`) | ⚠️ | No | Not returned by `transactionStatus`. Read them from the notification or `transactionList`. |
 | Backend notification | ✅ | No | Sent once, no retry (`notification.md`) |
-| Inquiry `transactionStatus` / `transactionList` | ✅ | No | `transactionList` may lag a little. Use `transactionStatus` to confirm a payment. |
+| Inquiry `transactionStatus` | ✅ | No | Confirms one payment. Your `orderNo` only (not the 2C2P invoice number). |
+| Inquiry `transactionList` (reports) | ⚠️ | No | Max **500 per call, no paging**: split by date. May lag a little. Not filterable by `referenceNo`, `pspMerchantId`, `amountType`, `currencyCode`, `statementDescriptor`, `transactionInitiator`, `previousPaymentID`: filter the results yourself. `orderNo` matches by prefix. |
 | Void (full) | ✅ | Depends on settlement model | Only before settlement |
 | **Void (partial)** | ❌ | – | `voidAmount` / `voidItems` are ignored: void always cancels the full amount. For part of the money, settle less or refund later. |
 | Settlement (full) | ✅ | Yes: **manual** settlement model | Auto-settlement offices don't call it (`PC-B050055`) |
@@ -47,8 +48,9 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 5. **Recurring renames the first order** to `<orderNo>-0001`. Cards only, not with installments, auto-settlement offices only.
 6. **Tokenization must be enabled** on the office, or `Y` quietly does nothing.
 7. **`customFieldList` isn't in `transactionStatus`.**
-8. **APMs, installments, currency conversion and 3DS only appear if 2C2P set them up.** Check `availablePaymentTypes` before showing a method.
-9. **Build on v2.0 with JOSE for every call that has a body.**
+8. **`transactionList` returns max 500 per call, without paging, and ignores wrong filter values silently.** Split by date and check the results.
+9. **APMs, installments, currency conversion and 3DS only appear if 2C2P set them up.** Check `availablePaymentTypes` before showing a method.
+10. **Build on v2.0 with JOSE for every call that has a body.**
 
 ## How the AI uses this file
 - Before planning or writing code for any feature, look it up here.

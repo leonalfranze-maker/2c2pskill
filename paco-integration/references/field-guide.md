@@ -63,7 +63,7 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 | `paymentExpiryDateTime`, `linkExpiryDateTime` | At least a few minutes in the future (too soon → `PC-B050061`, payment rejected). Omit them to use your account's defaults. Ask your PO what those are if it matters. |
 | `recurringEndDate` | Required unless the plan is one-time. Not in the past. |
 | `refundLinkExpiryDatetime` | In the future. Omit it for your account's default. |
-| `transactionList` `fromDate` / `toDate` | Valid UTC ISO 8601. Invalid values may be ignored, so check that results match the range you asked for. |
+| `transactionList` `fromDate` / `toDate` | ISO 8601 with `Z` or an offset (none = UTC), both inclusive. Invalid values are ignored and the default is used, so check the results. Whole day: `…T00:00:00Z` to `…T23:59:59Z` (`fields/inquiry-transactionlist.md`). |
 
 ## URLs
 | Field | Do this |

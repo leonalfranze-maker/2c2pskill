@@ -95,6 +95,7 @@ Key fields in `data.paymentResult`:
 ## 2. Inquiry API: the source of truth [DZ][2C2P confirmed]
 `GET {base}/api/2.0/Inquiry/transactionStatus?orderNo=<orderNo>`
 - Header: `apiKey`. **No `officeId`**: the payment is found by your company (from the API key) + `orderNo`.
+- **URL-encode `orderNo`** (a raw `+` becomes a space). Only your `orderNo` works here, not the 2C2P invoice number. Request rules: `fields/inquiry-transactionstatus.md`.
 - **Plain JSON in UAT and production.** No JOSE needed for this GET. (If you send `Accept: application/jose` the answer may come back as JOSE, so send `Accept: application/json`.)
 - The data is current. Use it right after a notification or a redirect.
 - When to call: on every notification, on the result page, and in a scheduled job for orders still pending (`PCPS`, `I`, `P`, `A`/`PS`).
@@ -121,8 +122,9 @@ Key fields in `data.paymentResult`:
 |---|---|
 | HTTP 400 `PC-B052201` | `orderNo` not valid or doesn't exist (wrong environment? wrong company key?) |
 | HTTP 401 `PC-B050088` | API key missing or wrong |
+| `PC-T999999` | `orderNo` empty or not in the allowed format |
 
-`POST /api/2.0/Inquiry/transactionList` (JOSE) returns lists: max 500 results / past 12 months, filtered with `advSearchParams`. [DZ]
+`POST /api/2.0/Inquiry/transactionList` (JOSE) returns lists for reports and reconciliation: **max 500 per call, no paging** (split by date window), newest first. By default it searches the last 12 months. Wrong filter values are ignored without an error, and some documented filters aren't supported: read `fields/inquiry-transactionlist.md` before using it. [2C2P confirmed]
 
 ## 3. Frontend redirect [DZ][UAT][2C2P confirmed]
 - After the Payment Page, the browser is sent with a **GET** (normal navigation) to `confirmationUrl` (success), `failedUrl` (failed) or `cancellationUrl` (cancelled).

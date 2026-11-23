@@ -18,6 +18,8 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `application/json` error reply to a JOSE request · `PC-T051904` | PACO couldn't decrypt | see `jose.md` errors |
 | `PC-T051905` missing mandatory fields · `PC-T051906` invalid field length · `PC-T051907` invalid field value | request shape | compare with `payment-apis.md` minimum request |
 | `PC-T040010` / `PC-T050020` no payment flow / route | office not configured | ask the PO |
+| `PC-T999999` generic error | on `transactionStatus`: `orderNo` empty or bad format (often a `+` not URL-encoded). On `transactionList`: a filter array too large. | URL-encode `orderNo`; keep filter arrays ≤ 100 items |
+| `PC-T051903` on `transactionList` | `advSearchParams` missing | send it (may be `{}`) |
 
 ## Common business errors (HTTP 400, `apiResponse.responseCode`)
 | Code | Meaning | Usual fix |
@@ -62,7 +64,9 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B054502` | unknown country code | ISO numeric (`764`) |
 | `PC-B054514` / `PC-B054515` | airline data without the required billing address parts | send Line1, City, PostCode, Country |
 | `PC-B050083` / `PC-B050085` | airline data: required field missing / bad format (also: bad card holder name) | `fields/prepaymentui.md` → Airline data |
-| `PC-B050013` | payment not found | wrong `orderNo` / office / environment |
+| `PC-B050013` | payment not found (on `transactionList`: no results) | wrong `orderNo` / office / environment, or the filters/date range match nothing |
+| `transactionList` returns too much, or unfiltered results | a filter value was wrong (ignored silently) or isn't supported | check spelling and case (`UpdatedDate`, `First6Digits`, uppercase `ECOM`), 12-digit amounts, dates with `Z` (`fields/inquiry-transactionlist.md`) |
+| `transactionList` stops at 500 | max 500 per call, no paging | split by smaller date windows |
 | `PC-B050055` | settlement called on an **auto**-settlement payment | don't call settlement. PACO captures automatically. |
 | `PC-B050039` | refund without a valid `localMakerChecker` | send `maker.username` (see `post-payment.md`) |
 | `PC-B051939` | invalid email | fix `maker.email` or other email fields |
