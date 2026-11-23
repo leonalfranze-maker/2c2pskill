@@ -53,7 +53,7 @@ These protect the merchant's money, their customers' card data and their credent
 | `/prePaymentUi` and `/nonUi` requests, field rules, responses, `orderNo` reuse, payment types, 3DS, PCI | `references/payment-apis.md` |
 | Currency codes and decimal places (155 currencies) | `references/currencies.md` |
 | **How to fill common fields** (envelope, orderNo, texts, amounts, dates, URLs) | `references/field-guide.md` |
-| Every request field per API: type, length, required, allowed values (⚠️ = not stated publicly) | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
+| Every request field per API, confirmed by 2C2P: limits, required when, what to send / leave out, error codes | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
 | Backend notification, **Inquiry**, redirect, status/step codes, final states | `references/notification.md` |
 | Void, settlement (auto/manual), refund | `references/post-payment.md` |
 | JOSE keys, claims, headers | `references/jose.md` |
