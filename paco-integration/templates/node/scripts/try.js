@@ -36,9 +36,12 @@ try {
     console.log(JSON.stringify(r.raw, null, 2).slice(0, 3000));
   } else if (api === 'prepayment') {
     const r = await createPaymentPage(order, { cfg, keys });
-    console.log(`✓ orderNo ${r.orderNo}\n✓ paymentPageURL ${r.paymentPageURL}\n  valid till ${r.validTillDateTime}`);
-    console.log('  Open the URL, pay with 4111111111111111 / CVV 123 / OTP 123456.');
-    console.log(`  "Success" = page created, not paid. Check the real status: scripts/try.js inquiry ${r.orderNo}`);
+    const inc = r.raw?.data?.paymentIncompleteResult ?? {};
+    console.log(`✓ ${r.raw?.apiResponse?.responseCode ?? ''} ${r.raw?.apiResponse?.responseDescription ?? ''}: payment page created (NOT paid yet)`);
+    console.log(`  USE NOW  paymentPageURL ${r.paymentPageURL}\n           valid till ${r.validTillDateTime} (UTC)`);
+    console.log(`  STORE    orderNo ${r.orderNo} | controllerInternalID ${inc.controllerInternalID ?? '-'} | status ${inc.paymentStatusInfo?.paymentStatus ?? '-'}/${inc.paymentStatusInfo?.paymentStep ?? '-'} = pending`);
+    console.log('  NEXT     open the URL, pay with 4111111111111111 / CVV 123 / OTP 123456,');
+    console.log(`           then check the real status: npm run try -- inquiry ${r.orderNo}`);
   } else {
     const card = {
       cardNumber: opt('--card') || '4111111111111111',
