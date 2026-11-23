@@ -43,9 +43,12 @@ export function newOrderNo() {
 }
 
 export function buildPrePaymentUiRequest(order, cfg) {
-  const productDescription = String(order.productDescription || '').trim().slice(0, 50);
+  // One line, ≤ 50 characters (PACO cuts longer text). See references/field-guide.md.
+  const productDescription = String(order.productDescription || '').replace(/\s+/g, ' ').trim().slice(0, 50);
   if (!productDescription) throw new Error('productDescription is required');
-  const orderNo = String(order.orderNo || newOrderNo()).slice(0, 40);
+  // orderNo: 1–40 of A–Z a–z 0–9 - _ + (≤ 35 for recurring payments).
+  const orderNo = String(order.orderNo || newOrderNo());
+  if (!/^[A-Za-z0-9\-_+]{1,40}$/.test(orderNo)) throw new Error(`orderNo must be 1–40 characters of A–Z a–z 0–9 - _ + (got "${orderNo}")`);
   const base = cfg.publicBaseUrl.replace(/\/$/, '');
 
   return {

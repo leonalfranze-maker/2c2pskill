@@ -34,8 +34,8 @@ Every request is wrapped in `apiRequest`:
 | Field | Rule |
 |---|---|
 | `officeId` | string ≤ 20. Issued at onboarding. |
-| `orderNo` | string ≤ 40, **unique within your company** (across all its offices). Reuse rules: see *orderNo reuse* below. |
-| `productDescription` | string ≤ 50 (`PC-B050021` if invalid). Shown on the Payment Page. |
+| `orderNo` | **1–40 of `A–Z a–z 0–9 - _ +`** (≤ 35 for recurring), case-sensitive, **unique within your company** (across all its offices). Reuse rules: see *orderNo reuse* below. |
+| `productDescription` | ≤ 50, one line, no emoji (longer text is cut). Shown on the Payment Page. |
 | `transactionAmount.amount` | decimal > 0, e.g. `50.5`. No more decimals than `decimalPlaces`. `amount`, `amountText` and `decimalPlaces` must agree. |
 | `transactionAmount.amountText` | **exactly 12 digits**, amount in minor units, zero-padded: 50.50 → `000000005050` |
 | `transactionAmount.decimalPlaces` | per currency, see **`currencies.md`** (THB/USD **2**, JPY/KRW/VND **0**, BHD/KWD **3**). Mismatch → `PC-B050093`. |

@@ -1,15 +1,15 @@
 # Inquiry: transactionList: request fields
 
 `POST {base}/api/2.0/Inquiry/transactionList` · Source: Dev Zone reference (updated 2026-07-23), API v2.0.
-Generated from the public OpenAPI spec. **Length** = characters for strings. `[]` = array item.
+Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
 ⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
 
 | Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |
 |---|---|---|---|---|---|---|
 | `apiRequest` | **yes** | object |  |  |  |  |
-| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | Identifier that idenentify this specific message. Should globally unique but this is up to the cally party. Re-attempt of the same request should also has a … e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` |  |
-| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | Request DateTime e.g. `2025-08-29T09:12:34.001Z` |  |
-| `apiRequest.language` |  | string |  |  | Value representing the preferred language as defined in IETF BCP47. Returned from navigator.language property. e.g. `en-US` | length |
+| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | Identifier that idenentify this specific message. Should globally unique but this is up to the cally party. Re-attempt of the same request should also has a … e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` **Confirmed:** new UUID per call; key spelled exactly `requestMessageID` (`../field-guide.md`) | |
+| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | Request DateTime e.g. `2025-08-29T09:12:34.001Z` **Confirmed:** UTC `yyyy-MM-ddTHH:mm:ss.fffZ` (`../field-guide.md`) | |
+| `apiRequest.language` |  | string |  |  | Value representing the preferred language as defined in IETF BCP47. Returned from navigator.language property. e.g. `en-US` **Confirmed:** ≤ 20, `ll-CC` e.g. `en-US` (`../field-guide.md`) | |
 | `advSearchParams` | **yes** | object |  |  | Parameters for advanced search |  |
 | `advSearchParams.officeId` |  | array of string |  |  | Office ID | max items |
 | `advSearchParams.referenceNo` |  | array of string |  |  | Reference No. of purchanse item, e.g. Ticket Number and Insurance Policy No. | max items |

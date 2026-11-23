@@ -52,6 +52,7 @@ These protect the merchant's money, their customers' card data and their credent
 | `apiKey` header, JSON vs JOSE per environment, IP allowlist | `references/authentication.md` |
 | `/prePaymentUi` and `/nonUi` requests, field rules, responses, `orderNo` reuse, payment types, 3DS, PCI | `references/payment-apis.md` |
 | Currency codes and decimal places (155 currencies) | `references/currencies.md` |
+| **How to fill common fields** (envelope, orderNo, texts, amounts, dates, URLs) | `references/field-guide.md` |
 | Every request field per API: type, length, required, allowed values (⚠️ = not stated publicly) | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
 | Backend notification, **Inquiry**, redirect, status/step codes, final states | `references/notification.md` |
 | Void, settlement (auto/manual), refund | `references/post-payment.md` |

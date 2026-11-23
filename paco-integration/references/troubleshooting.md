@@ -17,7 +17,6 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050088` invalid or missing API key · `PC-B050101` company is unavailable | `apiKey` header missing or wrong | check `.env` with `doctor`. The header name is exactly `apiKey`. |
 | `application/json` error reply to a JOSE request · `PC-T051904` | PACO couldn't decrypt | see `jose.md` errors |
 | `PC-T051905` missing mandatory fields · `PC-T051906` invalid field length · `PC-T051907` invalid field value | request shape | compare with `payment-apis.md` minimum request |
-| `PC-T051911` duplicated request | reused `requestMessageID` | new UUID per request |
 | `PC-T040010` / `PC-T050020` no payment flow / route | office not configured | ask the PO |
 
 ## Common business errors (HTTP 400, `apiResponse.responseCode`)
@@ -25,13 +24,13 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 |---|---|---|
 | `PC-B050000` | Payment successful | n/a |
 | `PC-B050001` / `PC-B050002` | pending / pending on external party | wait for the notification or inquire |
-| `PC-B050004` | invalid order number | ≤ 40 chars, non-empty |
+| `PC-B050004` | invalid order number | 1–40 of `A–Z a–z 0–9 - _ +` only, no spaces/dots (`field-guide.md`) |
 | `PC-B050005` | invalid amount | `amount` > 0, matches `amountText` |
 | `PC-B050006` | invalid currency code | use the ISO 4217 **alphabetic** code (`THB`, not `764`), uppercase. If it's already alphabetic, the currency doesn't match your office's currency: check which currency your office uses, or ask the PO. [2C2P confirmed] |
 | `PC-B050093` | decimal places / currency mismatch | `decimalPlaces` = ISO 4217 exponent |
 | `PC-B050007` / `08` / `09` | invalid card number / CVV / expiry | nonUi card fields |
 | `PC-B050085` / `PC-B050089` | invalid cardholder name | English letters and spaces only, not all digits |
-| `PC-B050015` / `16` / `17` | invalid `apiRequest` / date time / message id | fresh UUID + current ISO UTC time |
+| `PC-B050015` / `16` / `17` | `apiRequest` missing / bad date-time / bad message ID | key names exactly `apiRequest` and `requestMessageID` (capital ID), a UUID, current UTC time (`field-guide.md`) |
 | `PC-B050018` | invalid notification URLs | all 4 URLs present and valid |
 | `PC-B050021` | invalid product description | non-empty, ≤ 50 |
 | `PC-B050012` | invalid payment category | drop `paymentCategory` or use a valid value |
@@ -44,7 +43,9 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050030` | 3DS authentication failed | customer failed OTP. Show failed, allow retry. |
 | `PC-B050031` / `PC-B050032` | authorization failed / call to acquirer failed | declined or acquirer down. Show failed. |
 | `PC-B050059` | ACS timeout | 3DS page timed out. Retry. |
-| `PC-B050061` / `PC-B050077` / `PC-B050091` | payment / link expired | create a new payment |
+| `PC-B050061` / `PC-B050077` / `PC-B050091` | payment / link expired, or expiry set too close to now | create a new payment. Set expiry times at least a few minutes ahead, or omit them. |
+| `PC-B054513` | a `userDefined` field is too long | ≤ 150 characters each |
+| Generic error that doesn't name a field | a value has the wrong format | check `field-guide.md`: `officeId`, `orderNo`, emails, URLs, names |
 | `PC-B050013` | payment not found | wrong `orderNo` / office / environment |
 | `PC-B050055` | settlement called on an **auto**-settlement payment | don't call settlement. PACO captures automatically. |
 | `PC-B050039` | refund without a valid `localMakerChecker` | send `maker.username` (see `post-payment.md`) |

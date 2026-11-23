@@ -1,19 +1,19 @@
 # /nonUi: request fields
 
 `POST {base}/api/2.0/Payment/nonUi` · Source: Dev Zone reference (updated 2026-07-31), API v2.0.
-Generated from the public OpenAPI spec. **Length** = characters for strings. `[]` = array item.
+Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
 ⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
 
 | Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |
 |---|---|---|---|---|---|---|
 | `apiRequest` | **yes** | object |  |  |  |  |
-| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` |  |
-| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | e.g. `2025-08-28T09:12:34.001Z` |  |
-| `apiRequest.language` |  | string |  |  | e.g. `en-US` | length |
-| `officeId` | **yes** | string (paco-CODE) | ≤ 20 |  |  | format paco-CODE |
+| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` **Confirmed:** new UUID per call; key spelled exactly `requestMessageID` (`../field-guide.md`) | |
+| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | e.g. `2025-08-28T09:12:34.001Z` **Confirmed:** UTC `yyyy-MM-ddTHH:mm:ss.fffZ` (`../field-guide.md`) | |
+| `apiRequest.language` |  | string |  |  | e.g. `en-US` **Confirmed:** ≤ 20, `ll-CC` e.g. `en-US` (`../field-guide.md`) | |
+| `officeId` | **yes** | string (paco-CODE) | ≤ 20 |  |  **Confirmed:** exact office code from 2C2P (`../field-guide.md`) | |
 | `terminalId` |  | string | ≤ 20 |  | e.g. `75002084` |  |
-| `orderNo` | **yes** | string | ≤ 40 |  | e.g. `ORD001` |  |
-| `productDescription` | **yes** | string | ≤ 50 |  | e.g. `Product01` |  |
+| `orderNo` | **yes** | string | ≤ 40 |  | e.g. `ORD001` **Confirmed:** 1–40 of `A–Z a–z 0–9 - _ +` (≤ 35 for recurring) (`../field-guide.md`) | |
+| `productDescription` | **yes** | string | ≤ 50 |  | e.g. `Product01` **Confirmed:** ≤ 50, one line, no emoji (`../field-guide.md`) | |
 | `paymentCategory` |  | string | ≤ 20 | ECOM, VEDC, QUICKPAY, RPP, IPP | e.g. `ECOM` |  |
 | `paymentType` | **yes** | string | ≤ 20 | CC, IPP, CC-VI, CC-CA, CC-AX, CC-DC, CC-DS, CC-UP, CC-JC, CC-MP, CC-KP, CC-TP, QR, DEEPLINK, WALLET, OTC, SSM, WEBPAY, IMBANK, EXT | e.g. `CC-VI` |  |
 | `paymentExpiryDateTime` |  | string (date-time) |  |  | e.g. `2025-08-28T23:59:59.999Z` |  |
@@ -248,16 +248,16 @@ Generated from the public OpenAPI spec. **Length** = characters for strings. `[]
 | `airlineData.passengers[].isFrequentFlyer` |  | boolean |  |  |  |  |
 | `airlineData.passengers[].frequentFlyerStatus` |  | string | ≤ 64 |  |  | values |
 | `airlineData.passengers[].frequentFlyerNumber` |  | string | ≤ 64 |  |  |  |
-| `statementDescriptor` |  | string | ≤ 20 |  |  |  |
+| `statementDescriptor` |  | string | ≤ 20 |  |  **Confirmed:** 5–20 of `A–Z 0–9 . - &` and spaces (`../field-guide.md`) | |
 | `transactionInitiator` |  | string | ≤ 1 |  | C=Customer (default), M=Merchant e.g. `C` |  |
 | `previousPaymentId` |  | string | ≤ 255 |  | Required when transactionInitiator is M. |  |
-| `userDefined1` |  | string | ≤ 150 |  |  |  |
-| `userDefined2` |  | string | ≤ 150 |  |  |  |
-| `userDefined3` |  | string | ≤ 150 |  |  |  |
-| `userDefined4` |  | string | ≤ 150 |  |  |  |
-| `userDefined5` |  | string | ≤ 150 |  |  |  |
-| `userDefined6` |  | string | ≤ 150 |  |  |  |
-| `userDefined7` |  | string | ≤ 150 |  |  |  |
-| `userDefined8` |  | string | ≤ 150 |  |  |  |
-| `userDefined9` |  | string | ≤ 150 |  |  |  |
-| `userDefined10` |  | string | ≤ 150 |  |  |  |
+| `userDefined1` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined2` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined3` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined4` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined5` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined6` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined7` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined8` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined9` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
+| `userDefined10` |  | string | ≤ 150 |  |  Any characters, returned unchanged (`../field-guide.md`) |  |
