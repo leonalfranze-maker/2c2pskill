@@ -8,7 +8,7 @@ One file per block in `kiro-questions/`. Send `0-shared.md` first, then one API 
 | `1-prepaymentui.md` ✅ answered 2026-11-23 → `references/fields/prepaymentui.md` | /prePaymentUi | every field: ⚠️ = find the real limit (or the risk if unlimited), ✓ = confirm the docs |
 | `2-nonui.md` ✅ answered 2026-11-23 → `references/fields/nonui.md` | /nonUi | fields not already in 1 (card, 3DS, device, shipping, conversion) |
 | `3-inquiry.md` ✅ answered 2026-11-23 → `references/fields/inquiry-*.md` | transactionStatus + transactionList | incl. 500 vs 5000 results, `UpldatedDate` typo |
-| `4-void.md` | void | |
+| `4-void.md` ✅ answered 2026-11-23 → `references/fields/void.md` | void | |
 | `5-settlement.md` | settlement | incl. `Ticket` vs `ticket` |
 | `6-refund.md` | refund | |
 

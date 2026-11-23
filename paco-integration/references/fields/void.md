@@ -1,17 +1,47 @@
-# Void: request fields
+# Void: request (confirmed)
 
-`POST {base}/api/2.0/void` · Source: Dev Zone reference (updated 2026-07-23), API v2.0.
-Generated from the public OpenAPI spec. **Shared fields (envelope, IDs, texts, amounts, dates, URLs): follow `../field-guide.md` first.** **Length** = characters for strings. `[]` = array item.
-⚠️ = the public docs don't state this (length, allowed values, range, max items or format). **Unconfirmed:** don't guess. Keep values short and plain (letters, digits, `-`, `_`) and confirm with 2C2P before relying on a limit.
+`POST {base}/api/2.0/void` · API v2.0 · Rules confirmed by 2C2P (2026-11-23).
+JOSE in production, plain JSON allowed in UAT (`../authentication.md`). When to void vs refund: `../post-payment.md`.
 
-| Field | Req | Type | Length / range | Allowed values | Notes | ⚠️ |
-|---|---|---|---|---|---|---|
-| `apiRequest` | **yes** | object |  |  |  |  |
-| `apiRequest.requestMessageID` | **yes** | string (guid) |  |  | Identifier that idenentify this specific message. Should globally unique but this is up to the cally party. Re-attempt of the same request should also has a … e.g. `e952828c-6d19-4a08-92e4-1bc47e1945a2` **Confirmed:** new UUID per call; key spelled exactly `requestMessageID` (`../field-guide.md`) | |
-| `apiRequest.requestDateTime` | **yes** | string (date-time) |  |  | Request DateTime e.g. `2023-08-29T09:12:34.001Z` **Confirmed:** UTC `yyyy-MM-ddTHH:mm:ss.fffZ` (`../field-guide.md`) | |
-| `apiRequest.language` |  | string |  |  | Value representing the preferred language as defined in IETF BCP47. Returned from navigator.language property. e.g. `en-US` **Confirmed:** ≤ 20, `ll-CC` e.g. `en-US` (`../field-guide.md`) | |
-| `officeId` |  | string (paco-CODE) | ≤ 20 |  | Office ID **Confirmed:** exact office code from 2C2P (`../field-guide.md`) | |
-| `orderNo` |  | string |  |  | Order No. (a.k.a Transaction Invoice No.) e.g. `684105191128073630` **Confirmed:** 1–40 of `A–Z a–z 0–9 - _ +` (≤ 35 for recurring) (`../field-guide.md`) | |
-| `paymentId` |  | string (uuid) |  |  | Internal payment ID (UUID). Can be used as alternative to orderNo. At least one of orderNo or paymentId must be provided. |  |
-| `productDescription` |  | string |  |  | Product Description (a.k.a. PNR) e.g. `URRT55` **Confirmed:** ≤ 50, one line, no emoji (`../field-guide.md`) | |
-| `issuerApprovalCode` |  | string | ≤ 20 |  | Issuer approval code that obtained from authorization e.g. `657300` **Confirmed:** not used: leave out (`../field-guide.md`) | |
+- Void cancels the **full** amount. There's no partial void.
+- Allowed only while the payment is **approved and not yet settled** (step `PA` or `PS`). After settlement → refund.
+
+## Request
+| Field | Rule | Required | Do this / if wrong |
+|---|---|---|---|
+| `apiRequest` | `requestMessageID` (new UUID) + `requestDateTime` (UTC), as on every call (`../field-guide.md`) | send it | The response doesn't echo your `requestMessageID`: log it on your side with the `orderNo`. |
+| `orderNo` | 1–40 of `A–Z a–z 0–9 - _ +`, exact, case-sensitive | **one of `orderNo` / `paymentId`** | bad format → `PC-B050004`. No approved payment with this `orderNo` → `PC-B050013`. |
+| `paymentId` | the payment's `controllerInternalID` **exactly as PACO returned it** (32 lowercase hex characters, **no dashes**) | one of `orderNo` / `paymentId` | store and send it unchanged. Don't reformat it as a dashed or uppercase UUID: it won't be found. |
+| `officeId` | not needed | no | PACO uses the office of the original payment. Leave it out, or send the payment's own `officeId`. |
+| `productDescription` | not used | no | leave out |
+| `issuerApprovalCode` | not used | no | leave out |
+
+**Use one identifier.** `orderNo` is the simplest. If you send both, `paymentId` is the one that's used (`orderNo` isn't checked against it), and if that `paymentId` is wrong the void fails. It doesn't fall back to `orderNo`.
+
+Minimum request:
+```json
+{
+  "apiRequest": { "requestMessageID": "<uuid>", "requestDateTime": "<ISO UTC now>" },
+  "orderNo": "ORD123"
+}
+```
+
+## Errors
+| Code | Meaning | Do this |
+|---|---|---|
+| `PC-B050015` | neither `orderNo` nor `paymentId` sent | send one |
+| `PC-B050004` | `orderNo` format wrong | `../field-guide.md` |
+| `PC-B050013` | no approved payment found for this `orderNo` | check value, environment, API key. Inquire first. |
+| `PC-B050025` | `paymentId` not found | send `controllerInternalID` unchanged (no dashes), or use `orderNo` |
+| `PC-T999999` | `paymentId` too long (> 40) | send it unchanged |
+| `PC-B050045` | not approved yet | nothing to void. Inquire again later. |
+| `PC-B050046` | payment failed | nothing to void |
+| `PC-B050047` | already settled | **refund** instead |
+| `PC-B050048` | already refunded or voided | nothing to do. Update your order. |
+| `PC-B050049` | can't be voided for another reason | inquire: if step is `ST`, refund. Otherwise ask the PO with the `orderNo`. |
+| `PC-B050060` | settlement is running right now | retry a little later. If it settles meanwhile, refund. |
+
+## Good practice
+- Before voiding, **inquire** (`transactionStatus`): step `PA`/`PS` → void, step `ST` → refund.
+- One void call per business action. Don't fire several voids for the same order at once. If a call times out, inquire before retrying.
+- After a successful void, confirm with Inquiry (status `V`) before telling the customer.

@@ -71,5 +71,7 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050039` | refund without a valid `localMakerChecker` | send `maker.username` (see `post-payment.md`) |
 | `PC-B051939` | invalid email | fix `maker.email` or other email fields |
 | `PC-B050047` | void on a settled payment | refund instead |
+| `PC-B050025` on void | `paymentId` not found | send `controllerInternalID` unchanged (32 hex, no dashes), or void by `orderNo` (`fields/void.md`) |
+| `PC-B050060` | void while settlement is running | retry later; if it got settled, refund |
 | `PC-B050053` | refund not possible (e.g. not settled yet) | void instead |
 | Other void / settlement / refund errors | see `post-payment.md` | |

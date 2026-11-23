@@ -80,4 +80,4 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 | `refundToBankAccount.accountNumber` | ≤ 30 characters. |
 
 ## Leave out
-- `issuerApprovalCode` on settlement and refund: not used. Void doesn't accept it.
+- `issuerApprovalCode` on settlement, refund and void: not used. Leave it out.

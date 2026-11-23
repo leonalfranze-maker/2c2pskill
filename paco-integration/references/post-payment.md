@@ -45,8 +45,8 @@ Status and step codes: `notification.md`.
 ## Void [DZ][2C2P confirmed]
 - Allowed only while the payment is approved and not settled (step `PA` or `PS`). After settlement → **refund**.
 - **Always the full amount.** There's no partial void: `voidAmount` / `voidItems` are ignored. For part of the money, settle less (manual model) or refund after settlement. [2C2P confirmed]
-- Body: `apiRequest` + `orderNo` **or** `paymentId` (at least one), plus `officeId`. Optional: `productDescription`, `issuerApprovalCode`.
-- Errors: not approved yet (`PC-B050045`), failed (`PC-B050046`), **already settled, use refund** (`PC-B050047`), already refunded/voided (`PC-B050048`), during settlement processing (`PC-B050060`), amount mismatch (`PC-B050051`).
+- Body: `apiRequest` + **`orderNo`** (simplest) **or** `paymentId` (= `controllerInternalID` exactly as returned, no dashes). `officeId`, `productDescription` and `issuerApprovalCode` aren't needed. Full rules: `fields/void.md`.
+- Errors: not found (`PC-B050013`), not approved yet (`PC-B050045`), failed (`PC-B050046`), **already settled, use refund** (`PC-B050047`), already refunded/voided (`PC-B050048`), not voidable (`PC-B050049`), during settlement processing (`PC-B050060`, retry later).
 - Some wallet/QR payments are settled straight away, so they can't be voided. Use refund.
 
 ## Refund [DZ][2C2P confirmed]

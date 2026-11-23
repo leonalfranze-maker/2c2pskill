@@ -65,7 +65,7 @@ failed (F) / pending (P) are other outcomes
 | Office / `officeId` | The merchant account inside PACO that a payment belongs to. Issued at onboarding. |
 | API key | Company credential. Sent in the `apiKey` header and as JWT `iss`. |
 | `orderNo` | Merchant's order number, max 40. Also called "Transaction Invoice No." |
-| `controllerInternalId` / `paymentId` | PACO's payment ID (UUID) returned in responses. |
+| `controllerInternalId` / `paymentId` | PACO's payment ID returned in responses (32 hex characters, no dashes). Store it and send it back unchanged. |
 | PSP / acquirer | The bank or provider that actually processes the payment behind PACO. |
 | JOSE | Signed + encrypted message format (JWS inside JWE). Required in production. See `jose.md`. |
 | 3DS / OTP | Card holder authentication by the issuing bank (the OTP page). |
