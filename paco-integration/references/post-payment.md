@@ -27,10 +27,12 @@ Status and step codes: `notification.md`.
 **Don't wait too long.** How long a card authorization stays valid is set by the card scheme / acquirer. Settle as soon as the goods/service are confirmed. Ask 2C2P whether your office settles unsettled manual payments automatically after a number of days, and how many.
 
 ### Settlement request [DZ][2C2P confirmed]
-- Required: `apiRequest`, `officeId`, `orderNo`, `settlementAmount`.
+- Required: `apiRequest`, `officeId` (the payment's office), `orderNo`, `settlementAmount`. Full rules: `fields/settlement.md`.
 - `settlementAmount`: > 0, same currency as the payment, **not more than the approved amount**.
-- **Partial settlement is allowed once**: whatever you don't capture in that call can't be captured later. Not allowed for installment (IPP) payments, payments itemized by sub-merchant, and some special card types. Those must be settled in full.
-- Currency-conversion payments: also send `originalSettlementAmount`.
+- **One settlement call per payment.** A second one → `PC-B050057`. A partial settlement is final: the rest can't be captured later.
+- Partial isn't allowed for installment (IPP) payments, payments with purchase items, and UATP (airline) cards. Settle those in full.
+- Payments with purchase items: for a full settlement, leave `settlementItems` out.
+- Currency-conversion payments: send the amount in your base currency (`originalSettlementAmount`). PACO calculates the converted amount. Don't send `originalSettlementAmount` for normal payments.
 - The payment is found by `orderNo` within your company.
 
 | Error | Meaning |
@@ -40,7 +42,9 @@ Status and step codes: `notification.md`.
 | `PC-B050055` | payment uses **auto** settlement. Don't call settlement. |
 | `PC-B050056` | failed payment can't be settled |
 | `PC-B050057` / `58` / `72` / `68` | already settled / voided / refunded / not approved yet |
+| `PC-B050073` | can't be settled for another reason |
 | `PC-B050074` | partial settlement for IPP not allowed |
+| `PC-B054506` | settlement items don't add up to the settlement amount (or empty `settlementItems`) |
 
 ## Void [DZ][2C2P confirmed]
 - Allowed only while the payment is approved and not settled (step `PA` or `PS`). After settlement → **refund**.

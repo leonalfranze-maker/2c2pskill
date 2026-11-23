@@ -68,6 +68,9 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `transactionList` returns too much, or unfiltered results | a filter value was wrong (ignored silently) or isn't supported | check spelling and case (`UpdatedDate`, `First6Digits`, uppercase `ECOM`), 12-digit amounts, dates with `Z` (`fields/inquiry-transactionlist.md`) |
 | `transactionList` stops at 500 | max 500 per call, no paging | split by smaller date windows |
 | `PC-B050055` | settlement called on an **auto**-settlement payment | don't call settlement. PACO captures automatically. |
+| `PC-B050057` | settlement on an already settled payment | one settlement per payment; inquire before retrying |
+| `PC-B050043` / `PC-B050074` | settlement above approved amount, or partial where not allowed (items, UATP / IPP) | `fields/settlement.md` |
+| `PC-B054506` | settlement items don't add up (or `[]`) | leave `settlementItems` out for full settlement |
 | `PC-B050039` | refund without a valid `localMakerChecker` | send `maker.username` (see `post-payment.md`) |
 | `PC-B051939` | invalid email | fix `maker.email` or other email fields |
 | `PC-B050047` | void on a settled payment | refund instead |

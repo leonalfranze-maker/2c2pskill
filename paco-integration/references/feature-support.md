@@ -36,14 +36,14 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | Void (full) | ✅ | Depends on settlement model | Only before settlement |
 | **Void (partial)** | ❌ | – | `voidAmount` / `voidItems` are ignored: void always cancels the full amount. For part of the money, settle less or refund later. |
 | Settlement (full) | ✅ | Yes: **manual** settlement model | Auto-settlement offices don't call it (`PC-B050055`) |
-| Settlement (partial) | ⚠️ | Yes: manual settlement model | **Once only:** the rest can't be captured later. Not for installments or itemized payments. |
+| Settlement (partial) | ⚠️ | Yes: manual settlement model | **Once only:** one settlement call per payment, the rest can't be captured later. Not for installments, payments with purchase items, or UATP cards. |
 | **Refund** (full, partial, multiple, itemized) | ✅ | **Yes: refunds by API are OFF by default** | Without it every refund returns `PC-B050096`. Payment must be settled first. Itemized needs items on the payment. |
 | Refund to a bank account | ⚠️ | Yes | Only for cash-type APM methods (e.g. counter payments) |
 
 ## Must know before building
 1. **Refunds by API are off by default.** Ask 2C2P to enable them before building any refund feature.
 2. **No partial void.** Void always reverses the full amount.
-3. **Settlement is one-shot.** A partial capture is final. Auto-settlement offices don't call settlement at all.
+3. **Settlement is one-shot.** One call per payment; a partial capture is final. Auto-settlement offices don't call settlement at all.
 4. **Refund needs a settled payment.** Before settlement, use void.
 5. **Recurring renames the first order** to `<orderNo>-0001`. Cards only, not with installments, auto-settlement offices only.
 6. **Tokenization must be enabled** on the office, or `Y` quietly does nothing.

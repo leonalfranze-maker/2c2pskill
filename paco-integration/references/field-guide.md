@@ -54,7 +54,7 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 - `amount` > 0 (`PC-B050005` for 0 or negative). Maximum: 12-digit `amountText`, i.e. 999,999,999,999 minor units (THB 9,999,999,999.99).
 - `amount`, `amountText` and `decimalPlaces` must agree: `currencies.md`.
 - A payment method may have its own amount range on your office. Outside it the method is missing from `availablePaymentTypes`, or you get `PC-B050035`.
-- Settlement and refund can't exceed the original amount (`PC-B050044`, `PC-B050040`).
+- Settlement and refund can't exceed the original amount (settlement `PC-B050043`, refund `PC-B050040`).
 
 ## Dates
 | Field | Do this |
