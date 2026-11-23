@@ -4,7 +4,7 @@ Sources [DZ]: https://devzone.2c2p.com/docs/payment-result-notification-1 · htt
 
 > ## ⚠️ Golden rule: the first message is not the final answer
 > **Always tell the merchant this.** The first thing PACO sends back can say **"Success"** even though the payment isn't complete:
-> - `/prePaymentUi` returns `PC-B050000` **"Success"**. That only means the payment page was created. The customer hasn't paid. [UAT]
+> - `/prePaymentUi` returns **`PC-B050000` "Success"** (seen in UAT) or **`PC-B050001` "pending"** [2C2P confirmed]. Either way it only means the payment page was created. The customer hasn't paid.
 > - A backend notification or a `/nonUi` response is a first report. Treat it as a trigger to check, not as proof.
 > - The browser redirect carries no status at all.
 >
@@ -56,8 +56,10 @@ Key fields in `data.paymentResult`:
 | `transactionAmount` | amount and currency actually charged |
 | `approvalCode`, `pspReferenceNo`, `invoiceNo2C2P` | references for reconciliation and support |
 | `creditCardAuthenticatedDetails` | masked card, `eciValue`, 3DS `authenticationStatus` |
-| `failedReason` | why it failed |
-| `apiResponse.responseCode` | e.g. `PC-B050000` Payment Successful |
+| `failedReason` | always `null` in the notification: use `apiResponse.responseCode` |
+| `apiResponse.responseCode` | e.g. `PC-B050000` Payment Successful. Failed payments also arrive in `data.paymentResult`, with their error code here. |
+
+Full response rules (exact field names, null values, dates): `responses/shared.md`.
 
 ## Payment status & step [2C2P confirmed]
 `paymentStatus` is the overall state. Act on it. `paymentStep` is the detailed stage. Each step belongs to exactly one status.
@@ -74,7 +76,9 @@ Key fields in `data.paymentResult`:
 | `E` | Expired: payment time ran out | `PE` payment expired |
 | `V` | Voided | `VD` void |
 | `PCRP` | Refund preparation | `RI` refund initiated |
-| `R` | Refund exists (see step) | `RP` waiting for the merchant's own refund approver, `RP2` waiting for external provider review, `RP3` waiting for bank approval, `RF` refunded, `RS` refund settled, `RR` refund rejected, `RE` refund expired on approval |
+| `R` | Refund exists (see step) | `RP` waiting for the merchant's own refund approver, `RP2` waiting for external provider review, `RP3` waiting for bank approval, `RF` refunded, `RS` refund settled, `RR` refund rejected, `RE` / `RX` refund expired |
+
+Other steps can appear (e.g. `TA`, `TI`, `TS` for airline ticketing). On an unknown step, act on `paymentStatus`. There is no `AU` step.
 
 ### Which states are final
 | State | Treat as | What the merchant can still do |
@@ -116,7 +120,7 @@ Key fields in `data.paymentResult`:
 - **Don't just take `data[0]`.** It may be a refund. To get the payment's status: take the **first entry whose `paymentStatus` is not `R` or `PCRP`**. Refund entries tell you about refunds.
 - `apiResponse` is about this inquiry call. `priorPaymentResponseDetails.responseCode` is the result of the payment attempt itself.
 - An unpaid payment past its `paymentExpiryDateTime` is reported as `F` / step `PT` (payment timeout).
-- Field name `lastUpdatedDttm`: check it against a real response.
+- Field names here: **`controllerInternalId`** (lower-case `d`) and `paymentStatusInfo.lastUpdatedDttm`. Payment responses and notifications use `controllerInternalID` and `lastUpdatedDateTime` (`responses/shared.md`). [2C2P confirmed]
 
 | Error | Meaning |
 |---|---|

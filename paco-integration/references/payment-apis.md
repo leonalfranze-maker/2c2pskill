@@ -79,7 +79,7 @@ Full confirmed rules for every field: **`fields/prepaymentui.md`**.
   - `data.paymentPage.paymentPageURL`: redirect the customer here. Optional `validTillDateTime` (UTC).
   - `data.paymentIncompleteResult`: `orderNo`, `controllerInternalID`, `paymentStatusInfo`, `availablePaymentTypes` (the methods available **for this payment**, see below), echoed `notificationURLs` (uppercase `URL` in responses).
 - **HTTP 400**: `apiResponse.responseCode` / `responseDescription` / `marketingDescription`. No `data`. Map the code with `troubleshooting.md`.
-- ⚠️ `PC-B050000 "Success"` here means **the payment page was created**, not that the customer paid. Store the order as *pending* and confirm later with the Inquiry API.
+- ⚠️ `PC-B050000 "Success"` (seen in UAT) or `PC-B050001` (pending) here means **the payment page was created**, not that the customer paid. Store the order as *pending* and confirm later with the Inquiry API.
 - Observed [UAT]: the page URL looks like `https://payment-api.demo-paco.2c2p.com/payment/...?pid=<controllerInternalId>&lang=en-US`.
 
 ## /nonUi [DZ]
@@ -101,8 +101,11 @@ Full confirmed rules (card, 3DS, device data, DCC/MCP, merchant-initiated): **`f
 
 Responses:
 - **200**: complete → `data.paymentResult` (status, approval code, masked card, PSP response). Still **confirm with the Inquiry API** before fulfilling the order.
-- **202**: incomplete, needs further action (e.g. 3DS challenge) → `data.paymentPage.paymentPageURL` (send the customer there) and/or `data.paymentIncompleteResult.aresACSChallenge` (`acsURL`, `challengeHtml`). Default: redirect to `paymentPageURL`.
+- **202**: not complete. Read `apiResponse.responseCode`: [2C2P confirmed]
+  - `PC-B050001` / `PC-B050002`: needs further action (3DS challenge, QR/APM) → `data.paymentPage.paymentPageURL` (send the customer there) and/or `data.paymentIncompleteResult.aresACSChallenge` (`acsURL`, `challengeHtml`). Default: redirect to `paymentPageURL`.
+  - **any other code: the payment failed or was declined.** `data.paymentIncompleteResult.failedReason` says why. A decline is **not** a 4xx.
 - **400**: error, as above.
+- Decide from `responseCode`, never from the HTTP status alone (`responses/shared.md`).
 
 **PCI DSS warning.** With `/nonUi` and raw card data, the merchant receives, transmits or processes full card numbers on its own servers, which puts it in **PCI DSS scope**. That typically means an SAQ D self-assessment or an Attestation of Compliance (general PCI DSS fact, not a PACO rule). With `/prePaymentUi` the merchant never touches card numbers, so the scope is much smaller.
 - Recommend `/prePaymentUi` by default.

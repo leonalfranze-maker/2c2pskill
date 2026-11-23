@@ -20,7 +20,7 @@ Files in `kiro-questions/responses/`. Send `R0-shared.md` first.
 
 | File | API | What Kiro checks |
 |---|---|---|
-| `R0-shared.md` | all | exact casing on the wire, null handling, apiResponse fields, status/step in responses, PCI-only fields, notification body |
+| `R0-shared.md` ✅ answered 2026-11-23 → `references/responses/shared.md` | all | exact casing on the wire, null handling, apiResponse fields, status/step in responses, PCI-only fields, notification body |
 | `R1-prepaymentui.md` | /prePaymentUi | paymentPageURL reuse, which expiry to show, what's filled before payment, new tokenRef |
 | `R2-nonui.md` | /nonUi | 200 vs 202, approval/failed fields, token, 3DS challenge rendering, APM data |
 | `R3-inquiry.md` | transactionStatus + transactionList | field names, refund entries vs refundNo, QR content, refundableAmount |

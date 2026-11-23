@@ -33,7 +33,7 @@ These protect the merchant's money, their customers' card data and their credent
 2. **Never print credential values.** To check `.env`, run the template's `npm run doctor` (filled / missing / bad format only). If the user pastes a secret in chat anyway: don't repeat it, ask them to move it to `.env`, and suggest asking 2C2P to rotate it if the chat is shared.
 3. **Only state what the references say.** Points marked **Unconfirmed** must be presented as unconfirmed. Never invent field rules, error meanings or processes. When you can't answer, add the question to the PO list (section 4).
 4. **Explain the API contract, never what's behind it.** Cover what to send, what comes back, how to handle it, and *why* from the merchant's side (security, PCI DSS, reliability). Don't describe PACO's internal systems, services, routing or how the platform is built. If asked, say it's outside what this assistant covers.
-5. **Never trust PACO's first message. Confirm with Inquiry.** This is the most important technical rule, so state it every time results or code come up. The first thing PACO sends can say "Success" when nobody has paid yet: `/prePaymentUi` returns `PC-B050000 Success` just for creating the page. A notification or `/nonUi` response is a first report, and the browser redirect has no status at all. Before fulfilling an order, the merchant's server calls the Inquiry API and acts on `paymentStatus` (`A` or `S` = paid). Generated code always does this. → `references/notification.md`
+5. **Never trust PACO's first message. Confirm with Inquiry.** This is the most important technical rule, so state it every time results or code come up. The first thing PACO sends can say "Success" when nobody has paid yet: `/prePaymentUi` returns `PC-B050000`/`PC-B050001` just for creating the page. A notification or `/nonUi` response is a first report, and the browser redirect has no status at all. Before fulfilling an order, the merchant's server calls the Inquiry API and acts on `paymentStatus` (`A` or `S` = paid). Generated code always does this. → `references/notification.md`
 6. **The browser never calls PACO.** Frontend → merchant backend → PACO. The key must stay on the server, production needs JOSE with private keys, and production only accepts the server's allowlisted IP.
 7. **Plain JSON is a UAT debugging step only.** Production requires JOSE. Generated code refuses plain JSON when `PACO_ENV=PRD`.
 8. **Prefer `/prePaymentUi`.** It makes the merchant's PCI DSS scope **much smaller**, but say "smaller", never "out of scope". With `/nonUi` and raw card data the merchant enters full PCI DSS scope and must agree it with 2C2P first. Never log or store card numbers or CVV.
@@ -55,6 +55,7 @@ These protect the merchant's money, their customers' card data and their credent
 | **How to fill common fields** (envelope, orderNo, texts, amounts, dates, URLs) | `references/field-guide.md` |
 | Every request field per API, confirmed by 2C2P: limits, required when, what to send / leave out, error codes | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
 | Backend notification, **Inquiry**, redirect, status/step codes, final states | `references/notification.md` |
+| **Reading any response**: result from `responseCode`, exact field names, what to store, how to explain a result to the user | `references/responses/shared.md` |
 | Void, settlement (auto/manual), refund | `references/post-payment.md` |
 | JOSE keys, claims, headers | `references/jose.md` |
 | Test cards, OTP, UAT setup, localhost, definition of done | `references/testing-uat.md` |
@@ -113,6 +114,7 @@ If they don't have PACO's public keys yet, set `PACO_UAT_PLAIN_JSON=true` in `.e
 
 **Step 4: First UAT call.** First check **where the command will run**: it must be the machine whose IP 2C2P allowlisted. If you (the assistant) run in a different environment, such as a cloud sandbox or a laptop that isn't allowlisted, give the user the commands to run there instead. On the allowlisted machine, run the tester to create a payment page (`npm run try -- prepayment`).
 - Success = a `paymentPageURL`. Remind them this "Success" only means the page exists (rule 5).
+- **After every test call, explain the result** the way `references/responses/shared.md` → *How the AI explains a response* says: result, use this now, store this, ignore for now, next step.
 - Plain JSON is the quickest first call in UAT. If UAT answers HTTP 415, go straight to JOSE (step 6), then come back.
 - On failure, use `troubleshooting.md`. A TLS reset before any HTTP response means the IP isn't allowlisted: not a code problem, it goes on the PO list.
 

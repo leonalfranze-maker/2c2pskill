@@ -13,7 +13,9 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 ## HTTP errors
 | Symptom | Cause | Action |
 |---|---|---|
-| HTTP 415 in production | sent `application/json` | use JOSE (`application/jose`) |
+| HTTP 415 in production (no body) | sent `application/json` | use JOSE (`application/jose`) |
+| HTTP 403 with no body | wrong API version in the URL | use `/api/2.0/...` |
+| `/nonUi` HTTP 202 with an error code | the card was declined / payment failed (not a server problem) | read `responseCode` and `failedReason` (`responses/shared.md`) |
 | `PC-B050088` invalid or missing API key · `PC-B050101` company is unavailable | `apiKey` header missing or wrong | check `.env` with `doctor`. The header name is exactly `apiKey`. |
 | `application/json` error reply to a JOSE request · `PC-T051904` | PACO couldn't decrypt | see `jose.md` errors |
 | `PC-T051905` missing mandatory fields · `PC-T051906` invalid field length · `PC-T051907` invalid field value | request shape | compare with `payment-apis.md` minimum request |

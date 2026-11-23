@@ -50,6 +50,7 @@ try {
     const r = await payNonUi(order, card, { cfg, keys });
     console.log(`✓ orderNo ${r.orderNo} | outcome ${r.outcome} | paymentStatus ${r.paymentStatus ?? '-'} | ${r.raw?.apiResponse?.responseCode} ${r.raw?.apiResponse?.responseDescription ?? ''}`);
     if (r.paymentPageURL) console.log(`✓ 3DS/OTP page: ${r.paymentPageURL}\n  Open it and enter OTP 123456.`);
+    if (r.outcome === 'FAILED') console.log(`✗ declined/failed: ${r.failedReason ?? '-'} (a decline comes back as HTTP 202 with an error code)`);
   }
 } catch (e) {
   const net = e.cause?.code || e.cause?.message;

@@ -130,19 +130,28 @@ export function buildNonUiRequest(order, card, cfg) {
 }
 
 /**
- * /nonUi -> { outcome, orderNo, paymentStatus, paymentPageURL?, raw }
- *   HTTP 200 = complete (authorized or declined, see paymentStatus)
- *   HTTP 202 = incomplete, needs further action (e.g. 3DS/OTP): redirect the customer to paymentPageURL
+ * /nonUi -> { outcome, orderNo, responseCode, paymentStatus, paymentPageURL?, failedReason?, raw }
+ * Decide from apiResponse.responseCode, not the HTTP status:
+ *   PC-B050000                 -> COMPLETE (HTTP 200, data.paymentResult). Still confirm with Inquiry.
+ *   PC-B050001 / PC-B050002    -> ACTION_REQUIRED (HTTP 202): send the customer to paymentPageURL (3DS/OTP, APM)
+ *   any other code on HTTP 202 -> FAILED: the payment was declined/failed (data.paymentIncompleteResult.failedReason)
+ *   HTTP 4xx                   -> request rejected: thrown as an error
  */
+const PENDING_CODES = new Set(['PC-B050001', 'PC-B050002']);
+
 export async function payNonUi(order, card, { cfg, keys }) {
   const body = buildNonUiRequest(order, card, cfg);
   const r = await callPaco('/api/2.0/Payment/nonUi', body, { cfg, keys });
   const d = r.data?.data;
-  if (r.httpStatus === 202 && d?.paymentPage?.paymentPageURL) {
-    return { outcome: 'ACTION_REQUIRED', orderNo: body.orderNo, paymentStatus: d.paymentIncompleteResult?.paymentStatusInfo?.paymentStatus, paymentPageURL: d.paymentPage.paymentPageURL, raw: r.data };
+  const responseCode = r.data?.apiResponse?.responseCode;
+  const result = d?.paymentResult ?? d?.paymentIncompleteResult;
+  const base = { orderNo: body.orderNo, responseCode, paymentStatus: result?.paymentStatusInfo?.paymentStatus, raw: r.data };
+  if (r.httpStatus === 200 && responseCode === 'PC-B050000' && d?.paymentResult) return { outcome: 'COMPLETE', ...base };
+  if (r.httpStatus === 202 && PENDING_CODES.has(responseCode)) {
+    return { outcome: 'ACTION_REQUIRED', ...base, paymentPageURL: d?.paymentPage?.paymentPageURL };
   }
-  if (r.httpStatus === 200 && d?.paymentResult) {
-    return { outcome: 'COMPLETE', orderNo: body.orderNo, paymentStatus: d.paymentResult.paymentStatusInfo?.paymentStatus, raw: r.data };
+  if (r.httpStatus >= 200 && r.httpStatus < 300 && responseCode) {
+    return { outcome: 'FAILED', ...base, failedReason: result?.failedReason ?? r.data?.apiResponse?.responseDescription };
   }
   throw pacoError('nonUi', r);
 }
