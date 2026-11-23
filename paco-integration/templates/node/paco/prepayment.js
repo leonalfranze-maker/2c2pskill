@@ -130,12 +130,16 @@ export function buildNonUiRequest(order, card, cfg) {
 }
 
 /**
- * /nonUi -> { outcome, orderNo, responseCode, paymentStatus, paymentPageURL?, failedReason?, raw }
- * Decide from apiResponse.responseCode, not the HTTP status:
- *   PC-B050000                 -> COMPLETE (HTTP 200, data.paymentResult). Still confirm with Inquiry.
- *   PC-B050001 / PC-B050002    -> ACTION_REQUIRED (HTTP 202): send the customer to paymentPageURL (3DS/OTP, APM)
- *   any other code on HTTP 202 -> FAILED: the payment was declined/failed (data.paymentIncompleteResult.failedReason)
- *   HTTP 4xx                   -> request rejected: thrown as an error
+ * /nonUi -> { outcome, action?, orderNo, responseCode, paymentStatus, ..., raw }
+ * HTTP 200 = approved (status A / step PA). Everything else that was processed is HTTP 202:
+ *   202 + paymentIncompleteResult.aresACSChallenge -> ACTION_REQUIRED, action CHALLENGE:
+ *        decode challengeHtml (Base64) and write it into the customer's browser (page or iframe >= 500x600).
+ *        Afterwards PACO redirects to confirmationUrl/failedUrl and sends the backend notification.
+ *   202 + data.webPaymentResult                     -> ACTION_REQUIRED, action REDIRECT:
+ *        send the customer to webPaymentUrl (or show content.extra.qrData as a QR). Result comes by notification.
+ *   202 + any other code                             -> FAILED (declined/failed). Show apiResponse.marketingDescription.
+ *   HTTP 4xx                                         -> request rejected: thrown as an error
+ * /nonUi never returns paymentPage. Always confirm the final result with Inquiry.
  */
 const PENDING_CODES = new Set(['PC-B050001', 'PC-B050002']);
 
@@ -144,13 +148,22 @@ export async function payNonUi(order, card, { cfg, keys }) {
   const r = await callPaco('/api/2.0/Payment/nonUi', body, { cfg, keys });
   const d = r.data?.data;
   const responseCode = r.data?.apiResponse?.responseCode;
-  const result = d?.paymentResult ?? d?.paymentIncompleteResult;
-  const base = { orderNo: body.orderNo, responseCode, paymentStatus: result?.paymentStatusInfo?.paymentStatus, raw: r.data };
-  if (r.httpStatus === 200 && responseCode === 'PC-B050000' && d?.paymentResult) return { outcome: 'COMPLETE', ...base };
-  if (r.httpStatus === 202 && PENDING_CODES.has(responseCode)) {
-    return { outcome: 'ACTION_REQUIRED', ...base, paymentPageURL: d?.paymentPage?.paymentPageURL };
+  const result = d?.paymentResult ?? d?.webPaymentResult ?? d?.paymentIncompleteResult;
+  const base = {
+    orderNo: body.orderNo, responseCode, paymentStatus: result?.paymentStatusInfo?.paymentStatus,
+    paymentStep: result?.paymentStatusInfo?.paymentStep, controllerInternalID: result?.controllerInternalID,
+    customerMessage: r.data?.apiResponse?.marketingDescription, raw: r.data,
+  };
+  if (r.httpStatus === 200 && d?.paymentResult) return { outcome: 'COMPLETE', ...base, approvalCode: d.paymentResult.approvalCode };
+  const challenge = d?.paymentIncompleteResult?.aresACSChallenge;
+  if (r.httpStatus === 202 && challenge?.challengeHtml) {
+    return { outcome: 'ACTION_REQUIRED', action: 'CHALLENGE', ...base, challengeHtml: Buffer.from(challenge.challengeHtml, 'base64').toString('utf8') };
   }
-  if (r.httpStatus >= 200 && r.httpStatus < 300 && responseCode) {
+  if (r.httpStatus === 202 && d?.webPaymentResult) {
+    const w = d.webPaymentResult;
+    return { outcome: 'ACTION_REQUIRED', action: 'REDIRECT', ...base, webPaymentUrl: w.webPaymentUrl, qrData: w.content?.extra?.qrData, payBefore: w.pspExpiryDateTime ?? w.paymentExpiryDateTime };
+  }
+  if (r.httpStatus === 202 && !PENDING_CODES.has(responseCode) && responseCode) {
     return { outcome: 'FAILED', ...base, failedReason: result?.failedReason ?? r.data?.apiResponse?.responseDescription };
   }
   throw pacoError('nonUi', r);

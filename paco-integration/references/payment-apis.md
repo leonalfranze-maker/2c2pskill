@@ -100,10 +100,12 @@ Full confirmed rules for every field: **`fields/prepaymentui.md`**.
 Full confirmed rules (card, 3DS, device data, DCC/MCP, merchant-initiated): **`fields/nonui.md`**.
 
 Responses:
-- **200**: complete → `data.paymentResult` (status, approval code, masked card, PSP response). Still **confirm with the Inquiry API** before fulfilling the order.
-- **202**: not complete. Read `apiResponse.responseCode`: [2C2P confirmed]
-  - `PC-B050001` / `PC-B050002`: needs further action (3DS challenge, QR/APM) → `data.paymentPage.paymentPageURL` (send the customer there) and/or `data.paymentIncompleteResult.aresACSChallenge` (`acsURL`, `challengeHtml`). Default: redirect to `paymentPageURL`.
-  - **any other code: the payment failed or was declined.** `data.paymentIncompleteResult.failedReason` says why. A decline is **not** a 4xx.
+- **200**: **approved** (status `A` / `PA`) → `data.paymentResult` (approval code, masked card, PSP references). Still **confirm with the Inquiry API** before fulfilling the order.
+- **202**: everything else that was processed. `/nonUi` **never returns `paymentPage`**. [2C2P confirmed]
+  - `data.paymentIncompleteResult.aresACSChallenge` → **3DS challenge**: decode `challengeHtml` (Base64) and write it into the customer's browser.
+  - `data.webPaymentResult` → **QR / wallet / deeplink**: send the customer to `webPaymentUrl` or show `content.extra.qrData`.
+  - any other code → **declined / failed**: show `apiResponse.marketingDescription`. A decline is **not** a 4xx.
+- Full guide: `responses/nonui.md`.
 - **400**: error, as above.
 - Decide from `responseCode`, never from the HTTP status alone (`responses/shared.md`).
 
@@ -115,7 +117,7 @@ Responses:
 ### 3DS with /nonUi [2C2P confirmed]
 | Setup | What the merchant does |
 |---|---|
-| PACO handles 3DS (default) | Send card data + `request3dsFlag`. If a challenge is needed, PACO answers **HTTP 202**. Send the customer to `paymentPageURL`, or render the challenge from `aresACSChallenge`. |
+| PACO handles 3DS (default) | Send card data + `request3dsFlag`. If a challenge is needed, PACO answers **HTTP 202** with `aresACSChallenge`: decode `challengeHtml` and write it into the customer's browser. Afterwards PACO redirects to your `confirmationUrl` / `failedUrl` and sends the notification. |
 | Merchant already authenticated the card with its own 3DS provider | Send the results in `creditCardDetails`: `eciValue`, `cAvvValue`, `dsTransID`, `threeDSServerTransID`, `authentication3DSVersion` (e.g. `2.2.0`), `authenticationStatus` (+ optional `xidValue`, `acsTransId`, `sdkTransId`, `authenticationStatusReason`). With `dsTransID` + `eciValue` + `cavvValue` + `authentication3DSVersion` all present, PACO skips its own 3DS. ECI as 2 digits (`05`). |
 
 Errors: full/attempt ECI without CAVV → `PC-B050010`. `dsTransID` without version → `PC-B050076`.

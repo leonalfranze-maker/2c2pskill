@@ -4,6 +4,7 @@
 //   npm run try -- inquiry <orderNo>                         the real status (source of truth)
 // Test cards: https://devzone.2c2p.com/docs/test-card (Visa 4111111111111111, CVV 123, OTP 123456,
 // any future expiry, default 12/30; override with TEST_CARD_EXPIRY=MMYY).
+import { writeFileSync } from 'node:fs';
 import { loadConfig, hasJoseKeys } from '../paco/config.js';
 import { loadKeys } from '../paco/jose.js';
 import { createPaymentPage, payNonUi } from '../paco/prepayment.js';
@@ -52,7 +53,15 @@ try {
     console.log(`  card ${mask(card.cardNumber)} exp ${card.cardExpiryMMYY}${order.request3dsFlag ? ` 3ds=${order.request3dsFlag}` : ''}`);
     const r = await payNonUi(order, card, { cfg, keys });
     console.log(`✓ orderNo ${r.orderNo} | outcome ${r.outcome} | paymentStatus ${r.paymentStatus ?? '-'} | ${r.raw?.apiResponse?.responseCode} ${r.raw?.apiResponse?.responseDescription ?? ''}`);
-    if (r.paymentPageURL) console.log(`✓ 3DS/OTP page: ${r.paymentPageURL}\n  Open it and enter OTP 123456.`);
+    if (r.action === 'CHALLENGE') {
+      const file = `challenge-${r.orderNo}.html`;
+      writeFileSync(file, r.challengeHtml);
+      console.log(`✓ 3DS challenge needed. Saved the bank's page to ${file}: open it in a browser and enter OTP 123456.`);
+      console.log('  In your app: decode challengeHtml and write it into the customer\'s browser. The result comes by redirect + notification.');
+    }
+    if (r.action === 'REDIRECT') console.log(`✓ send the customer to ${r.webPaymentUrl}${r.qrData ? ' (or show qrData as a QR)' : ''}, pay before ${r.payBefore ?? '-'} (UTC)`);
+    if (r.outcome !== 'FAILED') console.log(`  STORE    orderNo ${r.orderNo} | controllerInternalID ${r.controllerInternalID ?? '-'}${r.approvalCode ? ` | approvalCode ${r.approvalCode}` : ''}`);
+    console.log(`  NEXT     confirm the real status: npm run try -- inquiry ${r.orderNo}`);
     if (r.outcome === 'FAILED') console.log(`✗ declined/failed: ${r.failedReason ?? '-'} (a decline comes back as HTTP 202 with an error code)`);
   }
 } catch (e) {

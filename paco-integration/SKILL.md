@@ -56,7 +56,7 @@ These protect the merchant's money, their customers' card data and their credent
 | Every request field per API, confirmed by 2C2P: limits, required when, what to send / leave out, error codes | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
 | Backend notification, **Inquiry**, redirect, status/step codes, final states | `references/notification.md` |
 | **Reading any response**: result from `responseCode`, exact field names, what to store, how to explain a result to the user | `references/responses/shared.md` |
-| What to use / store / ignore from each API's response | `references/responses/<api>.md` (prepaymentui) |
+| What to use / store / ignore from each API's response | `references/responses/<api>.md` (prepaymentui, nonui) |
 | Void, settlement (auto/manual), refund | `references/post-payment.md` |
 | JOSE keys, claims, headers | `references/jose.md` |
 | Test cards, OTP, UAT setup, localhost, definition of done | `references/testing-uat.md` |

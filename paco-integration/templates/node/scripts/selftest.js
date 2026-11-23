@@ -64,7 +64,14 @@ const mock = http.createServer(async (req, res) => {
     let status = 200;
     let reply;
     if (isNonUi) {
-      if (!r.paymentType || !r.creditCardDetails?.cardNumber) throw new Error('nonUi: paymentType and creditCardDetails.cardNumber required');
+      if (!r.paymentType) throw new Error('nonUi: paymentType required');
+      if (r.paymentType === 'QR') {
+        status = 202;
+        reply = { version: '2.0', apiResponse: { responseCode: 'PC-B050002', responseDescription: 'Forwarded' },
+          data: { webPaymentResult: { orderNo: r.orderNo, controllerInternalID: 'abcdefabcdefabcdefabcdefabcdefab', webPaymentUrl: 'https://wallet.mock.invalid/pay',
+            paymentStatusInfo: { paymentStatus: 'P', paymentStep: 'PF' }, pspExpiryDateTime: '2026-11-23T10:30:00Z', content: { extra: { qrData: '000201...' } } } } };
+      } else {
+      if (!r.creditCardDetails?.cardNumber) throw new Error('nonUi: creditCardDetails.cardNumber required');
       const ok3ds = r.request3dsFlag === 'Y';
       const declined = r.creditCardDetails.cvvCode === '999';
       status = ok3ds || declined ? 202 : 200;
@@ -73,10 +80,12 @@ const mock = http.createServer(async (req, res) => {
             data: { paymentIncompleteResult: { orderNo: r.orderNo, failedReason: 'Do not honour', paymentStatusInfo: { paymentStatus: 'F', paymentStep: 'PR' } } } }
         : ok3ds
         ? { version: '2.0', apiResponse: { responseCode: 'PC-B050001', responseDescription: 'Pending 3DS' },
-            data: { paymentIncompleteResult: { orderNo: r.orderNo, paymentStatusInfo: { paymentStatus: 'I', paymentStep: 'AC' } },
-              paymentPage: { paymentPageURL: `https://mock-paco.invalid/3ds?o=${r.orderNo}` } } }
+            data: { paymentIncompleteResult: { orderNo: r.orderNo, paymentStatusInfo: { paymentStatus: 'I', paymentStep: 'AC' },
+              aresACSChallenge: { transStatus: 'C', challengeHtml: Buffer.from('<html><form name="creqForm" action="https://acs.mock.invalid"></form></html>').toString('base64') } },
+              paymentPage: null } }
         : { version: '2.0', apiResponse: { responseCode: 'PC-B050000', responseDescription: 'Success' },
             data: { paymentResult: { orderNo: r.orderNo, paymentStatusInfo: { paymentStatus: 'A', paymentStep: 'PA' } } } };
+      }
     } else reply = {
       version: '2.0',
       apiResponse: { responseCode: 'PC-B050001', responseDescription: 'Pending', responseDateTime: new Date().toISOString() },
@@ -164,7 +173,9 @@ try {
     ok(a.outcome === 'COMPLETE' && a.paymentStatus === 'A', `${plainJson ? 'JSON' : 'JOSE'}: 200 -> COMPLETE, status A`);
     ok(lastRequest.paymentType === 'CC' && lastRequest.creditCardDetails.cardNumber === '4111111111111111', `${plainJson ? 'JSON' : 'JOSE'}: paymentType CC + card (spaces stripped)`);
     const b = await payNonUi({ amount: 10, productDescription: 'nonUi', request3dsFlag: 'Y' }, card, { cfg, keys: appKeys });
-    ok(b.outcome === 'ACTION_REQUIRED' && b.paymentPageURL.includes('/3ds'), `${plainJson ? 'JSON' : 'JOSE'}: 202 -> ACTION_REQUIRED with 3DS page`);
+    ok(b.outcome === 'ACTION_REQUIRED' && b.action === 'CHALLENGE' && b.challengeHtml.includes('creqForm'), `${plainJson ? 'JSON' : 'JOSE'}: 202 + aresACSChallenge -> CHALLENGE with decoded HTML`);
+    const q = await payNonUi({ amount: 10, productDescription: 'qr', paymentType: 'QR' }, card, { cfg, keys: appKeys });
+    ok(q.outcome === 'ACTION_REQUIRED' && q.action === 'REDIRECT' && q.webPaymentUrl && q.qrData && q.paymentStatus === 'P', `${plainJson ? 'JSON' : 'JOSE'}: 202 + webPaymentResult -> REDIRECT with webPaymentUrl / qrData`);
     const c = await payNonUi({ amount: 10, productDescription: 'nonUi' }, { ...card, cvvCode: '999' }, { cfg, keys: appKeys });
     ok(c.outcome === 'FAILED' && c.responseCode === 'PC-B050031' && c.failedReason === 'Do not honour', `${plainJson ? 'JSON' : 'JOSE'}: declined card on HTTP 202 -> FAILED (not success)`);
   }
