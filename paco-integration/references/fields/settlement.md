@@ -39,7 +39,7 @@ Minimum request (normal payment, full amount):
 
 ## Purchase items (`settlementItems`)
 - **Full settlement of a payment with purchase items: leave `settlementItems` out.** PACO settles every item at its approved price.
-- If you send items:
+- Partial settlement isn't allowed for these payments, so there's normally **no reason to send `settlementItems`**. If you still send them (full amount, item by item), these rules apply:
 
 | Field | Rule | If wrong |
 |---|---|---|

@@ -30,7 +30,7 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **Will PACO notify me when a refund completes?** No, there's no refund callback. Read `paymentStep` in the refund response (HTTP 200 or 202): `RF`/`RS` = done, `RP`/`RP2`/`RI` = still in progress (approval in the Portal, review, or waiting for the customer's bank details), so follow up in the Portal or by inquiry. Store the `refundNo` from the response. → `post-payment.md`
 
-**Can I capture less than I authorized?** Usually yes (partial settlement), except installments, payments itemized by sub-merchant and some special card types. → `post-payment.md`
+**Can I capture less than I authorized?** Usually yes (partial settlement), except installments, payments with purchase items and UATP (airline) cards. One settlement call per payment. → `post-payment.md`
 
 **Cancel vs refund?** Not settled yet → void. Settled → refund. → `post-payment.md`
 

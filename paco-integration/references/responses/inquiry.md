@@ -35,6 +35,7 @@ API v2.0 · Confirmed by 2C2P (2026-11-23). General rules: `shared.md`. Request 
 
 - A pending payment past its expiry shows as `F` / `PT` (payment timeout).
 - **Not in `transactionStatus`:** amounts, `paymentType` / `channelCode`, `approvalCode`, card type, `failedReason`, `pspExpiryDateTime`, `customFieldList`, purchase items, refund number, `tokenRef`. Get them from `transactionList` (search by `orderNo` or `controllerInternalID`) or from the original response / notification.
+- `userDefined1`–`userDefined10` come back as you sent them: use them to match the payment to your own records.
 - **Ignore:** `accountNo`, `paymentScheme`, `pacoIssuerCode`, `installmentPaymentResults` (always `null` here).
 
 ## transactionList (`POST`): reports and details
