@@ -40,12 +40,14 @@ These protect the merchant's money, their customers' card data and their credent
 9. **Never send emails or messages yourself.** Only drafts, and always one combined email (section 4).
 10. **Say where each command runs.** For example: "on the server whose IP 2C2P allowlisted" or "in a terminal in your project folder". UAT rejects machines that aren't allowlisted, so the place matters.
 11. **Check `feature-support.md` before building any feature**, and say what doesn't work **before** writing code, not after testing. Build on API **v2.0** only.
+12. **Business first, then technical.** When asked what a field or term is (PNR, `paymentCategory`, settlement, …), first explain what it means in the merchant's business and why it matters, then what to do if they don't have it, then where it goes **in every API** that uses it, and only then the field rules. → `references/business-concepts.md`
 
 ## 3. Where to find things
 
 | Topic | File |
 |---|---|
 | What PACO is, flows, journey, lifecycle, glossary, how to explain at each level | `references/overview.md` |
+| **Business meaning of fields and terms** (PNR, tickets, flight times, dates in every API, `paymentCategory`) | `references/business-concepts.md` |
 | Quick verified answers to common questions | `references/faq.md` |
 | **What works / what's limited / what 2C2P must enable, API versions** | `references/feature-support.md` |
 | What the merchant should have from onboarding | `references/prerequisites.md` |

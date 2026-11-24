@@ -13,7 +13,7 @@ Shared fields (envelope, `orderNo`, amounts, dates, `userDefined`): also see `..
 |---|---|---|---|
 | `officeId` | office code from 2C2P | always | copy exactly (`PC-B050410` if wrong) |
 | `orderNo` | 1–40 of `A–Z a–z 0–9 - _ +` | always | ≤ 35 for recurring (`PC-B050004`) |
-| `productDescription` | ≤ 50 (longer is cut) | send it | one line, no emoji |
+| `productDescription` | ≤ 50 (longer is cut) | send it | one line, no emoji. **Airlines / travel agents: put the PNR here when you have it** (Dev Zone: "a.k.a. PNR"); otherwise a short description (`../business-concepts.md`). |
 | `paymentCategory` | `ECOM`, `VEDC`, `RPP`, `IPP`, `QUICKPAY` (uppercase) | no, default `ECOM` | omit it or send `ECOM`. `VEDC` (mail/phone order) only if 2C2P enabled it. Don't send `QUICKPAY` or `RPP`/`IPP` (set automatically). A bad value fails later, at payment (`PC-B050012`). |
 | `paymentType` | `TYPE`, `TYPE-CHANNEL` or `TYPE-CHANNEL-AGENT` (e.g. `CC`, `QR`, `WALLET-…`), only codes enabled on your office | no | omit to show every method. Unknown → `PC-B051401`, not enabled → `PC-B051402`. |
 | `channelCode` | ≤ 20, no `-`, a channel enabled for you | no | usually omit. Ignored for `CC`/`IPP`. Must match `paymentType` if both carry a channel (`PC-B051401`). |
@@ -102,13 +102,14 @@ Missing required parts with airline data → `PC-B054514` / `PC-B054515`.
 | `subMerchantID` | ≤ 25, an ID from 2C2P | no | |
 
 ## Airline data (`airlineData`): airlines and travel agents only
+What PNR, tickets and segments mean, and what to do without a PNR: `../business-concepts.md`. **No PNR yet → leave `airlineData` out.**
 Send `billingAddress` (Line1, City, PostCode, Country) with it. Missing required parts → `PC-B050083`. Bad format → `PC-B050085`.
 
 | Field | Rule | Required |
 |---|---|---|
 | `bypassForwarding` | JSON boolean (**this is the real name**, not `bypassForward`) | no |
 | `bookingReference.pnrCode` | exactly 6 of `A–Z a–z 0–9` | yes |
-| `bookingReference.bookingDateTime` | ISO 8601 **with offset**, e.g. `2026-11-16T09:30:00Z` | yes |
+| `bookingReference.bookingDateTime` | **UTC with `Z`**, e.g. `2026-11-16T09:30:00Z` | yes |
 | `bookingReference.status` | 2-letter IATA PNR status, e.g. `HK` | no |
 | `agency.name` / `code` / `id` / `invoiceNo` / `planName` | ≤ 50 / 20 / 20 / 50 / 30 | no |
 | `flightSegments[]` | ≥ 1 | yes |
@@ -122,13 +123,13 @@ Send `billingAddress` (Line1, City, PostCode, Country) with it. Missing required
 | `…airportCode`, `…cityCode` | exactly 3 **uppercase** IATA letters | airport yes, city no |
 | `…countryCode` | 3 **digits** (ISO numeric, `764`) | yes |
 | `…cityName` / `…countryName` | ≤ 50 / ≤ 70 | no |
-| `…dateTime` | **local time, no offset**: `2026-12-01T08:30:00` | yes |
+| `…dateTime` | **local time at that airport, no `Z` or offset**: `2026-12-01T08:30:00` (the only date-time not in UTC) | yes |
 | `fareClass` | 1 letter | no |
 | `fareBasisCode` | ≤ 15 of `A–Z a–z 0–9 - / +` | no |
 | `endorsementOrRestriction` | 1–100 of letters, digits, space and `. , ' - / & ( ) : +` | no |
 | `isChartered` / `isStopOver` / `isReturnFlight` | JSON boolean | no |
 | `tickets[].ticketNo` | ≤ 64 | no |
-| `tickets[].ticketIssueDate` | ISO 8601 with offset | no |
+| `tickets[].ticketIssueDate` | UTC with `Z` | no |
 | `tickets[].ticketReservationSystemCode` / `purchaseType` / `securityProgramTravelCode` | ≤ 4 / 40 / 30, free text | no |
 | `tickets[]` amounts (`taxAmount`, `ticketFare`, …) | amount objects | no |
 | `tickets[]` booleans | JSON boolean | no |

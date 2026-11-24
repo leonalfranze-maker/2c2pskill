@@ -65,6 +65,9 @@ failed (F) / pending (P) are other outcomes
 | Office / `officeId` | The merchant account inside PACO that a payment belongs to. Issued at onboarding. |
 | API key | Company credential. Sent in the `apiKey` header and as JWT `iss`. |
 | `orderNo` | Merchant's order number, max 40. Also called "Transaction Invoice No." |
+| `productDescription` | What was bought, max 50. Airlines put the **PNR** here (Dev Zone: "a.k.a. PNR"). |
+| PNR | Passenger Name Record: an airline booking code, usually 6 letters/digits; tickets are issued against it. See `business-concepts.md`. |
+| `paymentCategory` | How the payment is made: `ECOM` online (default), `VEDC` mail/phone order, `RPP` recurring, `IPP` installments. See `business-concepts.md`. |
 | `controllerInternalId` / `paymentId` | PACO's payment ID returned in responses (32 hex characters, no dashes). Store it and send it back unchanged. |
 | PSP / acquirer | The bank or provider that actually processes the payment behind PACO. |
 | JOSE | Signed + encrypted message format (JWS inside JWE). Required in production. See `jose.md`. |

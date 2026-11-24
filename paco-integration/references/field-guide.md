@@ -1,7 +1,7 @@
 # Field guide: how to fill the common fields
 
 Recommendations for fields used across the APIs. Follow them and requests pass first time. [2C2P confirmed]
-Per-API tables: `fields/<api>.md`. This guide wins where they differ.
+Per-API tables: `fields/<api>.md` (same rules, plus field-specific detail). Business meaning of fields: `business-concepts.md`.
 Explain these to merchants as recommendations ("use …"). There's no need to explain why.
 
 ## General
@@ -57,9 +57,24 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 - Settlement and refund can't exceed the original amount (settlement `PC-B050043`, refund `PC-B050040`).
 
 ## Dates
+**Rule for every API: send every date-time as UTC with `Z`** (`2026-11-23T08:15:30Z`). **One exception: flight departure and arrival times** (`airlineData.flightSegments[].departure.dateTime` / `arrival.dateTime`): send them as the **local time at that airport**, as the flight is scheduled, **without** `Z` or an offset (`2026-12-01T08:30:00`). Departure = local time at the departure airport, arrival = local time at the arrival airport. Don't convert them to UTC. [2C2P confirmed]
+Invalid values may be ignored, so always send valid ISO 8601.
+
+| API | Date-time fields you send | Format |
+|---|---|---|
+| every call with a body | `apiRequest.requestDateTime` | UTC `Z`, current time |
+| `/prePaymentUi`, `/nonUi` | `paymentExpiryDateTime`, `linkExpiryDateTime` | UTC `Z` |
+| `/prePaymentUi`, `/nonUi` | `recurringPaymentDetails.recurringEndDate` | date, not in the past |
+| `/prePaymentUi`, `/nonUi` | `airlineData.bookingReference.bookingDateTime`, `airlineData.tickets[].ticketIssueDate` | UTC `Z` |
+| `/prePaymentUi`, `/nonUi` | `airlineData.flightSegments[].departure.dateTime` / `arrival.dateTime` | **local airport time, no offset** (the exception) |
+| `transactionList` | `advSearchParams.fromDate` / `toDate` | UTC `Z` |
+| Refund | `refundLinkExpiryDatetime` (better left out) | UTC `Z` |
+| `transactionStatus`, void, settlement | only `requestDateTime` (void/settlement), none (transactionStatus) | – |
+
+**Responses and notifications:** every date-time PACO returns is UTC, even when the `Z` is missing (e.g. `validTillDateTime`): `responses/shared.md`.
+
 | Field | Do this |
 |---|---|
-| All date-time fields | **UTC with `Z`**: `2026-11-23T08:15:30Z`. Invalid values may be ignored, so always send valid ISO 8601. |
 | `paymentExpiryDateTime`, `linkExpiryDateTime` | At least a few minutes in the future (too soon → `PC-B050061`, payment rejected). Omit them to use your account's defaults. Ask your PO what those are if it matters. |
 | `recurringEndDate` | Required unless the plan is one-time. Not in the past. |
 | `refundLinkExpiryDatetime` | **Leave it out** (account default). If sent it must be in the future, or every refund fails (`PC-B053558`). |

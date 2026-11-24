@@ -31,7 +31,7 @@ All filters are optional. Arrays have no fixed maximum, but **keep each array �
 | `paymentCategory[]` | exact, **uppercase** | `ECOM`, `VEDC`, `QUICKPAY`, `RPP`, `IPP` (`IPP` also finds installment payments) | lowercase → no match |
 | `paymentType[]` | exact, case-sensitive | `CC` also finds every `CC-xx`. Others exact (`IPP`, `QR`, `WALLET`, …) | |
 | `channelCode[]` | exact, case-sensitive | APM channel codes, or card scheme codes (`VI`, `CA`, …) | |
-| `productDescription[]` | **word match**, not exact | text | check the results if you need an exact match |
+| `productDescription[]` | **word match**, not exact | text (airlines: the PNR) | find payments by PNR; check the results if you need an exact match |
 | `invoiceNo2C2P[]` | word match | 2C2P invoice number | |
 | `pspReferenceNo[]` | word match | | |
 | `agentCode[]` | word match | | |

@@ -10,7 +10,7 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **What is PACO?** 2C2P's payment API platform. Your backend calls it to take payments and manage them (inquiry, void, capture, refund). → `overview.md`
 
-**prePaymentUi or nonUi?** prePaymentUi for almost everyone: 2C2P's page collects card data, so you stay out of PCI DSS scope, and every method enabled on your office appears automatically. nonUi only if you already run a PCI-compliant card form or need full control. → `overview.md`
+**prePaymentUi or nonUi?** prePaymentUi for almost everyone: 2C2P's page collects card data, so your PCI DSS scope is much smaller (never "out of scope"), and every method enabled on your office appears automatically. nonUi only if you already run a PCI-compliant card form or need full control. → `overview.md`
 
 **Can my website (JavaScript) call PACO directly?** No. Your frontend calls your backend, and your backend calls PACO. The API key and private keys must stay on the server, and production only accepts your server's allowlisted IP. → `overview.md`
 

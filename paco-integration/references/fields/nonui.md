@@ -22,7 +22,7 @@ A wrong format or length usually returns `PC-B051800`, naming the field.
 | `enrolledFlag` | `Y` / `N` | no | stored only |
 | `cardType`, `issuerCode`, `issuerBankName`, `issuerBankCountry`, `acquirerBank`, `acquirerMerchantID`, `paRes` | not used: PACO fills card details itself | – | leave out |
 
-**No CVV (`-`) is accepted only when:** `paymentCategory` is `VEDC` or `RPP`, or `transactionInitiator` is `M`, or 2C2P enabled CVV bypass on your office.
+**No CVV (`-`) is accepted only when:** the payment is a mail/phone order (`VEDC`, if 2C2P enabled it) or a recurring charge (`RPP`, set automatically), or `transactionInitiator` is `M`, or 2C2P enabled CVV bypass on your office.
 
 ## Your own 3DS results (external 3DS)
 PACO uses your 3DS result **only when all four are sent:** `dsTransID` + `eciValue` + `cavvValue` + `authentication3DSVersion`. Otherwise PACO runs its own 3DS.

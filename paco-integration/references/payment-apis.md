@@ -35,7 +35,7 @@ Every request is wrapped in `apiRequest`:
 |---|---|
 | `officeId` | string ≤ 20. Issued at onboarding. |
 | `orderNo` | **1–40 of `A–Z a–z 0–9 - _ +`** (≤ 35 for recurring), case-sensitive, **unique within your company** (across all its offices). Reuse rules: see *orderNo reuse* below. |
-| `productDescription` | ≤ 50, one line, no emoji (longer text is cut). Shown on the Payment Page. |
+| `productDescription` | ≤ 50, one line, no emoji (longer text is cut). Shown on the Payment Page. Airlines: the PNR when you have it (`business-concepts.md`). |
 | `transactionAmount.amount` | decimal > 0, e.g. `50.5`. No more decimals than `decimalPlaces`. `amount`, `amountText` and `decimalPlaces` must agree. |
 | `transactionAmount.amountText` | **exactly 12 digits**, amount in minor units, zero-padded: 50.50 → `000000005050` |
 | `transactionAmount.decimalPlaces` | per currency, see **`currencies.md`** (THB/USD **2**, JPY/KRW/VND **0**, BHD/KWD **3**). Mismatch → `PC-B050093`. |
@@ -63,14 +63,14 @@ The same amount rules (alphabetic currency, exponent, 12-digit `amountText`) app
 Full confirmed rules for every field: **`fields/prepaymentui.md`**.
 | Field | Use |
 |---|---|
-| `preferredPaymentTypes` | array of payment types to show first/only on the page, e.g. `["CC"]` |
+| `preferredPaymentTypes` | array of payment types to show on the page, e.g. `["CC"]`. PACO decides the display order. Ignored if `paymentType` is sent. |
 | `paymentExpiryDateTime` / `linkExpiryDateTime` | when the payment / the page link expires |
 | `request3dsFlag` | exactly `"N"` (no 3DS), `"Y"` (relaxed: full authentication or attempt accepted) or `"Y-Strict"` (full authentication only). Case-sensitive. Not sent → the office's setting. The office must have a channel matching the value, otherwise `PC-B050035` / `PC-B050036`. The office may upgrade `Y` to strict. `Y` doesn't guarantee an OTP page: the issuer can approve without a challenge. |
-| `generalPayerDetails` | payer name / email / phone (`mobilePhone` 8–15 chars incl. country code) |
+| `generalPayerDetails` | payer name / email / phone (phone **without** the country code: `field-guide.md`) |
 | `statementDescriptor` | ≤ 20, text on the cardholder's statement |
 | `autoRedirectDelayTimer` | seconds PACO's result page waits before redirecting back. `0` = immediately. See `notification.md`. |
 | `userDefined1`…`userDefined10` | ≤ 150 each, merchant's own data |
-| `paymentCategory` | `ECOM`, `VEDC`, `QUICKPAY`, `RPP`, `IPP`. Not needed for a basic payment [UAT]. |
+| `paymentCategory` | usually omit (default `ECOM`). `VEDC` only if 2C2P enabled it; never send `QUICKPAY`, `RPP`, `IPP`. Business meaning: `business-concepts.md`. |
 | `tokenizeDetails` | save the card and show saved cards (`tokenRefList`). ⚠️ Tokenization must be enabled on the office, or `Y` silently becomes a normal payment and `F` is rejected. Use `tokenizeFlag` `Y`, `N` or `F`. prePaymentUi rules: `tokenizeFlag` required when the object is sent; `tokenRef` forbidden; `F` needs 3DS on. |
 | `installmentPaymentDetails`, `recurringPaymentDetails` | installments / recurring. ⚠️ Both need 2C2P setup. Recurring is **cards only**, needs an auto-settlement office, can't be combined with installments, and renames the first charge to `<orderNo>-0001`. See `feature-support.md`. |
 
