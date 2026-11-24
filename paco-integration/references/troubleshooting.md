@@ -34,7 +34,7 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050093` | decimal places / currency mismatch | `decimalPlaces` = ISO 4217 exponent |
 | `PC-B050007` / `08` / `09` | invalid card number / CVV / expiry | nonUi card fields |
 | `PC-B050085` / `PC-B050089` | invalid cardholder name | English letters and spaces only, not all digits |
-| `PC-B050015` / `16` / `17` | `apiRequest` missing / bad date-time / bad message ID | key names exactly `apiRequest` and `requestMessageID` (capital ID), a UUID, current UTC time (`field-guide.md`) |
+| `PC-B050015` / `16` / `17` | `apiRequest` missing / bad date-time / bad message ID (`17` also: a DCC/MCP rate-quote `messageId` that doesn't match the amounts, `fields/nonui.md`) | key names exactly `apiRequest` and `requestMessageID` (capital ID), a UUID, current UTC time (`field-guide.md`) |
 | `PC-B050018` | invalid notification URLs | all 4 URLs present and valid |
 | `PC-B050021` | invalid product description | non-empty, ≤ 50 |
 | `PC-B050012` | invalid payment category | drop `paymentCategory` or use a valid value |

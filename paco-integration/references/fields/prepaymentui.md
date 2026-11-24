@@ -72,6 +72,16 @@ Not combinable with DCC (`PC-B054511`) or recurring (`PC-B050014`).
 The office must use auto settlement (`PC-B050411`). Recurring rules are checked when the customer pays.
 
 ## Payer (`generalPayerDetails`)
+One **object** (not an array), e.g.:
+```json
+"generalPayerDetails": {
+  "personName": { "firstName": "Somchai", "lastName": "Jaidee" },
+  "email": "somchai@example.com",
+  "mobilePhoneCountryCode": "66",
+  "mobilePhone": "0861234567"
+}
+```
+
 | Field | Rule | Required | Do this / if wrong |
 |---|---|---|---|
 | `personName.fullName` | ≤ 100, **English letters only** (Thai and other non-Latin letters are removed) | no | send the English name, ≤ 50 |
