@@ -49,7 +49,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
 ### 3DS (the OTP step)
 - **What:** the card-issuing bank checks that the person paying really owns the card, usually with an **OTP** sent to the cardholder.
-- **Why it matters:** it protects you and the cardholder from someone paying with a stolen card number. When you ask for 3DS (`Y`), the issuing bank decides whether the customer must enter an OTP. It doesn't always ask: **if the bank approves without an OTP and a problem comes up later, the issuing bank is responsible, not you.** The 3DS result (`authenticationStatus`, `eciValue`) comes back with the payment: store it as evidence if a cardholder disputes the payment (chargeback).
+- **Why it matters:** it protects you and the cardholder from someone paying with a stolen card number. When you ask for 3DS (`Y`), the issuing bank decides whether the customer must enter an OTP. It doesn't always ask: **if the bank approves without an OTP and a problem comes up later, the issuing bank is responsible, not you.** [2C2P confirmed] The 3DS result (`authenticationStatus`, `eciValue`) comes back with the payment: store it as evidence if a cardholder disputes the payment (chargeback).
 - **What to do:** with `/prePaymentUi` you build nothing: the Payment Page shows the OTP step. With `/nonUi` you show the bank's challenge page yourself (`responses/nonui.md`).
 - **`request3dsFlag`** (`/prePaymentUi`, `/nonUi`): `N` no 3DS · `Y` 3DS, full authentication or "attempted" accepted · `Y-Strict` full authentication only · not sent = your office's setting. Rules: `fields/prepaymentui.md`.
 - **3DS is set in three places:** your API request (`request3dsFlag`), and two settings you can adjust in the **PACO Portal**: **payment routing** and **PSP profile**. ⚠️ **If you send `Y` or `Y-Strict`, neither Portal setting may be `N`**, or the request is rejected. [2C2P confirmed]
@@ -68,7 +68,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
 ### Tokenization (saved cards)
 - **What:** saving a customer's card so they don't type it again. PACO keeps the card; you get a **token** (`tokenRef`) that stands for it, a **`profileRef`** (your ID for that customer) and a masked number to show ("Visa •••• 1111"). Next time you send the token instead of card details, and PACO turns it into a payment with that card.
-- **Why it matters:** returning customers pay faster, with fewer steps and **often without an OTP again** (like marketplace apps where the second purchase is one tap), so **more payments succeed**. Useful for **any business** with repeat customers.
+- **Why it matters:** returning customers pay faster, with fewer steps and **usually without an OTP again** (like marketplace apps where the second purchase is one tap), so **more payments succeed**. Useful for **any business** with repeat customers.
 - **Is it safe?** You only store `tokenRef` and `profileRef`. They mean nothing outside PACO, so a leak of your database doesn't expose card data. You never store card numbers.
 - **What to do:** 2C2P must enable tokenization on your office. Then choose the flag:
 

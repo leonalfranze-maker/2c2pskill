@@ -22,9 +22,9 @@ Every request is wrapped in `apiRequest`:
   "productDescription": "T-shirt",
   "transactionAmount": { "amount": 100.0, "amountText": "000000010000", "currencyCode": "<see currency>", "decimalPlaces": 2 },
   "notificationUrls": {
-    "confirmationUrl": "https://shop.example/payment/result?status=success&orderNo=ORD123",
-    "failedUrl":       "https://shop.example/payment/result?status=failed&orderNo=ORD123",
-    "cancellationUrl": "https://shop.example/payment/result?status=cancelled&orderNo=ORD123",
+    "confirmationUrl": "https://shop.example/payment/result",
+    "failedUrl":       "https://shop.example/payment/result",
+    "cancellationUrl": "https://shop.example/payment/cancelled",
     "backendUrl":      "https://shop.example/paco/notification"
   }
 }
@@ -118,7 +118,7 @@ Responses:
 | Setup | What the merchant does |
 |---|---|
 | PACO handles 3DS (default) | Send card data + `request3dsFlag`. If a challenge is needed, PACO answers **HTTP 202** with `aresACSChallenge`: decode `challengeHtml` and write it into the customer's browser. Afterwards PACO redirects to your `confirmationUrl` / `failedUrl` and sends the notification. |
-| Merchant already authenticated the card with its own 3DS provider | Send the results in `creditCardDetails`: `eciValue`, `cAvvValue`, `dsTransID`, `threeDSServerTransID`, `authentication3DSVersion` (e.g. `2.2.0`), `authenticationStatus` (+ optional `xidValue`, `acsTransId`, `sdkTransId`, `authenticationStatusReason`). With `dsTransID` + `eciValue` + `cavvValue` + `authentication3DSVersion` all present, PACO skips its own 3DS. ECI as 2 digits (`05`). |
+| Merchant already authenticated the card with its own 3DS provider | Send the results in `creditCardDetails`: `eciValue`, `cavvValue`, `dsTransID`, `threeDSServerTransID`, `authentication3DSVersion` (e.g. `2.2.0`), `authenticationStatus` (+ optional `xidValue`, `acsTransId`, `sdkTransId`, `authenticationStatusReason`). With `dsTransID` + `eciValue` + `cavvValue` + `authentication3DSVersion` all present, PACO skips its own 3DS. ECI as 2 digits (`05`). |
 
 Errors: full/attempt ECI without CAVV → `PC-B050010`. `dsTransID` without version → `PC-B050076`.
 
