@@ -59,7 +59,7 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | `PC-B050410` | `officeId` not recognised | copy the office code exactly |
 | `PC-B051401` / `PC-B051402` | `paymentType` unknown / not enabled on your office | check `availablePaymentTypes`. Don't mix a channel in `paymentType` with a different `channelCode`. |
 | `PC-B054508` | `conversionType` missing while conversion is enabled | send `conversionType` |
-| `PC-B056301`–`PC-B056309` | saved-card (`tokenizeDetails`) rule broken | in prePaymentUi: `tokenRefList` (≤ 50, flag `Y`), never `tokenRef`. Don't send `F` for a card that already has a token (`business-concepts.md` → Tokenization). |
+| `PC-B056301`–`PC-B056309` | saved-card (`tokenizeDetails`) rule broken | in prePaymentUi: show saved cards with `profileRef` (flag `Y`), never `tokenRef`. Don't send `F` for a card that already has a token (`business-concepts.md` → Tokenization). |
 | 3DS request rejected although you sent `Y` / `Y-Strict` | a 3DS setting in the PACO Portal (payment routing or PSP profile) is `N` | change it in the Portal, or ask your PO (`business-concepts.md` → 3DS) |
 | `PC-B050014` / `PC-B051943` / `PC-B050411` | recurring: bad plan / end date in the past / office not on auto settlement | `fields/prepaymentui.md` → Recurring |
 | `PC-B054504` / `PC-B054505` / `PC-B054512` | purchase items: sum ≠ amount / bad item price / not allowed with DCC | |

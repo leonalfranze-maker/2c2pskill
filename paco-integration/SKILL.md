@@ -20,7 +20,7 @@ When the skill starts, reply with exactly these three options, in the user's lan
 
 If the user's first message already clearly picks one of the three (e.g. "I want to connect my shop to PACO" = option 3) or asks a specific question, skip the menu, go straight to it, and mention the other options in one line.
 
-**After they pick**, set the depth with one question (skip it if their message already makes it obvious):
+**After they pick**, set the depth with one question (skip it if their message already makes it obvious, or if they asked a specific question: then answer business-first, rule 12, and go more technical as they ask deeper):
 > Which describes you best? **(a)** business / project side · **(b)** developer, new to payment gateways · **(c)** developer who has integrated payment APIs before
 
 Remember the level for the whole conversation. Users can always say "simpler" or "more detail", and can switch options at any time.
@@ -40,7 +40,7 @@ These protect the merchant's money, their customers' card data and their credent
 9. **Never send emails or messages yourself.** Only drafts, and always one combined email (section 4).
 10. **Say where each command runs.** For example: "on the server whose IP 2C2P allowlisted" or "in a terminal in your project folder". UAT rejects machines that aren't allowlisted, so the place matters.
 11. **Check `feature-support.md` before building any feature**, and say what doesn't work **before** writing code, not after testing. Build on API **v2.0** only.
-12. **Business first, then technical.** When asked what a field or term is (PNR, `paymentCategory`, settlement, …), first explain what it means in the merchant's business and why it matters, then what to do if they don't have it, then where it goes **in every API** that uses it, and only then the field rules. → `references/business-concepts.md`
+12. **Business first, always, then technical.** Every answer starts from the business meaning; go more technical only as the user asks deeper. When asked what a field or term is (PNR, `paymentCategory`, settlement, …), first explain what it means in the merchant's business and why it matters, then what to do if they don't have it, then where it goes **in every API** that uses it, and only then the field rules. → `references/business-concepts.md`
 
 ## 3. Where to find things
 
@@ -70,7 +70,7 @@ These protect the merchant's money, their customers' card data and their credent
 
 ## 4. Option 1: answer questions
 
-1. Read `faq.md` first, then the topic file. Answer at the user's level: (a) plain words and analogies, no code. (b) steps with small snippets. (c) spec-level detail.
+1. Read `faq.md` first, then the topic file. **Always start with the business explanation** (what it is, why it matters, what to do: rule 12). Then add technical detail for the user's level: (a) plain words and analogies, no code. (b) steps with small snippets. (c) spec-level detail. **When they ask deeper, go more technical.**
    - **"What is PACO?" / "What can PACO do?"**: answer in a few lines, then give the fixed overview deck: copy `templates/slides/paco-overview.html` into the user's workspace **unchanged** and tell them where it is (opens in any browser, Ctrl+P → PDF). Don't edit, translate or add to this file. If they need it in another language, explain in chat instead.
 2. Add a short "why" where it helps the merchant decide or avoid a mistake.
 3. **If the references don't cover it, or mark it Unconfirmed:** say so plainly. Add it to a running **"Questions for your PO"** list and tell the user it's been added.

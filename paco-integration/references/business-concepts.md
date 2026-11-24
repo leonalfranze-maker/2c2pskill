@@ -52,6 +52,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 - **Why it matters:** it protects you and the cardholder from someone paying with a stolen card number. When you ask for 3DS (`Y`), the issuing bank decides whether the customer must enter an OTP. It doesn't always ask: **if the bank approves without an OTP and a problem comes up later, the issuing bank is responsible, not you.** [2C2P confirmed] The 3DS result (`authenticationStatus`, `eciValue`) comes back with the payment: store it as evidence if a cardholder disputes the payment (chargeback).
 - **What to do:** with `/prePaymentUi` you build nothing: the Payment Page shows the OTP step. With `/nonUi` you show the bank's challenge page yourself (`responses/nonui.md`).
 - **`request3dsFlag`** (`/prePaymentUi`, `/nonUi`): `N` no 3DS · `Y` 3DS, full authentication or "attempted" accepted · `Y-Strict` full authentication only · not sent = your office's setting. Rules: `fields/prepaymentui.md`.
+- **Which value to send:** you can send **`Y`**, but then the 3DS settings in the PACO Portal must be **`Y` too** (below). If you're not sure how they're set, ask your PO before going live.
 - **3DS is set in three places:** your API request (`request3dsFlag`), and two settings you can adjust in the **PACO Portal**: **payment routing** and **PSP profile**. ⚠️ **If you send `Y` or `Y-Strict`, neither Portal setting may be `N`**, or the request is rejected. [2C2P confirmed]
 
 ### notificationUrls (the 4 URLs)
@@ -74,7 +75,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
 | `tokenizeFlag` | `/prePaymentUi` (Payment Page) | `/nonUi` (your own form) |
 |---|---|---|
-| `Y` (usual) | **No `profileRef`:** a normal payment; after a successful payment PACO creates a token and returns it. **With `profileRef`:** PACO gives you that customer's saved cards to show; the customer picks one and pays, no OTP needed. | **`tokenRef` sent:** PACO pays with that saved card. **No `tokenRef`:** PACO creates a new token from the card details you send; you get it if the payment succeeds. |
+| `Y` (usual) | **No `profileRef`:** a normal payment; after a successful payment PACO creates a token and returns it. **With `profileRef`:** PACO sends the list of that customer's saved cards to choose from; the customer picks one and pays, no OTP needed. **`profileRef` is how you show saved cards.** | **`tokenRef` sent:** PACO pays with that saved card. **No `tokenRef`:** PACO creates a new token from the card details you send; you get it if the payment succeeds. |
 | `F` (force) | **always creates a new token**, whatever your office's setting. No saved-card list is shown (a new one is being made). | always creates a new token from the card details |
 | `N` / not sent | no token | no token |
 
@@ -85,8 +86,8 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 ## Purchase item types (`purchaseItemType`)
 - **What:** purchase items split one payment into parts, e.g. a ticket plus insurance. The type says what each part is.
 - **Why it matters:** with items on the payment you can refund part of it item by item (e.g. refund only the insurance).
-- **Which types exist:** **there's no fixed list.** The types are **agreed between you and your PO** and set up on **your office ID**. The Dev Zone shows `Ticket` and `Insurance` as examples.
-- **Need another type** (e.g. baggage)? **Agree it with your PO first.** They add it to your office's setup, then you send only the types on the agreed list. A type that isn't set up for your office is rejected (`PC-B050041`).
+- **Which types exist:** **there's no fixed list.** The types are **agreed with your PO, normally when your office ID is created**, and set up on that office ID. The Dev Zone shows `Ticket` and `Insurance` as examples.
+- **Need another type later** (e.g. baggage)? **Tell your PO.** They add it to your office's setup, then you send only the types on the agreed list. A type that isn't set up for your office is rejected (`PC-B050041`).
 - **Until it's set up:** don't send that type. Each type can appear only once per payment, and the items must add up to the payment amount.
 
 | API | Purchase items |
@@ -98,9 +99,9 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
 ## Your own data and extra information (`userDefined1`–`userDefined10`)
 - **What:** 10 spare fields whose use is **agreed between you and 2C2P**: what goes in each one so that 2C2P can process it for you.
-- **Do you need them?** No, not unless you've agreed a use with your PO.
+- **Do you need them?** No. Use them only for what you've agreed with your PO.
 - **Want 2C2P to receive and process some other information?** **Contact your PO** to agree which field it goes in. Don't invent new field names: PACO ignores unknown fields without an error.
-- The values come back unchanged in the backend notification and in both inquiry APIs, so you can also match them to your own records. Rules: ≤ 150 characters each (`PC-B054513`).
+- **Always agree with your PO** what goes in each field, whatever the purpose. The values come back unchanged in the backend notification and in both inquiry APIs. Rules: ≤ 150 characters each (`PC-B054513`).
 - Used in `/prePaymentUi` and `/nonUi`. Void, settlement and refund don't take them.
 
 ## Dates and time zones (all APIs)

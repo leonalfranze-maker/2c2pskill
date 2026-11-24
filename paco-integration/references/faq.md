@@ -66,4 +66,4 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **How long is the payment link valid?** See `validTillDateTime` in the response. You can set `linkExpiryDateTime` / `paymentExpiryDateTime` in the request. → `payment-apis.md`
 
-**Can I save cards for next time?** Yes, with `tokenizeDetails` (`tokenizeFlag` Y/N/F, `tokenRefList` to show saved cards on the Payment Page). Rules differ between prePaymentUi and nonUi. → `payment-apis.md`
+**Can I save cards for next time?** Yes, with `tokenizeDetails`: `tokenizeFlag` `Y` saves the card, and `profileRef` (your customer ID) brings back that customer's saved cards to choose from. `F` forces a new token. Rules differ between prePaymentUi and nonUi. → `business-concepts.md` → Tokenization

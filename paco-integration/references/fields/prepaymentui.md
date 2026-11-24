@@ -43,9 +43,9 @@ Shared fields (envelope, `orderNo`, amounts, dates, `userDefined`): also see `..
 | Field | Rule | Required | Do this / if wrong |
 |---|---|---|---|
 | `tokenizeFlag` | `Y`, `N`, `F` | no | `N`/empty → the whole object is ignored. `Y` = save the card after a successful payment (with `profileRef`: offer that customer's saved cards). `F` = **force** a new token now; **rejected if the card already has a token**, and no saved-card list is shown. Meaning and flow: `../business-concepts.md` → Tokenization. |
-| `profileRef` | ≤ 255 | no | your customer ID (`PC-B056301`) |
+| `profileRef` | ≤ 255 | no | your customer ID (`PC-B056301`). **With `Y`, send it to show this customer's saved cards**: PACO sends the list to choose from. |
 | `tokenRef` | **not allowed here** | – | use `tokenRefList` (`PC-B056309`) |
-| `tokenRefList[]` | ≤ 50 items, only with flag `Y` | no | `PC-B056304` / `PC-B056303` |
+| `tokenRefList[]` | ≤ 50 items, only with flag `Y` | no, use `profileRef` to show saved cards | `PC-B056304` / `PC-B056303` |
 | `tokenRefList[].tokenRef` | not blank | per item | send the token PACO returned, unchanged (`PC-B056302`). Unknown or expired tokens are dropped from the list, not reported. |
 
 ## Installments (`installmentPaymentDetails`)
