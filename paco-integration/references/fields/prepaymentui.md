@@ -42,7 +42,7 @@ Shared fields (envelope, `orderNo`, amounts, dates, `userDefined`): also see `..
 ## Saved cards (`tokenizeDetails`)
 | Field | Rule | Required | Do this / if wrong |
 |---|---|---|---|
-| `tokenizeFlag` | `Y`, `N`, `F` | no | `N`/empty → the whole object is ignored |
+| `tokenizeFlag` | `Y`, `N`, `F` | no | `N`/empty → the whole object is ignored. `Y` = save the card after a successful payment (with `profileRef`: offer that customer's saved cards). `F` = **force** a new token now; **rejected if the card already has a token**, and no saved-card list is shown. Meaning and flow: `../business-concepts.md` → Tokenization. |
 | `profileRef` | ≤ 255 | no | your customer ID (`PC-B056301`) |
 | `tokenRef` | **not allowed here** | – | use `tokenRefList` (`PC-B056309`) |
 | `tokenRefList[]` | ≤ 50 items, only with flag `Y` | no | `PC-B056304` / `PC-B056303` |

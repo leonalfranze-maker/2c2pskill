@@ -49,9 +49,10 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
 ### 3DS (the OTP step)
 - **What:** the card-issuing bank checks that the person paying really owns the card, usually with an **OTP** sent to the cardholder.
-- **Why it matters:** it protects you and the cardholder from someone paying with a stolen card number. The 3DS result (`authenticationStatus`, `eciValue`) comes back with the payment: **store it as evidence if a cardholder disputes the payment** (chargeback).
-- **What to do:** 2C2P switches 3DS on for your office. With `/prePaymentUi` you build nothing: the Payment Page shows the OTP step. With `/nonUi` you show the bank's challenge page yourself (`responses/nonui.md`).
-- **`request3dsFlag`** (`/prePaymentUi`, `/nonUi`): `N` no 3DS · `Y` 3DS, full authentication or "attempted" accepted · `Y-Strict` full authentication only · **not sent = your office's setting** (simplest: leave it out and use what 2C2P set up). `Y` doesn't mean every customer sees an OTP: the bank may approve without one. Rules: `fields/prepaymentui.md`.
+- **Why it matters:** it protects you and the cardholder from someone paying with a stolen card number. When you ask for 3DS (`Y`), the issuing bank decides whether the customer must enter an OTP. It doesn't always ask: **if the bank approves without an OTP and a problem comes up later, the issuing bank is responsible, not you.** The 3DS result (`authenticationStatus`, `eciValue`) comes back with the payment: store it as evidence if a cardholder disputes the payment (chargeback).
+- **What to do:** with `/prePaymentUi` you build nothing: the Payment Page shows the OTP step. With `/nonUi` you show the bank's challenge page yourself (`responses/nonui.md`).
+- **`request3dsFlag`** (`/prePaymentUi`, `/nonUi`): `N` no 3DS · `Y` 3DS, full authentication or "attempted" accepted · `Y-Strict` full authentication only · not sent = your office's setting. Rules: `fields/prepaymentui.md`.
+- **3DS is set in three places:** your API request (`request3dsFlag`), and two settings you can adjust in the **PACO Portal**: **payment routing** and **PSP profile**. ⚠️ **If you send `Y` or `Y-Strict`, neither Portal setting may be `N`**, or the request is rejected. [2C2P confirmed]
 
 ### notificationUrls (the 4 URLs)
 - **What:** where PACO sends the **customer** and where it tells your **server** when the payment ends. Two different audiences, so different URLs:
@@ -66,10 +67,20 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 - **What to do:** always send all four (`"-"` = PACO's own result page for the three browser URLs, or your office's configured URL for `backendUrl`). In `/prePaymentUi` and `/nonUi` only; refunds have no callback.
 
 ### Tokenization (saved cards)
-- **What:** saving a customer's card so they don't type it again next time. PACO keeps the card; you get a **token** (`tokenRef`) that stands for it, plus a masked number to show ("Visa •••• 1111").
-- **Why it matters:** returning customers pay faster, and you never store real card numbers.
-- **Do you need it?** No, it's optional: use it only if your business wants customers to save cards. 2C2P must enable it on your office first.
-- **How it works:** the new `tokenRef` arrives in the backend notification after a successful payment (so your `backendUrl` must work). Next time, send it back to show the saved card (`/prePaymentUi` `tokenRefList`) or to pay with it (`/nonUi` `tokenizeDetails.tokenRef`). Store tokens securely; show only the masked number. Rules: `fields/prepaymentui.md` → Saved cards, `responses/nonui.md`.
+- **What:** saving a customer's card so they don't type it again. PACO keeps the card; you get a **token** (`tokenRef`) that stands for it, a **`profileRef`** (your ID for that customer) and a masked number to show ("Visa •••• 1111"). Next time you send the token instead of card details, and PACO turns it into a payment with that card.
+- **Why it matters:** returning customers pay faster, with fewer steps and **often without an OTP again** (like marketplace apps where the second purchase is one tap), so **more payments succeed**. Useful for **any business** with repeat customers.
+- **Is it safe?** You only store `tokenRef` and `profileRef`. They mean nothing outside PACO, so a leak of your database doesn't expose card data. You never store card numbers.
+- **What to do:** 2C2P must enable tokenization on your office. Then choose the flag:
+
+| `tokenizeFlag` | `/prePaymentUi` (Payment Page) | `/nonUi` (your own form) |
+|---|---|---|
+| `Y` (usual) | **No `profileRef`:** a normal payment; after a successful payment PACO creates a token and returns it. **With `profileRef`:** PACO gives you that customer's saved cards to show; the customer picks one and pays, no OTP needed. | **`tokenRef` sent:** PACO pays with that saved card. **No `tokenRef`:** PACO creates a new token from the card details you send; you get it if the payment succeeds. |
+| `F` (force) | **always creates a new token**, whatever your office's setting. No saved-card list is shown (a new one is being made). | always creates a new token from the card details |
+| `N` / not sent | no token | no token |
+
+- ⚠️ **Use `F` only for a card that has no token yet.** Sending `F` for a card that already has a token is **rejected**, in both APIs. `F` also needs 3DS (`Y`/`Y-Strict`).
+- **When tokens appear or disappear:** the token is created **before** the payment is authorized. If that payment fails, the new token is **deleted**. A token that already worked isn't deleted when a later payment with it fails.
+- **Where the token comes back:** `/prePaymentUi`: only in the backend notification (so your `backendUrl` must work). `/nonUi`: in the payment result. Store `tokenRef` securely; show only the masked number. Rules: `fields/prepaymentui.md` → Saved cards, `responses/nonui.md`.
 
 ## Purchase item types (`purchaseItemType`)
 - **What:** purchase items split one payment into parts, e.g. a ticket plus insurance. The type says what each part is.

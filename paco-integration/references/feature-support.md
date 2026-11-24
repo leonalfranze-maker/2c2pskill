@@ -23,7 +23,7 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | APM: QR, wallet, deeplink, i-banking, web pay, counter, ATM/kiosk | ✅ | **Yes: per method** | Show only what's in `availablePaymentTypes` |
 | Installments (IPP) | ✅ | Yes: installment plans | Can't be combined with recurring. Settle in full only. |
 | Recurring (RPP) | ⚠️ | Yes, and the office must use **auto** settlement | **Cards only.** The first charge's `orderNo` becomes `<orderNo>-0001`: use that value for inquiry, void and refund. |
-| Saved cards / tokenization | ⚠️ | **Yes** | Use `tokenizeFlag` `Y` or `F` only. If not enabled, `Y` silently becomes a normal payment and `F` is rejected. With the Payment Page, the new `tokenRef` arrives **only in the backend notification** (`responses/prepaymentui.md`). |
+| Saved cards / tokenization | ⚠️ | **Yes** | Good for any business with repeat customers (faster, fewer OTPs). Use `tokenizeFlag` `Y` (usual) or `F` (force a new token; rejected if the card already has one). If not enabled, `Y` silently becomes a normal payment and `F` is rejected. With the Payment Page, the new `tokenRef` arrives **only in the backend notification** (`responses/prepaymentui.md`). |
 | Currency conversion: MCP | ✅ | Yes | Needs a rate-quote `messageId`: ask 2C2P how to get it before building |
 | Currency conversion: DCC | ⚠️ ❓ | Yes | May not work with every acquirer. Needs a rate-quote `messageId` and `originalTransactionAmount`. Confirm with 2C2P before building. |
 | Currency conversion: MCC | ❌ on `/nonUi` (`PC-B050019`) · ❓ elsewhere | – | Use DCC or MCP |
