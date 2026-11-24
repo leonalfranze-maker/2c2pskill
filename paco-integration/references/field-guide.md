@@ -41,7 +41,7 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 |---|---|
 | `mobilePhoneCountryCode` | digits only, no `+`: `66` |
 | `mobilePhone` | national number **without** the country code: `0861234567` |
-| Country codes (`billAddrCountry`, airline `countryCode`) | **ISO 3166-1 numeric**, 3 digits: `764` for Thailand. Not `TH`/`THA`. |
+| Country codes (`billAddrCountry`, airline `countryCode`) | **ISO 3166-1 numeric**, 3 digits: `764` for Thailand. Not `TH`/`THA`. List: https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes (the numeric column). |
 | `billAddrState` | ISO 3166-2 code without the country prefix: `10` Bangkok |
 | Card holder / payer names (`/nonUi`) | English letters and spaces only (`PC-B050085`), not all digits (`PC-B050089`). |
 

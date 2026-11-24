@@ -42,7 +42,7 @@ Don't answer with field rules alone. A merchant who understands the "why" fills 
 |---|---|---|
 | `airportCode` | the IATA airport code, e.g. `BKK`, `NRT` | IATA Airport & Location Identifier database: https://www.iata.org/en/publications/manuals/airline-airport-location-coding-databases/airport-location-identifier-database/. Airlines normally already have access to IATA's databases. **If you don't, ask your PO for the list.** |
 | `cityCode` | the IATA city code of that airport | same IATA database / your PO |
-| `countryCode` | the country as an **ISO 3166-1 numeric** code: `764` Thailand, `392` Japan (not `TH`/`JP`) | the ISO 3166-1 numeric list. Same format as `billAddrCountry`. |
+| `countryCode` | the country as an **ISO 3166-1 numeric** code: `764` Thailand, `392` Japan (not `TH`/`JP`) | https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes: use the **numeric** column (3 digits). Same format as `billAddrCountry`. |
 Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
 ## Purchase item types (`purchaseItemType`)
