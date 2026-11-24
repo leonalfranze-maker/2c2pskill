@@ -24,6 +24,6 @@ Files in `kiro-questions/responses/`. Send `R0-shared.md` first.
 | `R1-prepaymentui.md` ✅ answered 2026-11-23 → `references/responses/prepaymentui.md` | /prePaymentUi | paymentPageURL reuse, which expiry to show, what's filled before payment, new tokenRef |
 | `R2-nonui.md` ✅ answered 2026-11-23 → `references/responses/nonui.md` | /nonUi | 200 vs 202, approval/failed fields, token, 3DS challenge rendering, APM data |
 | `R3-inquiry.md` ✅ answered 2026-11-23 → `references/responses/inquiry.md` | transactionStatus + transactionList | field names, refund entries vs refundNo, QR content, refundableAmount |
-| `R4-void-settlement-refund.md` | void, settlement, refund | status after each call, refundNo, refunded/pending amounts, 202 cases |
+| `R4-void-settlement-refund.md` ✅ answered 2026-11-24 → `references/responses/post-payment.md` | void, settlement, refund | status after each call, refundNo, refunded/pending amounts, 202 cases |
 
 Answers become `paco-integration/references/responses/<api>.md`: use this / store this / ignore / next step. No internal logic.

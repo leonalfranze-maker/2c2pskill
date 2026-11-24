@@ -1,6 +1,6 @@
 # Responses: rules for every API (confirmed)
 
-API v2.0 · Confirmed by 2C2P (2026-11-23). Per-API "what to use" guides: `prepaymentui.md`, `nonui.md`, `inquiry.md` (more follow: post-payment).
+API v2.0 · Confirmed by 2C2P (2026-11-23). Per-API "what to use" guides: `prepaymentui.md`, `nonui.md`, `inquiry.md`, `post-payment.md` (void, settlement, refund).
 Use this file to read **any** PACO response and to explain it to the merchant.
 
 ## 1. Decide the result from `responseCode`, not the HTTP status
@@ -13,7 +13,7 @@ Use this file to read **any** PACO response and to explain it to the merchant.
 | HTTP | When |
 |---|---|
 | 200 | `/nonUi` **approved** (always status `A`), void, settlement, inquiry, refund done, `/prePaymentUi` page created |
-| 202 | `/nonUi` needs 3DS or an APM step, **`/nonUi` payment failed or declined** (error code inside), refund waiting for approval or bank details |
+| 202 | `/nonUi` needs 3DS or an APM step, **`/nonUi` payment failed or declined** (error code inside), refund waiting for approval or bank details (**may also come as 200**: decide refunds by `paymentStep`) |
 | 400 | request rejected; void / settlement / refund failures; inquiry not found. Body = `apiResponse` only. |
 | 401 | `apiKey` missing or wrong (`PC-B050088`) |
 | 403 | wrong API version in the URL. **No body.** |

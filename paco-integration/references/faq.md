@@ -28,7 +28,7 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **Can I refund part of a payment?** Yes, once it's settled, several times up to the full amount. Every refund must include `localMakerChecker` (who requested it). → `post-payment.md`
 
-**Will PACO notify me when a refund completes?** No, there's no refund callback. HTTP 200 = result in the response. HTTP 202 = still in progress (approval in the Portal, or waiting for the customer's bank details), so follow up in the Portal or by inquiry. → `post-payment.md`
+**Will PACO notify me when a refund completes?** No, there's no refund callback. Read `paymentStep` in the refund response (HTTP 200 or 202): `RF`/`RS` = done, `RP`/`RP2`/`RI` = still in progress (approval in the Portal, review, or waiting for the customer's bank details), so follow up in the Portal or by inquiry. Store the `refundNo` from the response. → `post-payment.md`
 
 **Can I capture less than I authorized?** Usually yes (partial settlement), except installments, payments itemized by sub-merchant and some special card types. → `post-payment.md`
 

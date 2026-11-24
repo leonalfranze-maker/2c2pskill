@@ -22,7 +22,7 @@ Status and step codes: `notification.md`.
 - In the PACO Portal, transaction details show a **"Settlement Model"** field: "Auto Settlement" or "Manual Settlement".
 - Most reliable: ask 2C2P (the PO). Add it to the go-live checklist.
 
-**After a manual settlement call**, the payment goes to `ST` (settled) straight away, **or** first to `PS` (pending for settlement) and then `ST` later. `PS` is **not final**.
+**After a manual settlement call**, the payment is usually **`A` / `PS`** (capture accepted, pending for settlement) and moves to `S` / `ST` later in the settlement batch. Some acquirer connections go to `ST` straight away. At `PS` the capture is accepted: **don't settle again** (`PC-B050057`). Void is still possible. Follow `PS` → `ST` by inquiry. [2C2P confirmed]
 
 **Don't wait too long.** How long a card authorization stays valid is set by the card scheme / acquirer. Settle as soon as the goods/service are confirmed. Ask 2C2P whether your office settles unsettled manual payments automatically after a number of days, and how many.
 
@@ -50,6 +50,7 @@ Status and step codes: `notification.md`.
 - Allowed only while the payment is approved and not settled (step `PA` or `PS`). After settlement → **refund**.
 - **Always the full amount.** There's no partial void: `voidAmount` / `voidItems` are ignored. For part of the money, settle less (manual model) or refund after settlement. [2C2P confirmed]
 - Body: `apiRequest` + **`orderNo`** (simplest) **or** `paymentId` (= `controllerInternalID` exactly as returned, no dashes). `officeId`, `productDescription` and `issuerApprovalCode` aren't needed. Full rules: `fields/void.md`.
+- Success = HTTP 200 with status `V` / step `VD`: **final**, there's no pending void. A declined void is HTTP 400 (`PC-B050032`). On a 400 or a timeout, **inquire before retrying** (rarely the void went through anyway).
 - Errors: not found (`PC-B050013`), not approved yet (`PC-B050045`), failed (`PC-B050046`), **already settled, use refund** (`PC-B050047`), already refunded/voided (`PC-B050048`), not voidable (`PC-B050049`), during settlement processing (`PC-B050060`, retry later).
 - Some wallet/QR payments are settled straight away, so they can't be voided. Use refund.
 
@@ -86,24 +87,28 @@ Full rules: `fields/refund.md`.
 - Missing or incomplete → `PC-B050039` "Invalid Local Maker data".
 
 ### Response
-| HTTP | Meaning | What to do |
-|---|---|---|
-| **200** | refund sent to the acquirer. The response holds the result. | record the result |
-| **202** | **accepted but not finished** | track it (see below) |
-| 400 | error | see table |
+**Accept HTTP 200 and 202 alike and decide by `data.paymentStatusInfo.paymentStep`**: an unfinished refund can come back as 200 too. [2C2P confirmed]
 
-You get **202** when:
-1. **Your account requires refund approval:** the refund waits at step `RP` until an approver on the merchant's side approves or rejects it in the **PACO Portal**.
-2. **Refund to a bank account** without complete bank details: PACO emails the customer to fill in their account details. Step `RI`.
+| `paymentStep` (status) | Meaning | What to do |
+|---|---|---|
+| `RF` (`R`) | accepted by the acquirer | record as refunded |
+| `RS` (`R`) | refund settled straight away (cash-type methods, some acquirers) | record as refunded |
+| `RP` (`R`) | **waiting for your approver** in the PACO Portal | track it (below) |
+| `RP2` (`R`) | waiting for review by a third party / bank (bank-transfer refunds) | track it |
+| `RI` (`PCRP`) | **waiting for the customer's bank details**: PACO e-mailed `refundToBankAccount.clientEmail` a form link | track it |
+| HTTP 400 | refund failed (e.g. `PC-B050032` acquirer declined) | see table. A failed refund never comes back as 200. |
+
+From the refund response, **store `refundNo`** (`<orderNo>-R01` … `R99`): it's the only place the API gives it. Quote it to 2C2P support with the `orderNo`. Full guide: `responses/post-payment.md`.
+⚠️ `failedReason` carries the acquirer's text **even on success** (e.g. "Approved"): never use it to detect a failure.
 
 ### Getting the final refund result
 - **There is no backend notification for refunds.** Don't send `refundNotificationURLs`: it isn't used.
-- After **200**: the response is the result.
-- After **202**: follow up in the PACO Portal or by inquiry. `transactionStatus` lists **each refund as its own entry** (recognise it by a refund step), but **neither inquiry API returns the refund number**. So:
+- Step `RF` / `RS`: the response is the result.
+- Step `RP` / `RP2` / `RI`: not final. It can still end as `RF`/`RS`, or `RR` rejected, `RE` approval expired, `RX` bank-details link expired. Follow up in the PACO Portal or by inquiry. `transactionStatus` lists **each refund as its own entry** (recognise it by a refund step), but **neither inquiry API returns the refund number**. So:
   - **store `refundNo` (`orderNo-R01`, …) from the refund response**, with its amount and result;
   - when you need to follow a pending refund by inquiry, **make refunds on one order one at a time** and read the newest refund-step entry.
   - `transactionList` `refundableAmount` shows what's still refundable (a hint; the refund API has the final say).
-- Refund steps: `RP` → (approved) → `RF` refunded → `RS` refund settled. `RR` rejected, `RE` expired before approval.
+- Refund steps: `RP` → (approved) → `RF` refunded → `RS` refund settled. `RR` rejected, `RE` expired before approval, `RX` bank-details link expired.
 
 | Error | Meaning |
 |---|---|

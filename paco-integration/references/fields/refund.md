@@ -1,7 +1,7 @@
 # Refund: request (confirmed)
 
 `POST {base}/api/2.0/Refund/refund` · API v2.0 · Rules confirmed by 2C2P (2026-11-23).
-JOSE in production, plain JSON allowed in UAT (`../authentication.md`). Responses (200 / 202), refund steps and how to track the result: `../post-payment.md`.
+JOSE in production, plain JSON allowed in UAT (`../authentication.md`). Responses (200 or 202: decide by `paymentStep`), refund steps and how to track the result: `../post-payment.md`, `../responses/post-payment.md`.
 
 - **Refunds by API are off by default.** 2C2P must enable them for your company, otherwise `PC-B050096`.
 - Only for **settled** payments (step `ST`). Before settlement → void (`PC-B050053`).
@@ -67,7 +67,7 @@ Needed only for payment methods that refund by bank transfer (e.g. counter/cash 
 | `accountName` | ≤ 150, Thai allowed | ≤ 100 recommended |
 | `accountNumber` | ≤ 30 | digits only, no `-` or spaces |
 
-Missing bank details where they're required → `PC-B050054` (or PACO e-mails the customer to fill them in: HTTP 202, step `RI`).
+Missing bank details where they're required → `PC-B050054` (or PACO e-mails the customer to fill them in: step `RI`).
 
 ## Errors
 | Code | Meaning | Do this |
