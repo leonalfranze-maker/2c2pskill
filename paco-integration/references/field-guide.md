@@ -84,7 +84,7 @@ Invalid values may be ignored, so always send valid ISO 8601.
 | Field | Do this |
 |---|---|
 | `notificationUrls.backendUrl` | Absolute `https://` URL (http works, but use https), or `"-"` to use your office's configured URL. |
-| `confirmationUrl`, `failedUrl`, `cancellationUrl` | Absolute URL (`https://` or an app deeplink), or `"-"` for PACO's result page. **Keep each under ~1,500 characters**, because PACO adds query parameters. |
+| `confirmationUrl`, `failedUrl`, `cancellationUrl` | Absolute URL (`https://` or an app deeplink), or `"-"` for PACO's result page. **≤ 1,000 characters each**, because PACO adds up to ~800 characters of query parameters. |
 
 ## Refund-specific
 | Field | Do this |

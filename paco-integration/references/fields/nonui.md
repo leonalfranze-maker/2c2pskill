@@ -1,7 +1,7 @@
 # /nonUi: request fields (confirmed)
 
 `POST {base}/api/2.0/Payment/nonUi` · API v2.0 · Rules confirmed by 2C2P (2026-11-23).
-**Every field that also exists in `/prePaymentUi` follows `prepaymentui.md`** (core, URLs, tokenization, installments, recurring, payer, billing, purchase items, airline). This file covers what's different or only in nonUi. Shared fields: `../field-guide.md`.
+**Every field that also exists in `/prePaymentUi` follows `prepaymentui.md`** (core, URLs, tokenization, installments, recurring, payer, billing, purchase items, airline). This file covers what's different or only in nonUi. Saved cards differ: to **pay with a saved card** in `/nonUi`, send it in `tokenizeDetails.tokenRef` (the value PACO returned); `tokenRefList` is for showing saved cards on the Payment Page. Shared fields: `../field-guide.md`.
 A wrong format or length usually returns `PC-B051800`, naming the field.
 
 ⚠️ Using `/nonUi` with raw card data puts you in **PCI DSS scope**. Agree it with 2C2P first (`../payment-apis.md`).

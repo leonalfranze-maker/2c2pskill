@@ -45,6 +45,32 @@ Don't answer with field rules alone. A merchant who understands the "why" fills 
 | `countryCode` | the country as an **ISO 3166-1 numeric** code: `764` Thailand, `392` Japan (not `TH`/`JP`) | https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes: use the **numeric** column (3 digits). Same format as `billAddrCountry`. |
 Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 
+## Cards and checkout
+
+### 3DS (the OTP step)
+- **What:** the card-issuing bank checks that the person paying really owns the card, usually with an **OTP** sent to the cardholder.
+- **Why it matters:** it protects you and the cardholder from someone paying with a stolen card number. The 3DS result (`authenticationStatus`, `eciValue`) comes back with the payment: **store it as evidence if a cardholder disputes the payment** (chargeback).
+- **What to do:** 2C2P switches 3DS on for your office. With `/prePaymentUi` you build nothing: the Payment Page shows the OTP step. With `/nonUi` you show the bank's challenge page yourself (`responses/nonui.md`).
+- **`request3dsFlag`** (`/prePaymentUi`, `/nonUi`): `N` no 3DS · `Y` 3DS, full authentication or "attempted" accepted · `Y-Strict` full authentication only · **not sent = your office's setting** (simplest: leave it out and use what 2C2P set up). `Y` doesn't mean every customer sees an OTP: the bank may approve without one. Rules: `fields/prepaymentui.md`.
+
+### notificationUrls (the 4 URLs)
+- **What:** where PACO sends the **customer** and where it tells your **server** when the payment ends. Two different audiences, so different URLs:
+
+| URL | Who uses it | When | Why it's separate |
+|---|---|---|---|
+| `confirmationUrl` | the customer's browser | paid | show a "thank you" page |
+| `failedUrl` | the customer's browser | failed / declined | show "try again" |
+| `cancellationUrl` | the customer's browser | the customer cancelled | take them back to the cart |
+| `backendUrl` | **PACO → your server** | when the payment has a result | your server learns the result even if the customer closed the browser |
+- **Why it matters:** the browser pages are only for the customer's experience: anyone can edit a URL, and the customer may never come back. Your order is updated from the server side: the backend notification, **then confirm with Inquiry** before you ship or issue a ticket (`notification.md`).
+- **What to do:** always send all four (`"-"` = PACO's own result page for the three browser URLs, or your office's configured URL for `backendUrl`). In `/prePaymentUi` and `/nonUi` only; refunds have no callback.
+
+### Tokenization (saved cards)
+- **What:** saving a customer's card so they don't type it again next time. PACO keeps the card; you get a **token** (`tokenRef`) that stands for it, plus a masked number to show ("Visa •••• 1111").
+- **Why it matters:** returning customers pay faster, and you never store real card numbers.
+- **Do you need it?** No, it's optional: use it only if your business wants customers to save cards. 2C2P must enable it on your office first.
+- **How it works:** the new `tokenRef` arrives in the backend notification after a successful payment (so your `backendUrl` must work). Next time, send it back to show the saved card (`/prePaymentUi` `tokenRefList`) or to pay with it (`/nonUi` `tokenizeDetails.tokenRef`). Store tokens securely; show only the masked number. Rules: `fields/prepaymentui.md` → Saved cards, `responses/nonui.md`.
+
 ## Purchase item types (`purchaseItemType`)
 - **What:** purchase items split one payment into parts, e.g. a ticket plus insurance. The type says what each part is.
 - **Why it matters:** with items on the payment you can refund part of it item by item (e.g. refund only the insurance).

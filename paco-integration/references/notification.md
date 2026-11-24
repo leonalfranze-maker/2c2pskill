@@ -20,7 +20,7 @@ There are three ways to learn the result:
 | Works on localhost | no (use a tunnel) | yes | yes |
 
 ## 1. Backend notification [DZ][2C2P confirmed]
-**Where it goes.** PACO uses `notificationUrls.backendUrl` from the request. If you omit it or send `"-"`, PACO uses the **Backend Response URL configured on your office** at onboarding. If neither exists, no notification is sent.
+**Where it goes.** PACO uses `notificationUrls.backendUrl` from the request. All four URLs must always be present (`PC-B050018`): send `"-"` as `backendUrl` and PACO uses the **Backend Response URL configured on your office** at onboarding. If neither exists, no notification is sent.
 - `"-"` does **not** switch notifications off when the office has a URL configured.
 - No pre-registration is needed for the URL you send in the request.
 - `http://` and `https://` are accepted. **Use HTTPS.**
@@ -147,7 +147,7 @@ Other steps can appear (e.g. `TA`, `TI`, `TS` for airline ticketing). On an unkn
   | `0` | redirect to your URL immediately |
   | > 0 | the customer sees PACO's result page for that many seconds, then is redirected |
   | not sent | office setting: auto redirect on → `0`, otherwise 10 seconds |
-- If you don't send a redirect URL, the **Redirect Response URL configured on your office** may be used.
+- The three redirect URLs must always be present. `"-"` = PACO's own result page (above).
 
 ## 3DS authentication status (card details in results) [DZ]
 | Status | Meaning |
