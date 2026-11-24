@@ -28,7 +28,7 @@ Legend: ✅ works · ⚠️ works with a limit · ❌ not available · ❓ not v
 | Currency conversion: DCC | ⚠️ ❓ | Yes | May not work with every acquirer. Needs a rate-quote `messageId` and `originalTransactionAmount`. Confirm with 2C2P before building. |
 | Currency conversion: MCC | ❌ on `/nonUi` (`PC-B050019`) · ❓ elsewhere | – | Use DCC or MCP |
 | Airline data | ✅ | No | Send `billingAddress` too. The flag is `bypassForwarding`. |
-| Purchase items / itemized, sub-merchants | ✅ | **Yes: item types are configured per merchant** | Without configured types, don't send purchase items (`PC-B050041`). Items must add up to the amount. Not with DCC. |
+| Purchase items / itemized, sub-merchants | ✅ | **Yes: item types are agreed with your PO and set up on your office ID** (new types can be added the same way) | Without configured types, don't send purchase items (`PC-B050041`). Items must add up to the amount. Not with DCC. |
 | Custom fields (`customFieldList`) | ⚠️ | No | Not returned by `transactionStatus`. Read them from the notification or `transactionList`. |
 | Backend notification | ✅ | No | Sent once, no retry (`notification.md`) |
 | Inquiry `transactionStatus` | ✅ | No | Confirms one payment. Your `orderNo` only (not the 2C2P invoice number). No amounts, payment type or approval code (use `transactionList`). No refund number in either inquiry: store it from the refund response. |

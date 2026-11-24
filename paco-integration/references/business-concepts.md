@@ -37,6 +37,35 @@ Don't answer with field rules alone. A merchant who understands the "why" fills 
 | Departure / arrival time | the flight times **as printed on the ticket / flight schedule**, in the **local time of that airport** | `flightSegments[].departure.dateTime` / `arrival.dateTime`, **local time, no offset**. **UTC isn't accepted here: you must convert.** If your system stores flight times only in UTC, convert them with each airport's time zone before sending, or leave `airlineData` out until you can. |
 `airlineData` is optional: send it only if you're an airline or travel agent and have the booking details. With it, also send the billing address (`fields/prepaymentui.md`).
 
+### Airport, city and country codes (`departure` / `arrival` in each flight segment)
+| Field | What it is | Where to get it |
+|---|---|---|
+| `airportCode` | the IATA airport code, e.g. `BKK`, `NRT` | IATA Airport & Location Identifier database: https://www.iata.org/en/publications/manuals/airline-airport-location-coding-databases/airport-location-identifier-database/. Airlines normally already have access to IATA's databases. **If you don't, ask your PO for the list.** |
+| `cityCode` | the IATA city code of that airport | same IATA database / your PO |
+| `countryCode` | the country as an **ISO 3166-1 numeric** code: `764` Thailand, `392` Japan (not `TH`/`JP`) | the ISO 3166-1 numeric list. Same format as `billAddrCountry`. |
+Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
+
+## Purchase item types (`purchaseItemType`)
+- **What:** purchase items split one payment into parts, e.g. a ticket plus insurance. The type says what each part is.
+- **Why it matters:** with items on the payment you can refund part of it item by item (e.g. refund only the insurance).
+- **Which types exist:** **there's no fixed list.** The types are **agreed between you and your PO** and set up on **your office ID**. The Dev Zone shows `Ticket` and `Insurance` as examples.
+- **Need another type** (e.g. baggage)? **Agree it with your PO first.** They add it to your office's setup, then you send only the types on the agreed list. A type that isn't set up for your office is rejected (`PC-B050041`).
+- **Until it's set up:** don't send that type. Each type can appear only once per payment, and the items must add up to the payment amount.
+
+| API | Purchase items |
+|---|---|
+| `/prePaymentUi`, `/nonUi` | `purchaseItemize[]`: send them here |
+| Settlement | payments with items are settled **in full** (leave `settlementItems` out) |
+| Refund | `refundItems` needed for a **partial** refund of a payment with items |
+| `transactionList` | items and refunded items come back in each row |
+
+## Your own data and extra information (`userDefined1`–`userDefined10`)
+- **What:** 10 spare fields whose use is **agreed between you and 2C2P**: what goes in each one so that 2C2P can process it for you.
+- **Do you need them?** No, not unless you've agreed a use with your PO.
+- **Want 2C2P to receive and process some other information?** **Contact your PO** to agree which field it goes in. Don't invent new field names: PACO ignores unknown fields without an error.
+- The values come back unchanged in the backend notification and in both inquiry APIs, so you can also match them to your own records. Rules: ≤ 150 characters each (`PC-B054513`).
+- Used in `/prePaymentUi` and `/nonUi`. Void, settlement and refund don't take them.
+
 ## Dates and time zones (all APIs)
 **Every date-time you send to PACO is UTC (`…Z`). One exception: flight departure and arrival times**, which you send as the local time at the airport, the way the flight is scheduled. Every date-time PACO sends back is UTC. Per-field table: `field-guide.md` → Dates.
 

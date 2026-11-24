@@ -22,7 +22,7 @@ Shared fields (envelope, `orderNo`, amounts, dates, `userDefined`): also see `..
 | `paymentExpiryDateTime`, `linkExpiryDateTime` | UTC ISO 8601, ≥ a few minutes ahead | no | see `../field-guide.md` (`PC-B050061`) |
 | `request3dsFlag` | `N`, `Y`, `Y-Strict` (case-sensitive) | no | must be `Y`/`Y-Strict` when `tokenizeFlag` = `F` (`PC-B056305`) |
 | `statementDescriptor` | 5–20 of `A–Z 0–9 . - &` and spaces | no | see `../field-guide.md` |
-| `userDefined1`–`10` | ≤ 150 each | no | `PC-B054513` |
+| `userDefined1`–`10` | ≤ 150 each | no | use agreed with your PO (`../business-concepts.md`). `PC-B054513` |
 | `autoRedirectDelayTimer` | whole number ≥ 0 (seconds) | no, office default | 0–100. `0` = straight back to your URL. |
 
 ## Amount and URLs
@@ -96,7 +96,7 @@ Missing required parts with airline data → `PC-B054514` / `PC-B054515`.
 | Field | Rule | Required | Do this / if wrong |
 |---|---|---|---|
 | (list) | items must add up to the transaction amount | no | ≤ 20 items. Not with DCC (`PC-B054512`). Sum mismatch → `PC-B054504`. |
-| `purchaseItemType` | ≤ 50, **only types 2C2P configured for your account**, each type once | per item | ask 2C2P which types you have. **Not configured → don't send purchase items** (`PC-B050041`). Duplicate → `PC-B050087`. Case doesn't matter. |
+| `purchaseItemType` | ≤ 50, **only types agreed with your PO and set up on your office ID**, each type once | per item | new type (e.g. baggage)? agree it with your PO first (`../business-concepts.md`). Not set up → `PC-B050041`. Duplicate → `PC-B050087`. Case doesn't matter. |
 | `purchaseItemDescription` | ≤ 255 (longer is cut) | no | |
 | `purchaseItemPrice.*` | ≥ 0, same currency and decimals as the transaction | per item | `PC-B054505` |
 | `subMerchantID` | ≤ 25, an ID from 2C2P | no | |
@@ -120,7 +120,7 @@ Send `billingAddress` (Line1, City, PostCode, Country) with it. Missing required
 | `operatingAirlineCode` / `operatingflightNo` | ≤ 2 / ≤ 4 | no |
 | `flightType` | ≤ 20, free text | no |
 | `departure` / `arrival` | object | yes |
-| `…airportCode`, `…cityCode` | exactly 3 **uppercase** IATA letters | airport yes, city no |
+| `…airportCode`, `…cityCode` | exactly 3 **uppercase** IATA letters (IATA airport / city code; where to get them: `../business-concepts.md`) | airport yes, city no |
 | `…countryCode` | 3 **digits** (ISO numeric, `764`) | yes |
 | `…cityName` / `…countryName` | ≤ 50 / ≤ 70 | no |
 | `…dateTime` | **local time at that airport, no `Z` or offset**: `2026-12-01T08:30:00` (the only date-time not in UTC) | yes |

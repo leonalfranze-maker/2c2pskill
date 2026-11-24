@@ -48,7 +48,7 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 ## Your own data
 | Field | Do this |
 |---|---|
-| `userDefined1`–`userDefined10` | ≤ 150 characters each (`PC-B054513`), any characters. They come back unchanged in notifications and inquiry, so they're a good place for your own references. Only `userDefined1` can be passed on to the acquirer, and only if 2C2P sets that up. |
+| `userDefined1`–`userDefined10` | ≤ 150 characters each (`PC-B054513`), any characters. **What goes in each one is agreed with your PO** (so 2C2P can process it): don't use them without that agreement. They come back unchanged in notifications and inquiry. Only `userDefined1` can be passed on to the acquirer, and only if 2C2P sets that up. Meaning: `business-concepts.md`. |
 
 ## Amounts
 - `amount` > 0 (`PC-B050005` for 0 or negative). Maximum: 12-digit `amountText`, i.e. 999,999,999,999 minor units (THB 9,999,999,999.99).

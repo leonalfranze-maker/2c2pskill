@@ -47,7 +47,7 @@ These protect the merchant's money, their customers' card data and their credent
 | Topic | File |
 |---|---|
 | What PACO is, flows, journey, lifecycle, glossary, how to explain at each level | `references/overview.md` |
-| **Business meaning of fields and terms** (PNR, tickets, flight times, dates in every API, `paymentCategory`) | `references/business-concepts.md` |
+| **Business meaning of fields and terms** (PNR, tickets, flight times, airport/country codes, purchase item types, `userDefined`, dates in every API, `paymentCategory`) | `references/business-concepts.md` |
 | Quick verified answers to common questions | `references/faq.md` |
 | **What works / what's limited / what 2C2P must enable, API versions** | `references/feature-support.md` |
 | What the merchant should have from onboarding | `references/prerequisites.md` |

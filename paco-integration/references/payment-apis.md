@@ -69,7 +69,7 @@ Full confirmed rules for every field: **`fields/prepaymentui.md`**.
 | `generalPayerDetails` | payer name / email / phone (phone **without** the country code: `field-guide.md`) |
 | `statementDescriptor` | ≤ 20, text on the cardholder's statement |
 | `autoRedirectDelayTimer` | seconds PACO's result page waits before redirecting back. `0` = immediately. See `notification.md`. |
-| `userDefined1`…`userDefined10` | ≤ 150 each, merchant's own data |
+| `userDefined1`…`userDefined10` | ≤ 150 each. What goes in each one is agreed with your PO (`business-concepts.md`). |
 | `paymentCategory` | usually omit (default `ECOM`). `VEDC` only if 2C2P enabled it; never send `QUICKPAY`, `RPP`, `IPP`. Business meaning: `business-concepts.md`. |
 | `tokenizeDetails` | save the card and show saved cards (`tokenRefList`). ⚠️ Tokenization must be enabled on the office, or `Y` silently becomes a normal payment and `F` is rejected. Use `tokenizeFlag` `Y`, `N` or `F`. prePaymentUi rules: `tokenizeFlag` required when the object is sent; `tokenRef` forbidden; `F` needs 3DS on. |
 | `installmentPaymentDetails`, `recurringPaymentDetails` | installments / recurring. ⚠️ Both need 2C2P setup. Recurring is **cards only**, needs an auto-settlement office, can't be combined with installments, and renames the first charge to `<orderNo>-0001`. See `feature-support.md`. |
