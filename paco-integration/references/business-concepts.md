@@ -34,7 +34,7 @@ Don't answer with field rules alone. A merchant who understands the "why" fills 
 | Flight segment | one flight leg, e.g. Bangkok → Tokyo. A trip with a connection has 2 segments | `flightSegments[]` (`sequenceNo` 1, 2, …) |
 | Passenger | each traveller in the booking | `passengers[]` |
 | Booking date | when the booking was made | `bookingReference.bookingDateTime`, **UTC** |
-| Departure / arrival time | the flight times **as printed on the ticket / flight schedule**, in the **local time of that airport** | `flightSegments[].departure.dateTime` / `arrival.dateTime`, **local time, no offset**. If your system stores flight times only in UTC, convert them with each airport's time zone before sending, or leave `airlineData` out until you can. |
+| Departure / arrival time | the flight times **as printed on the ticket / flight schedule**, in the **local time of that airport** | `flightSegments[].departure.dateTime` / `arrival.dateTime`, **local time, no offset**. **UTC isn't accepted here: you must convert.** If your system stores flight times only in UTC, convert them with each airport's time zone before sending, or leave `airlineData` out until you can. |
 `airlineData` is optional: send it only if you're an airline or travel agent and have the booking details. With it, also send the billing address (`fields/prepaymentui.md`).
 
 ## Dates and time zones (all APIs)

@@ -57,7 +57,7 @@ A good `orderNo` pattern: your order ID plus an attempt suffix, e.g. `SO-2026112
 - Settlement and refund can't exceed the original amount (settlement `PC-B050043`, refund `PC-B050040`).
 
 ## Dates
-**Rule for every API: send every date-time as UTC with `Z`** (`2026-11-23T08:15:30Z`). **One exception: flight departure and arrival times** (`airlineData.flightSegments[].departure.dateTime` / `arrival.dateTime`): send them as the **local time at that airport**, as the flight is scheduled, **without** `Z` or an offset (`2026-12-01T08:30:00`). Departure = local time at the departure airport, arrival = local time at the arrival airport. Don't convert them to UTC. [2C2P confirmed]
+**Rule for every API: send every date-time as UTC with `Z`** (`2026-11-23T08:15:30Z`). **One exception: flight departure and arrival times** (`airlineData.flightSegments[].departure.dateTime` / `arrival.dateTime`): send them as the **local time at that airport**, as the flight is scheduled, **without** `Z` or an offset (`2026-12-01T08:30:00`). Departure = local time at the departure airport, arrival = local time at the arrival airport. Don't convert them to UTC, and **if you only have UTC, convert it to the airport's local time before sending**. [2C2P confirmed]
 Invalid values may be ignored, so always send valid ISO 8601.
 
 | API | Date-time fields you send | Format |
