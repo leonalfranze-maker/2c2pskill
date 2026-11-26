@@ -38,7 +38,7 @@ Answer from here first. "Unconfirmed" → say so, add to the PO question list.
 
 **How do I add a new payment method?** Ask your PO. Enabling methods is an office configuration on 2C2P's side. The exact process is **Unconfirmed**. Offer to draft the email.
 
-**Test cards?** Visa 4111111111111111 / Mastercard 5555555555554444, CVV 123, OTP 123456, any future expiry (12/30). Decline test: 4444333322221111. → `testing-uat.md`
+**Test cards?** Visa 4111111111111111 / Mastercard 5555555555554444, CVV 123, OTP 123456, any future expiry (12/30). Decline test: 4444333322221111. More cards (Amex, UnionPay, JCB, Discover, Diners, installment cards) → `testing-uat.md`
 
 **Why don't I see the OTP page?** 3DS depends on `request3dsFlag` and your office setting. `"Y"` requests 3DS, but the card can still pass without a challenge. → `testing-uat.md`
 

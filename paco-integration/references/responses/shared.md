@@ -34,6 +34,8 @@ Every response: `{ "version": "2.0", "apiResponse": { … }, "data": { … } }` 
 | `acquirerResponseCode` / `acquirerResponseDescription` | the bank's own code (often 2 characters, `00` = approved). Payment results only. **Store for support, never build logic on it.** |
 | `eciValue` | 3DS result indicator on card payments. Store. |
 
+**`apiResponse.responseCode` vs `pspResponse.responseCode`:** `apiResponse` is **PACO's** answer: use its `responseCode` for your logic. `pspResponse` (in payment and post-payment results) is the **bank/acquirer's** own answer behind PACO: store it for support and disputes, **never decide on it**, never show it. And for "is this order paid?", use `paymentStatus` from **Inquiry** (`../notification.md`).
+
 ## 3. Field names: exact spelling matters
 All names are camelCase and identical in plain JSON and JOSE (v2.0). A few names differ between APIs: read the exact one.
 

@@ -65,6 +65,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 | `cancellationUrl` | the customer's browser | the customer cancelled | take them back to the cart |
 | `backendUrl` | **PACO → your server** | when the payment has a result | your server learns the result even if the customer closed the browser |
 - **Why it matters:** the browser pages are only for the customer's experience: anyone can edit a URL, and the customer may never come back. Your order is updated from the server side: the backend notification, **then confirm with Inquiry** before you ship or issue a ticket (`notification.md`).
+- **Can I use one URL for all of them?** The three browser URLs can point to the same page of yours (PACO adds `orderNo`, so the page can inquire and show the real result). **Keep `backendUrl` a separate endpoint**: it's called by PACO's server with a POST, must answer 2xx at once and confirm by Inquiry.
 - **What to do:** always send all four (`"-"` = PACO's own result page for the three browser URLs, or your office's configured URL for `backendUrl`). In `/prePaymentUi` and `/nonUi` only; refunds have no callback.
 
 ### Tokenization (saved cards)
