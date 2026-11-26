@@ -38,7 +38,7 @@ Show the customer the **earlier of `linkExpiryDateTime` and `paymentExpiryDateTi
 
 ## Good to know
 - **A new `/prePaymentUi` call with the same `orderNo` closes the earlier link**: it can't be paid any more. Always send the customer the newest link.
-- `availablePaymentTypes`: the methods this customer will see, as strings (`CC`, `CC-VI`, `QR`, `QR-PROMPTPAY`, …), root types included, no meaningful order. Use it to check your setup. Don't show raw codes to customers.
+- `availablePaymentTypes`: the methods this customer will see, as strings (`CC`, `CC-VI`, `QR`, `QR-PROMPTPAY`, …), root types included, no meaningful order. Use it to check what's enabled. To **send** a method, take the separate `paymentType` / `channelCode` / `agentCode` values from `../payment-methods.md`. Don't show raw codes to customers.
 - `notificationURLs` echoes your URLs (`confirmationUrl`, `failedUrl`, `cancellationUrl`, `backendUrl`) with `orderNo`, `productDescription` and `controllerInternalId` already appended. Nothing to do.
 - `currencyConversionType` is `"None"` when currency conversion is off.
 - **Saved cards:** `tokenizeDetails` here is only an echo of what you sent (it doesn't check which tokens are still valid). The **new `tokenRef`** after a customer saves a card arrives **only in the backend notification** (`data.paymentResult.tokenizeDetails`: `tokenRef`, `maskedIdentifier`, `tokenExpiry`), and only when the payment succeeded. It isn't in inquiry or the redirect. Store `tokenRef` securely; `maskedIdentifier` is safe to show ("Visa •••• 1111").

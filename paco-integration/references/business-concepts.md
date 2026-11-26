@@ -89,7 +89,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
   - **`channelCode`**: the specific method within that type, e.g. GrabPay QR (`GPQR`), PromptPay QR (`PPQR`), TrueMoney (`TRUEMONEY`). **Every non-card method has one.**
   - **`agentCode`**: a level below the channel: the bank or provider. **Only some channels need it** (e.g. online banking: which bank).
 - **Why it matters:** you only send them when you want to send the customer straight to **one** method (your own "pay with GrabPay" button). Leave them all out and the Payment Page shows every method enabled on your office.
-- **What to do:** find the method in **`payment-methods.md`** (the full Dev Zone list) and send exactly what it shows. Examples:
+- **What to do:** send the three as **separate fields** (`paymentType`, `channelCode`, `agentCode`), with the values from **`payment-methods.md`** (the full Dev Zone list). Examples:
 
 | Customer pays with | `paymentType` | `channelCode` | `agentCode` |
 |---|---|---|---|
@@ -100,6 +100,7 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 | Visa card only | `CC-VI` | – | – |
 
 - Cards: `paymentType` only (`CC` = any card). `channelCode` and `agentCode` aren't used for cards and installments.
+- **When more than one code could fit, don't choose for the merchant.** Some methods exist in several forms, e.g. `GPQR` (GrabPay QR) and `GPTHQR` (GrabPay QR, **Thailand only**), or the same bank under `WEBPAY`, `IMBANK` and `DEEPLINK`. **Which ones the merchant can use was agreed at onboarding**: the 2C2P team tells them which channels are enabled. Show them where to look (this list, `availablePaymentTypes` in a `/prePaymentUi` response) and **ask the PO which channel is enabled** (PO list).
 - The method must also be **enabled on your office**, or it's rejected (`PC-B051402`). New methods need a business agreement with 2C2P (`payment-apis.md`).
 - Used in `/prePaymentUi` (optional) and `/nonUi` (`paymentType` required). `transactionList` can filter and returns them.
 

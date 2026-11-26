@@ -1,7 +1,7 @@
 # Payment types, channels and agents (full list)
 
 Source [DZ]: https://devzone.2c2p.com/docs/payment-type-channel-and-agent (updated 2026-03-20). Public list, copied as published. Check the Dev Zone if a code is missing.
-How to use it: `business-concepts.md` → *Payment type, channel and agent*. A method must also be **enabled on your office** (`availablePaymentTypes`).
+How to use it: send `paymentType`, `channelCode` and `agentCode` as **separate fields**, with the values below (`business-concepts.md` → *Payment type, channel and agent*). **Which of these your office can use was agreed at onboarding: if unsure, ask your PO.** `GPTHQR` is GrabPay QR for Thailand only. A method must also be **enabled on your office** (`availablePaymentTypes`).
 
 ## Credit Card
 Cards: send `paymentType` only (`CC` = any card, or one brand). No `channelCode` / `agentCode`.
