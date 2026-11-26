@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <!-- The Accept header of this page load, filled in by the server (3DS deviceDetails.browserAcceptHeader). -->
+  <meta name="browser-accept" content="__BROWSER_ACCEPT__">
+  <title>Card Payment</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>Pay by card</h1>
+    <p class="sub">Your card is sent to this shop's server, which sends it to 2C2P. Nothing is saved.</p>
+    <div class="summary" id="summary">Loading…</div>
+    <!-- Card inputs have NO name attribute on purpose: if JavaScript fails, a plain form submit can't put
+         card data in a URL. JavaScript sends them to /api/pay-card in a POST body. -->
+    <form id="f" autocomplete="on" novalidate>
+      <label class="field"><span>Card number</span>
+        <input id="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="1234 5678 9012 3456" required></label>
+      <div class="row">
+        <label class="field"><span>Expiry (MMYY)</span>
+          <input id="expiry" inputmode="numeric" autocomplete="cc-exp" maxlength="7" placeholder="MMYY" required></label>
+        <label class="field"><span>CVV</span>
+          <input id="cvv" type="password" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123" required></label>
+      </div>
+      <label class="field"><span>Name on card (English letters)</span>
+        <input id="holder" autocomplete="cc-name" maxlength="45" placeholder="JOHN DOE"></label>
+      <button id="pay" type="submit" disabled>Pay</button>
+    </form>
+    <div id="msg" role="status"></div>
+
+    <div class="note pci"><b>PCI DSS:</b> on this page the shop collects raw card data, so the merchant is in
+      <b>PCI DSS scope</b> and must agree the use of <code>/nonUi</code> with 2C2P first.
+      Paying on 2C2P's payment page (<code>/prePaymentUi</code>) makes the merchant's PCI DSS scope <b>much smaller</b>.
+      This demo never logs, stores or echoes the card number or CVV.</div>
+    <div class="note uat" id="uat" hidden><b>Testing (UAT):</b> use only 2C2P test cards, never a real card.
+      Visa <code>4111111111111111</code> or Mastercard <code>5555555555554444</code>, CVV <code>123</code>,
+      expiry <code>1230</code>, OTP <code>123456</code>. Decline test: <code>4444333322221111</code>.
+      A UAT office may be set up to return a fixed result for every card: if results look odd, ask 2C2P.</div>
+    <p class="sub" style="margin-top:14px"><a href="/">Back to shop</a></p>
+  </div>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const f = $('f'), btn = $('pay'), msg = $('msg');
+  const productId = new URLSearchParams(location.search).get('productId');
+  const showError = (text) => { msg.className = 'err'; msg.textContent = text; };
+
+  // Product and price are shown from the server's catalog. Only productId is sent back.
+  Promise.all([fetch('/api/products').then((r) => r.json()), fetch('/api/config').then((r) => r.json())]).then(([items, config]) => {
+    if (config.pacoEnv !== 'PRD') $('uat').hidden = false; // test cards: UAT only
+    const p = items.find((x) => x.id === productId);
+    if (!p) { $('summary').textContent = 'Unknown product.'; return; }
+    $('summary').innerHTML = '';
+    $('summary').append(Object.assign(document.createElement('span'), { textContent: p.name }),
+      Object.assign(document.createElement('b'), { textContent: `${p.amount.toFixed(2)} ${p.currencyCode}` }));
+    btn.textContent = `Pay ${p.amount.toFixed(2)} ${p.currencyCode}`;
+    btn.disabled = false;
+  }).catch(() => showError('Could not load the product.'));
+
+  // Browser details for 3DS (deviceDetails). The server adds the IP address and User-Agent itself.
+  function deviceDetails() {
+    // browserLanguage must be exactly xx-XX (en-US, not en): take the first browser language that has a region.
+    const lang = [navigator.language, ...(navigator.languages || [])]
+      .map((l) => /^([a-z]{2})[-_]([a-z]{2})$/i.exec(l || ''))
+      .filter(Boolean).map((m) => `${m[1].toLowerCase()}-${m[2].toUpperCase()}`)[0];
+    const mobile = navigator.userAgentData ? navigator.userAgentData.mobile : matchMedia('(pointer: coarse)').matches;
+    return {
+      browserAcceptHeader: document.querySelector('meta[name="browser-accept"]').content,
+      browserLanguage: lang,
+      browserColorDepth: screen.colorDepth,
+      browserScreenHeight: screen.height,
+      browserScreenWidth: screen.width,
+      browserTZ: new Date().getTimezoneOffset(), // minutes, UTC - local (Bangkok = -420)
+      browserJavaEnabled: 'Y', // PACO asks whether JavaScript is enabled: this code is running, so yes
+      mobileDeviceFlag: mobile ? 'Y' : 'N',
+    };
+  }
+
+  // "12/30", "1230" or an autofilled "12/2030" -> "1230"
+  function expiryMMYY(v) {
+    const d = v.replace(/\D/g, '');
+    return d.length === 6 ? d.slice(0, 2) + d.slice(4) : d;
+  }
+
+  // 3DS challenge: write the bank's page (decoded challengeHtml) into this browser window.
+  // If its form doesn't submit by itself, submit the form named creqForm.
+  function showChallenge(html) {
+    const fallback = '<script>(function(){var leaving=false;addEventListener("beforeunload",function(){leaving=true;});'
+      + 'setTimeout(function(){var c=document.forms.creqForm;if(!leaving&&c)c.submit();},2000);})();<\/script>';
+    document.open();
+    document.write(html + fallback);
+    document.close();
+  }
+
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const card = {
+      cardNumber: $('cardNumber').value.replace(/[\s-]/g, ''),
+      cardExpiryMMYY: expiryMMYY($('expiry').value),
+      cvvCode: $('cvv').value.trim(),
+      cardHolderName: $('holder').value.trim(),
+    };
+    if (!/^\d{13,19}$/.test(card.cardNumber)) return showError('Please enter a card number of 13 to 19 digits.');
+    if (!/^(0[1-9]|1[0-2])\d{2}$/.test(card.cardExpiryMMYY)) return showError('Please enter the expiry as MMYY, e.g. 1230.');
+    if (!/^\d{3,4}$/.test(card.cvvCode)) return showError('Please enter the 3 or 4 digit CVV.');
+
+    btn.disabled = true; msg.className = ''; msg.textContent = 'Processing payment…';
+    try {
+      const res = await fetch('/api/pay-card', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, card, device: deviceDetails() }) });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out.error || 'The payment could not be processed.');
+      if (out.next === 'result') { msg.textContent = 'Checking the payment…'; location.href = out.resultUrl; return; }
+      if (out.next === 'redirect') { msg.textContent = 'Redirecting…'; location.href = out.url; return; }
+      if (out.next === 'challenge') { showChallenge(out.challengeHtml); return; }
+      // declined / failed: the customer-friendly text from PACO (marketingDescription). Retry = a new payment.
+      $('cvv').value = '';
+      showError(out.message + '\nYou can try again.');
+      btn.disabled = false;
+    } catch (err) {
+      $('cvv').value = '';
+      showError(err.message);
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

@@ -65,7 +65,7 @@ const mock = http.createServer(async (req, res) => {
     let reply;
     if (isNonUi) {
       if (!r.paymentType) throw new Error('nonUi: paymentType required');
-      if (r.paymentType === 'QR') {
+      if (r.paymentType === 'QR' || r.creditCardDetails?.cvvCode === '777') { // mock trigger: CVV 777 -> APM-style 202
         status = 202;
         reply = { version: '2.0', apiResponse: { responseCode: 'PC-B050002', responseDescription: 'Forwarded' },
           data: { webPaymentResult: { orderNo: r.orderNo, controllerInternalID: 'abcdefabcdefabcdefabcdefabcdefab', webPaymentUrl: 'https://wallet.mock.invalid/pay',
@@ -76,7 +76,7 @@ const mock = http.createServer(async (req, res) => {
       const declined = r.creditCardDetails.cvvCode === '999';
       status = ok3ds || declined ? 202 : 200;
       reply = declined
-        ? { version: '2.0', apiResponse: { responseCode: 'PC-B050031', responseDescription: 'Authorization failed' },
+        ? { version: '2.0', apiResponse: { responseCode: 'PC-B050031', responseDescription: 'Authorization failed', marketingDescription: 'Your card was declined by the bank.' },
             data: { paymentIncompleteResult: { orderNo: r.orderNo, failedReason: 'Do not honour', paymentStatusInfo: { paymentStatus: 'F', paymentStep: 'PR' } } } }
         : ok3ds
         ? { version: '2.0', apiResponse: { responseCode: 'PC-B050001', responseDescription: 'Pending 3DS' },
@@ -182,6 +182,101 @@ try {
     const c = await payNonUi({ amount: 10, productDescription: 'nonUi' }, { ...card, cvvCode: '999' }, { cfg, keys: appKeys });
     ok(c.outcome === 'FAILED' && c.responseCode === 'PC-B050031' && c.failedReason === 'Do not honour', `${plainJson ? 'JSON' : 'JOSE'}: declined card on HTTP 202 -> FAILED (not success)`);
   }
+
+  console.log('\n6) shop + own card form routes (/nonUi through the server)');
+  cfg.plainJson = false;
+  const shop = await (await fetch(`${base}/`)).text();
+  ok(shop.includes('value="page"') && shop.includes('value="card"'), 'shop page offers both payment methods');
+  const cfgRes = await (await fetch(`${base}/api/config`)).json();
+  ok(cfgRes.cardForm === true && cfgRes.pacoEnv === 'MOCK' && !JSON.stringify(cfgRes).includes(API_KEY), '/api/config: card form on outside PRD, no secrets');
+  const cardPage = await fetch(`${base}/card?productId=${PRODUCT_ID}`, { headers: { Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' } });
+  const cardHtml = await cardPage.text();
+  ok(cardPage.status === 200 && cardPage.headers.get('cache-control') === 'no-store', 'card form page served, not cached');
+  ok(cardHtml.includes('content="text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"'), 'Accept header of the page load handed to the page (deviceDetails)');
+  ok(cardHtml.includes('much smaller') && cardHtml.includes('PCI DSS scope') && !/out of scope/i.test(cardHtml), 'PCI note: "much smaller" with prePaymentUi, never "out of scope"');
+  ok(cardHtml.includes('4111111111111111') && cardHtml.includes('4444333322221111'), 'UAT test cards shown');
+  ok(cardHtml.includes('document.write') && cardHtml.includes('creqForm'), 'card page writes the challenge page into the browser, creqForm fallback');
+  cfg.cardFormEnabled = false; // the default in PRD unless PACO_NONUI_CARD_FORM=true
+  const off1 = await fetch(`${base}/card?productId=${PRODUCT_ID}`);
+  const off2 = await fetch(`${base}/api/pay-card`, { method: 'POST', body: '{}' });
+  ok(off1.status === 403 && off2.status === 403 && (await (await fetch(`${base}/api/config`)).json()).cardForm === false, 'card form switched off -> 403');
+  cfg.cardFormEnabled = undefined;
+
+  // Capture everything the server logs while card data flows through it.
+  const logs = [];
+  const orig = { log: console.log, error: console.error };
+  console.log = (...a) => { logs.push(a.join(' ')); orig.log(...a); };
+  console.error = (...a) => { logs.push(a.join(' ')); orig.error(...a); };
+  const PAN = '4111111111111111', CVV = '123';
+  const longUA = 'Mozilla/5.0 ' + 'x'.repeat(600);
+  const device = { browserAcceptHeader: 'text/html', browserLanguage: 'th-TH', browserColorDepth: 24, browserScreenHeight: 900, browserScreenWidth: 1440,
+    browserTZ: -420, browserJavaEnabled: 'Y', mobileDeviceFlag: 'N' };
+  const payCard = async (card, extra = {}) => {
+    const res = await fetch(`${base}/api/pay-card`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': longUA },
+      body: JSON.stringify({ productId: PRODUCT_ID, amount: 0.01, card: { cardNumber: '4111 1111 1111 1111', cardExpiryMMYY: '1230', cvvCode: CVV, cardHolderName: 'Test Holder', ...card }, device, ...extra }) });
+    const text = await res.text();
+    return { status: res.status, text, json: JSON.parse(text) };
+  };
+  try {
+    // approved
+    let p = await payCard({});
+    ok(p.status === 200 && p.json.next === 'result' && p.json.resultUrl === `/payment/result?orderNo=${p.json.orderNo}`, 'approved (HTTP 200 paymentResult) -> go to the result page');
+    ok(lastRequest.transactionAmount.amountText === expected && lastRequest.paymentType === 'CC', 'nonUi amount from the server catalog (browser amount ignored), paymentType CC');
+    ok(lastRequest.creditCardDetails.cardNumber === PAN && lastRequest.creditCardDetails.cvvCode === CVV, 'card sent to PACO (spaces stripped)');
+    const dd = lastRequest.deviceDetails ?? {};
+    ok(dd.browserIP === '127.0.0.1' && dd.browserUserAgent.length === 500 && dd.browserAcceptHeader === 'text/html' && dd.browserLanguage === 'th-TH'
+      && dd.browserTZ === -420 && dd.browserScreenWidth === 1440 && dd.browserJavaEnabled === 'Y' && dd.mobileDeviceFlag === 'N', 'deviceDetails sent: IP from server, User-Agent cut to 500, browser values');
+    inquiryState.set(p.json.orderNo, [entry(p.json.orderNo, 'A', 'PA')]);
+    page = await (await fetch(`${base}${p.json.resultUrl}`)).text();
+    ok(page.includes('Payment successful') && page.includes('<b>A / PA</b>'), 'result page shows the status from Inquiry (A / PA)');
+    p = await payCard({});
+    inquiryState.set(p.json.orderNo, [entry(p.json.orderNo, 'F', 'PR')]);
+    page = await (await fetch(`${base}${p.json.resultUrl}`)).text();
+    ok(page.includes('Payment not completed'), 'nonUi said approved but Inquiry says F -> not paid (Inquiry wins)');
+
+    // 3DS challenge
+    cfg.request3dsFlag = 'Y';
+    p = await payCard({});
+    ok(lastRequest.request3dsFlag === 'Y', 'request3dsFlag from config sent');
+    ok(p.status === 200 && p.json.next === 'challenge' && p.json.challengeHtml.includes('name="creqForm"'), '3DS (HTTP 202 aresACSChallenge) -> decoded challengeHtml for the browser');
+    cfg.request3dsFlag = undefined;
+    ok(!('request3dsFlag' in (await payCard({}), lastRequest)), 'no request3dsFlag when not configured (office setting)');
+
+    // APM-style redirect
+    p = await payCard({ cvvCode: '777' });
+    ok(p.json.next === 'redirect' && p.json.url === 'https://wallet.mock.invalid/pay', 'webPaymentResult (HTTP 202) -> redirect to webPaymentUrl');
+
+    // declined
+    p = await payCard({ cvvCode: '999' });
+    ok(p.status === 200 && p.json.next === 'declined' && p.json.message === 'Your card was declined by the bank.', 'declined (HTTP 202 + error code) -> marketingDescription shown');
+    ok(!p.text.includes('Do not honour') && !p.text.includes('PC-B050031'), 'technical failedReason / code not shown to the customer');
+
+    // input checks, never echoing card data
+    p = await payCard({ cardNumber: '4111' });
+    ok(p.status === 400 && /13 to 19 digits/.test(p.json.error) && !p.text.includes('4111'), 'bad card number rejected without echoing it');
+    p = await payCard({ cardExpiryMMYY: '0120' });
+    ok(p.status === 400 && /expired/.test(p.json.error), 'expired card rejected');
+    p = await payCard({ cvvCode: '12' });
+    ok(p.status === 400 && /CVV/.test(p.json.error), 'bad CVV rejected');
+    p = await payCard({}, { productId: 'nope' });
+    ok(p.status === 400 && p.json.error === 'Unknown product', 'unknown product rejected');
+    const broken = await fetch(`${base}/api/pay-card`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: `{"card":{"cardNumber":"${PAN}"` });
+    const brokenText = await broken.text();
+    ok(broken.status === 400 && !brokenText.includes(PAN), 'malformed JSON rejected without echoing the body');
+
+    // PACO rejects the request (HTTP 400)
+    cfg.officeId = '';
+    p = await payCard({});
+    cfg.officeId = OFFICE;
+    ok(p.status === 502 && !p.text.includes(PAN) && !p.text.includes('MOCK-400 missing'), 'PACO 400 -> 502 with a generic message');
+
+    await new Promise((r) => setTimeout(r, 200)); // let background inquiries finish logging
+  } finally {
+    Object.assign(console, orig);
+  }
+  const all = logs.join('\n');
+  ok(!all.includes(PAN) && !all.includes('4111 1111') && !all.includes('cvvCode'), `server logs (${logs.length} lines) contain no card number or CVV`);
+  ok(!all.includes(API_KEY), 'server logs contain no API key');
 
   console.log('\nALL PASSED');
 } finally {

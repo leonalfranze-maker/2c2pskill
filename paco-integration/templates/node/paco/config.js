@@ -34,6 +34,11 @@ export function loadConfig(env = process.env) {
     currencyCode: env.PACO_CURRENCY || 'THB',
     publicBaseUrl: env.PUBLIC_BASE_URL || `http://localhost:${env.PORT || 3000}`,
     port: Number(env.PORT || 3000),
+    // Own card form (/nonUi) only: "N", "Y" or "Y-Strict" (case-sensitive). Empty = the office's setting.
+    request3dsFlag: env.PACO_REQUEST_3DS_FLAG || undefined,
+    // Own card form (/nonUi with raw card data = PCI DSS scope). On by default in UAT, off in PRD unless you
+    // set PACO_NONUI_CARD_FORM=true after agreeing /nonUi with 2C2P and being PCI DSS compliant.
+    cardFormEnabled: env.PACO_NONUI_CARD_FORM ? /^(1|true|yes)$/i.test(env.PACO_NONUI_CARD_FORM) : pacoEnv !== 'PRD',
     merchantSigningPrivateKey: keyValue(env, 'MERCHANT_SIGNING_PRIVATE_KEY'),
     merchantEncryptionPrivateKey: keyValue(env, 'MERCHANT_ENCRYPTION_PRIVATE_KEY'),
     pacoEncryptionPublicKey: keyValue(env, 'PACO_ENCRYPTION_PUBLIC_KEY'),
@@ -41,6 +46,9 @@ export function loadConfig(env = process.env) {
   };
 
   if (!['UAT', 'PRD'].includes(pacoEnv) && !env.PACO_BASE_URL) throw new Error(`PACO_ENV must be UAT or PRD (got ${pacoEnv}).`);
+  if (cfg.request3dsFlag && !['N', 'Y', 'Y-Strict'].includes(cfg.request3dsFlag)) {
+    throw new Error(`PACO_REQUEST_3DS_FLAG must be exactly N, Y or Y-Strict (got "${cfg.request3dsFlag}"), or empty for the office setting.`);
+  }
   if (cfg.plainJson && pacoEnv === 'PRD') {
     throw new Error('PACO_UAT_PLAIN_JSON is for test environments only. Production rejects plain JSON (HTTP 415).');
   }

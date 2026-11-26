@@ -3,53 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Demo Checkout</title>
-  <style>
-    :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#66707a; --accent:#0b6bcb; --line:#e3e6ea; --err:#b42318; }
-    @media (prefers-color-scheme: dark) { :root { --bg:#111418; --card:#1a1f25; --ink:#e7eaee; --muted:#9aa4ae; --accent:#4c9bf0; --line:#2b323a; --err:#ff8a80; } }
-    * { box-sizing: border-box; }
-    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
-    main { max-width:440px; margin:48px auto; padding:0 16px; }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px; }
-    h1 { font-size:20px; margin:0 0 4px; }
-    p.sub { color:var(--muted); margin:0 0 20px; font-size:14px; }
-    label.item { display:flex; justify-content:space-between; gap:12px; border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:8px; cursor:pointer; }
-    label.item input { margin-right:8px; }
-    button { width:100%; margin-top:14px; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
-    button:disabled { opacity:.6; cursor:wait; }
-    #msg { margin-top:14px; font-size:14px; white-space:pre-wrap; word-break:break-word; }
-    #msg.err { color:var(--err); }
-  </style>
+  <title>Demo Shop</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <main>
   <div class="card">
-    <h1>Checkout</h1>
-    <p class="sub">Card details are entered on the 2C2P payment page, not here.</p>
-    <form id="f"><div id="products">Loading…</div><button id="pay" type="submit" disabled>Pay</button></form>
+    <h1>Demo shop</h1>
+    <p class="sub">Prices come from the shop's server. Your browser only sends which product you picked.</p>
+    <form id="f">
+      <h2>1. Product</h2>
+      <div id="products">Loading…</div>
+      <h2>2. How do you want to pay?</h2>
+      <label class="item"><span><input type="radio" name="method" value="page" checked>Pay on 2C2P's payment page
+        <small>You enter your card (or other method) on 2C2P's secure page.</small></span></label>
+      <label class="item" id="card-option"><span><input type="radio" name="method" value="card">Pay with your own card form
+        <small id="card-hint">You enter your card on this shop's page (/nonUi).</small></span></label>
+      <button id="pay" type="submit" disabled>Continue</button>
+    </form>
     <div id="msg"></div>
   </div>
 </main>
 <script>
   const f = document.getElementById('f'), btn = document.getElementById('pay'), msg = document.getElementById('msg');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  // Prices are shown from the server. The browser only sends the product id.
-  fetch('/api/products').then((r) => r.json()).then((items) => {
+
+  Promise.all([fetch('/api/products').then((r) => r.json()), fetch('/api/config').then((r) => r.json())]).then(([items, config]) => {
     document.getElementById('products').innerHTML = items.map((p, i) =>
       `<label class="item"><span><input type="radio" name="productId" value="${esc(p.id)}" ${i ? '' : 'checked'}>${esc(p.name)}</span><b>${esc(p.amount.toFixed(2))} ${esc(p.currencyCode)}</b></label>`).join('');
+    if (!config.cardForm) { // switched off (default in production): see PACO_NONUI_CARD_FORM in .env
+      const opt = document.getElementById('card-option');
+      opt.classList.add('disabled'); opt.querySelector('input').disabled = true;
+      document.getElementById('card-hint').textContent = 'Not available.';
+    }
     btn.disabled = false;
   }).catch(() => { msg.className = 'err'; msg.textContent = 'Could not load products.'; });
 
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const data = new FormData(f), productId = data.get('productId');
+    if (data.get('method') === 'card') { window.location.href = '/card?productId=' + encodeURIComponent(productId); return; }
     btn.disabled = true; msg.className = ''; msg.textContent = 'Creating payment…';
     try {
       const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: new FormData(f).get('productId') }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error + (data.details ? '\n' + JSON.stringify(data.details, null, 2) : ''));
+        body: JSON.stringify({ productId }) });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out.error + (out.details ? '\n' + JSON.stringify(out.details, null, 2) : ''));
       msg.textContent = 'Redirecting to the payment page…';
-      window.location.href = data.paymentPageURL;
+      window.location.href = out.paymentPageURL;
     } catch (err) { msg.className = 'err'; msg.textContent = err.message; btn.disabled = false; }
   });
 </script>

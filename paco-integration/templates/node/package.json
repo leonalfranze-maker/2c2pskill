@@ -2,7 +2,7 @@
   "name": "paco-integration",
   "version": "1.0.0",
   "private": true,
-  "description": "2C2P PACO integration: checkout page -> backend -> /prePaymentUi -> payment page; results confirmed by Inquiry",
+  "description": "2C2P PACO integration: shop page -> backend -> /prePaymentUi (2C2P payment page) or /nonUi (own card form); results confirmed by Inquiry",
   "type": "module",
   "engines": { "node": ">=20.6" },
   "scripts": {

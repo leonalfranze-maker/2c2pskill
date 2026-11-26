@@ -121,11 +121,14 @@ export function buildNonUiRequest(order, card, cfg) {
     paymentType: order.paymentType || 'CC',
     ...(order.request3dsFlag ? { request3dsFlag: order.request3dsFlag } : {}),
     creditCardDetails: {
-      cardNumber: String(card.cardNumber).replace(/\s+/g, ''),
+      cardNumber: String(card.cardNumber).replace(/[\s-]+/g, ''), // PACO removes spaces and '-' too
       cardExpiryMMYY: card.cardExpiryMMYY,
       cvvCode: card.cvvCode,
-      cardHolderName: card.cardHolderName,
+      ...(card.cardHolderName ? { cardHolderName: card.cardHolderName } : {}), // empty -> PACO uses the payer name
     },
+    // Browser data for 3DS (references/fields/nonui.md -> deviceDetails). Missing values are filled with
+    // defaults by PACO, which may lead to more declines or challenges: send them on browser payments.
+    ...(order.deviceDetails ? { deviceDetails: order.deviceDetails } : {}),
   };
 }
 

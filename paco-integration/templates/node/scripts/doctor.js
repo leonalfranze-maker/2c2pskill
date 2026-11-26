@@ -59,6 +59,12 @@ const plainJson = /^(1|true|yes)$/i.test(env.PACO_UAT_PLAIN_JSON || '');
 if (plainJson && pacoEnv === 'PRD') fail('PACO_UAT_PLAIN_JSON=true is not allowed in PRD (production requires JOSE)');
 else if (plainJson) warn('Plain JSON mode (UAT first call only). Switch it off and test with JOSE before go-live.');
 
+// Own card form (/nonUi): PCI DSS scope
+const cardForm = env.PACO_NONUI_CARD_FORM ? /^(1|true|yes)$/i.test(env.PACO_NONUI_CARD_FORM) : pacoEnv !== 'PRD';
+if (cardForm && pacoEnv === 'PRD') warn('Own card form (/nonUi) is ON in production: only if you are PCI DSS compliant and 2C2P agreed /nonUi.');
+else ok(`Own card form (/nonUi) ${cardForm ? 'on (UAT test cards only)' : 'off'}`);
+if (env.PACO_REQUEST_3DS_FLAG && !['N', 'Y', 'Y-Strict'].includes(env.PACO_REQUEST_3DS_FLAG)) fail('PACO_REQUEST_3DS_FLAG must be exactly N, Y or Y-Strict (case-sensitive), or empty');
+
 const keyNames = ['MERCHANT_SIGNING_PRIVATE_KEY', 'MERCHANT_ENCRYPTION_PRIVATE_KEY', 'PACO_ENCRYPTION_PUBLIC_KEY', 'PACO_SIGNING_PUBLIC_KEY'];
 const given = keyNames.filter((k) => env[k] || (env[`${k}_FILE`] && (!plainJson || existsSync(env[`${k}_FILE`]))));
 if (given.length === 0 && plainJson) {
