@@ -16,7 +16,7 @@ Shared fields (envelope, `orderNo`, amounts, dates, `userDefined`): also see `..
 | `productDescription` | ≤ 50 (longer is cut) | send it | one line, no emoji. **Airlines / travel agents: put the PNR here when you have it** (Dev Zone: "a.k.a. PNR"); otherwise a short description (`../business-concepts.md`). |
 | `paymentCategory` | `ECOM`, `VEDC`, `RPP`, `IPP`, `QUICKPAY` (uppercase) | no, default `ECOM` | omit it or send `ECOM`. `VEDC` (mail/phone order) only if 2C2P enabled it. Don't send `QUICKPAY` or `RPP`/`IPP` (set automatically). A bad value fails later, at payment (`PC-B050012`). |
 | `paymentType` | `TYPE`, `TYPE-CHANNEL` or `TYPE-CHANNEL-AGENT` (e.g. `CC`, `QR`, `WALLET-…`), only codes enabled on your office | no | omit to show every method. Unknown → `PC-B051401`, not enabled → `PC-B051402`. |
-| `channelCode` | ≤ 20, no `-`, a channel enabled for you | no | usually omit. Ignored for `CC`/`IPP`. Must match `paymentType` if both carry a channel (`PC-B051401`). |
+| `channelCode` | ≤ 20, no `-`, a channel enabled for you (list: `../payment-methods.md`) | no | usually omit; send it to go straight to one method, e.g. `QR` + `GPQR`. Ignored for `CC`/`IPP`. Must match `paymentType` if both carry a channel (`PC-B051401`). |
 | `agentCode` | ≤ 20, no `-` | no | same as `channelCode` |
 | `preferredPaymentTypes[]` | same codes as `paymentType` | no | ≤ 20 items. **Ignored if `paymentType` is sent.** Display order is fixed by PACO. If nothing matches, all methods are shown. |
 | `paymentExpiryDateTime`, `linkExpiryDateTime` | UTC ISO 8601, ≥ a few minutes ahead | no | see `../field-guide.md` (`PC-B050061`) |

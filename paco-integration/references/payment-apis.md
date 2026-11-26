@@ -124,7 +124,7 @@ Errors: full/attempt ECI without CAVV → `PC-B050010`. `dsTransID` without vers
 
 ## Payment types (for `paymentType`, `preferredPaymentTypes`) [DZ]
 `CC` (any card), `CC-VI` Visa, `CC-CA` Mastercard, `CC-AX` Amex, `CC-DC` Diners, `CC-DS` Discover, `CC-UP` UnionPay, `CC-JC` JCB, `IPP` installments, `QR`, `DEEPLINK`, `WALLET`, `OTC` (over the counter), `SSM` (ATM/kiosk), `WEBPAY`, `IMBANK` (i-banking), `EXT`.
-Full channel/agent list (Apple Pay, Google Pay, PromptPay QR, TrueMoney, …): https://devzone.2c2p.com/docs/payment-type-channel-and-agent
+Full channel/agent list (Apple Pay, Google Pay, PromptPay QR, TrueMoney, …): **`payment-methods.md`** (copied from https://devzone.2c2p.com/docs/payment-type-channel-and-agent). How to choose: `business-concepts.md`.
 - A method must be **enabled on the office** to appear. Otherwise: `PC-B050092` (no channel/agent) or `PC-B050010` / `PC-B050035` (no route).
 - `availablePaymentTypes` in the prePaymentUi response = **what this payment can be paid with**: the office's methods filtered by this payment's currency, amount, expiry, purchase items and `preferredPaymentTypes`. Parent types are added too (`WALLET` alongside a specific wallet). It's reliable for "what can this customer use now", **not** for "everything my office has": a method can be missing just because it doesn't support this currency or amount. [2C2P confirmed]
 - Sending a `paymentType` that isn't available → `PC-B051402` "Payment type not support" or `PC-B050035`.

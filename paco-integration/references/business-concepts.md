@@ -83,6 +83,32 @@ Used only in `airlineData` (`/prePaymentUi`, `/nonUi`). No other API takes them.
 - **When tokens appear or disappear:** the token is created **before** the payment is authorized. If that payment fails, the new token is **deleted**. A token that already worked isn't deleted when a later payment with it fails.
 - **Where the token comes back:** `/prePaymentUi`: only in the backend notification (so your `backendUrl` must work). `/nonUi`: in the payment result. Store `tokenRef` securely; show only the masked number. Rules: `fields/prepaymentui.md` → Saved cards, `responses/nonui.md`.
 
+### Payment type, channel and agent (choosing a payment method)
+- **What:** three levels that name a payment method, from general to specific:
+  - **`paymentType`**: the kind of payment: card (`CC`), QR (`QR`), wallet (`WALLET`), online banking (`WEBPAY`), counter (`OTC`), ATM/kiosk (`SSM`), app deeplink (`DEEPLINK`), i-banking (`IMBANK`).
+  - **`channelCode`**: the specific method within that type, e.g. GrabPay QR (`GPQR`), PromptPay QR (`PPQR`), TrueMoney (`TRUEMONEY`). **Every non-card method has one.**
+  - **`agentCode`**: a level below the channel: the bank or provider. **Only some channels need it** (e.g. online banking: which bank).
+- **Why it matters:** you only send them when you want to send the customer straight to **one** method (your own "pay with GrabPay" button). Leave them all out and the Payment Page shows every method enabled on your office.
+- **What to do:** find the method in **`payment-methods.md`** (the full Dev Zone list) and send exactly what it shows. Examples:
+
+| Customer pays with | `paymentType` | `channelCode` | `agentCode` |
+|---|---|---|---|
+| GrabPay QR | `QR` | `GPQR` | – (leave out) |
+| PromptPay QR | `QR` | `PPQR` | – |
+| TrueMoney wallet | `WALLET` | `TRUEMONEY` | – |
+| Online banking, Kasikorn | `WEBPAY` | `WEBPAY` | `THKBANK` |
+| Visa card only | `CC-VI` | – | – |
+
+- Cards: `paymentType` only (`CC` = any card). `channelCode` and `agentCode` aren't used for cards and installments.
+- The method must also be **enabled on your office**, or it's rejected (`PC-B051402`). New methods need a business agreement with 2C2P (`payment-apis.md`).
+- Used in `/prePaymentUi` (optional) and `/nonUi` (`paymentType` required). `transactionList` can filter and returns them.
+
+### Payer details (`generalPayerDetails`)
+- **What:** the person **paying**: name, email, phone. Usually the cardholder, but it can be someone else, e.g. a person buying a ticket for a family member.
+- **Why it matters:** 2C2P can use the email for the customer's **receipt**, and the details help **3DS and fraud checks**. More complete payer details give the bank more to verify against.
+- **What to do:** send what you have; all fields are optional. The **cardholder's email goes in `generalPayerDetails.email`**. `emailForFxReceipt` = where to send the **currency-conversion receipt** when DCC/MCP is used. JSON shape and rules: `fields/prepaymentui.md` → Payer. Personal data: don't log more than needed.
+- Used in `/prePaymentUi` and `/nonUi`; comes back in `transactionList`.
+
 ## Purchase item types (`purchaseItemType`)
 - **What:** purchase items split one payment into parts, e.g. a ticket plus insurance. The type says what each part is.
 - **Why it matters:** with items on the payment you can refund part of it item by item (e.g. refund only the insurance).

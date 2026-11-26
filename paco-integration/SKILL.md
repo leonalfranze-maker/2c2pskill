@@ -47,13 +47,14 @@ These protect the merchant's money, their customers' card data and their credent
 | Topic | File |
 |---|---|
 | What PACO is, flows, journey, lifecycle, glossary, how to explain at each level | `references/overview.md` |
-| **Business meaning of fields and terms** (PNR, tickets, flight times, airport/country codes, purchase item types, `userDefined`, 3DS, the 4 notification URLs, tokenization, dates in every API, `paymentCategory`) | `references/business-concepts.md` |
+| **Business meaning of fields and terms** (PNR, tickets, flight times, airport/country codes, purchase item types, payment type/channel/agent, payer details, `userDefined`, 3DS, the 4 notification URLs, tokenization, dates in every API, `paymentCategory`) | `references/business-concepts.md` |
 | Quick verified answers to common questions | `references/faq.md` |
 | **What works / what's limited / what 2C2P must enable, API versions** | `references/feature-support.md` |
 | What the merchant should have from onboarding | `references/prerequisites.md` |
 | `apiKey` header, JSON vs JOSE per environment, IP allowlist | `references/authentication.md` |
 | `/prePaymentUi` and `/nonUi` requests, field rules, responses, `orderNo` reuse, payment types, 3DS, PCI | `references/payment-apis.md` |
 | Currency codes and decimal places (155 currencies) | `references/currencies.md` |
+| **Every payment type, channel and agent code** (which values to send for e.g. GrabPay QR) | `references/payment-methods.md` |
 | **How to fill common fields** (envelope, orderNo, texts, amounts, dates, URLs) | `references/field-guide.md` |
 | Every request field per API, confirmed by 2C2P: limits, required when, what to send / leave out, error codes | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
 | Backend notification, **Inquiry**, redirect, status/step codes, final states | `references/notification.md` |
