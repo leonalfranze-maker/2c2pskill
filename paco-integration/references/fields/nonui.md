@@ -42,11 +42,11 @@ PACO uses your 3DS result **only when all four are sent:** `dsTransID` + `eciVal
 Send all of them on browser payments: missing values are filled with defaults, which may lead to more declines or challenges.
 | Field | Rule | Do this |
 |---|---|---|
-| `browserIP` | IPv4 or IPv6 | the customer's IP |
-| `browserAcceptHeader` | ≤ 500 | the browser's `Accept` header, **cut to 500** |
-| `browserUserAgent` | ≤ 500 (**longer is rejected**) | **cut to 500** before sending |
+| `browserIP` | IPv4 or IPv6 | the customer's IP, read on your server from the incoming request (behind a proxy/load balancer: the client-IP header your proxy sets) |
+| `browserAcceptHeader` | ≤ 500 | the `Accept` header of the customer's request, read on your server, **cut to 500** |
+| `browserUserAgent` | ≤ 500 (**longer is rejected**) | the browser's **user agent**: no command needed, every browser sends it automatically in the `User-Agent` header of each request (on your server: `req.headers['user-agent']`; in the page: `navigator.userAgent`). In-app browsers send long ones, e.g. `Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/23G90 AliApp(DingTalk/8.3.11) …`, so **cut to 500** before sending |
 | `browser` | ≤ 500 | |
-| `browserLanguage` | exactly `xx-XX` | `en-US`, `th-TH` (not `en`) |
+| `browserLanguage` | exactly `xx-XX` | JavaScript `navigator.language`: `en-US`, `th-TH` (not `en`) |
 | `browserColorDepth` | whole number ≥ 0 | `screen.colorDepth` |
 | `browserScreenHeight` / `browserScreenWidth` | whole number ≥ 0, pixels | `screen.height` / `screen.width` |
 | `browserTZ` | minutes, UTC − local (−780 to 900) | JavaScript `new Date().getTimezoneOffset()`, Bangkok = `-420` |
