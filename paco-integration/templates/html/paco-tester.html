@@ -305,7 +305,9 @@
   }
   function renderCommand() {
     if (!lastReq) return;
-    $('curl').textContent = command($('shell').value, lastReq).split(lastReq.key).join('<your API key>');
+    let shown = command($('shell').value, lastReq).split(lastReq.key).join('<your API key>');
+    shown = shown.replace(/("cardNumber":")(\d{6})\d+(\d{4})"/, '$1$2******$3"').replace(/("cvvCode":")\d+"/, '$1***"'); // never show card data
+    $('curl').textContent = shown;
   }
   $('shell').value = /Win/i.test(navigator.userAgent) ? 'ps' : 'bash';
   $('shell').addEventListener('change', renderCommand);

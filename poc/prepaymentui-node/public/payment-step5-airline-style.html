@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Payment | [Your brand]</title>
+<!--
+  Booking step 5 "Payment": card payment page connected to PACO /nonUi, styled like the merchant's booking flow.
+  ONE FILE, open it in a browser. No server, no install.
+
+  UAT TESTING ONLY:
+  - This file calls PACO from the browser with PLAIN JSON. Production rejects plain JSON (it needs JOSE) and only
+    accepts the server's allowlisted IP. On the real site the same page is served by your server
+    (Node template public/card.html + your theme) and the browser NEVER calls PACO: browser -> your server -> PACO.
+  - Credentials are typed in, or loaded from your .env file, in the "Test settings (developer only)" panel.
+    They are NOT stored in this file.
+  - On the real site the amount comes from the server-side order, never from the browser.
+
+  PCI DSS (for the developer): this page collects raw card data, so the merchant is in PCI DSS scope and must agree the
+  use of /nonUi with 2C2P first. Paying on 2C2P's payment page (/prePaymentUi) makes the PCI DSS scope much smaller
+  (smaller, not "out of scope"). Never log or store card numbers or CVV: this page masks them in the request view and
+  never writes them to browser storage.
+
+  Branding: "[Your logo]" / "[Your brand]" / "[XX]" are placeholders for your team to fill in.
+  The page copies the look of your booking flow (colours, layout, type style), not your logo or trademarks.
+
+  Sources: https://devzone.2c2p.com/reference/pay · https://devzone.2c2p.com/reference/getpaymentstatusbyorderno
+-->
+<style>
+  :root {
+    --navy:#00266b; --navy-2:#0b3f95; --blue:#1d5fc9; --link:#1a5fd0; --gold:#a07a2c; --amber:#f2a516;
+    --green:#0b4a3a; --band:#e3e8f0; --bg:#f7f7f7; --card:#fff; --ink:#1f2328; --muted:#5d6670; --line:#e2e4e8;
+    --fill:#f7f7f7; --underline:#c3d1ec; --err:#b3261e; --err-bg:#fdeceb; --ok:#14653a; --ok-bg:#e9f5ee; --warn:#7a5600; --warn-bg:#fff5dc;
+    --serif: Georgia, "Times New Roman", "Noto Serif", serif;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 var(--sans); }
+  a { color:var(--link); text-decoration:none; } a:hover { text-decoration:underline; }
+  [hidden] { display:none !important; }
+
+  /* ---- header (their booking header: navy band, logo left, route summary pill in the middle) ---- */
+  .top { background:linear-gradient(90deg, var(--navy) 0%, var(--navy-2) 100%); color:#fff; }
+  .top-in { max-width:1180px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:24px; min-height:77px; }
+  .logo { flex:0 0 auto; border:1px dashed rgba(255,255,255,.55); border-radius:4px; padding:8px 14px; font-size:13px; letter-spacing:.04em; color:#e9eefb; }
+  .trip { margin:0 auto; display:flex; align-items:center; gap:12px; border:1px solid rgba(255,255,255,.55); border-radius:999px; padding:5px 6px 5px 16px; font-weight:600; white-space:nowrap; }
+  .trip .sep { opacity:.6; font-weight:400; }
+  .trip .edit { background:#fff; color:var(--navy); border:0; border-radius:999px; padding:5px 12px; font:600 15px var(--sans); cursor:pointer; }
+  .logo-spacer { flex:0 0 auto; width:120px; }
+
+  /* ---- progress steps (1 Flights . 2 Passengers . 3 Seats . 4 Review . 5 Payment) ---- */
+  .steps { background:var(--band); }
+  .steps ol { list-style:none; margin:0 auto; padding:0; max-width:1180px; display:grid; grid-template-columns:repeat(5,1fr); }
+  .steps li { display:flex; align-items:center; justify-content:center; gap:8px; height:50px; font-size:12px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#28334a; position:relative; }
+  .steps .num { width:20px; height:20px; border-radius:50%; background:var(--blue); color:#fff; font-size:11px; letter-spacing:0; display:inline-grid; place-items:center; }
+  .steps li.done .num { background:var(--blue); }
+  .steps li.active { background:#fff; clip-path:polygon(24px 0, 100% 0, 100% 100%, 24px 100%, 0 50%); }
+  @media (max-width:760px) {
+    .steps li .lbl { display:none; } .steps li.active .lbl { display:inline; }
+    .trip { font-size:13px; gap:8px; } .logo-spacer { display:none; } .top-in { gap:12px; }
+  }
+  @media (max-width:520px) { .trip .date, .trip .sep.d { display:none; } }
+
+  /* ---- page ---- */
+  main { max-width:1000px; margin:0 auto; padding:56px 16px 48px; }
+  .eyebrow { margin:0 0 2px; font-size:15px; }
+  h1 { font-family:var(--serif); font-weight:400; color:var(--navy); font-size:32px; line-height:1.2; margin:0 0 28px; }
+  .layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:24px; align-items:start; }
+  @media (max-width:860px) { .layout { grid-template-columns:1fr; } .summary { order:-1; } }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:28px 32px; }
+  @media (max-width:520px) { .box { padding:22px 16px; } h1 { font-size:26px; } main { padding-top:32px; } }
+  .box h2 { font-family:var(--serif); font-weight:400; color:var(--navy); font-size:26px; margin:0 0 22px; }
+  .sec { font-weight:700; font-size:15px; margin:0 0 6px; }
+  .helper { font-size:13px; color:var(--muted); margin:0 0 16px; }
+
+  /* ---- their input style: filled box, label inside, light-blue underline ---- */
+  .fld { position:relative; margin-bottom:20px; }
+  .fld input { width:100%; height:56px; border:0; border-bottom:1.5px solid var(--underline); border-radius:0; background:var(--fill);
+               padding:22px 10px 6px; font:16px var(--sans); color:var(--ink); outline:none; }
+  .fld input:focus { border-bottom-color:var(--blue); background:#f3f6fb; }
+  .fld label { position:absolute; left:10px; top:17px; font-size:15px; color:#6b7280; pointer-events:none; transition:all .12s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 20px); }
+  .fld input:focus + label, .fld input:not(:placeholder-shown) + label { top:6px; font-size:12px; }
+  .fld.bad input { border-bottom-color:var(--err); }
+  .fld .msg { font-size:12px; color:var(--err); margin-top:4px; min-height:0; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .upper input { text-transform:uppercase; }
+
+  /* ---- buttons (their square navy button, uppercase, letter-spaced) ---- */
+  .btn { display:inline-block; border:0; border-radius:2px; background:var(--navy); color:#fff; font:700 14px var(--sans); letter-spacing:.1em;
+         text-transform:uppercase; padding:14px 28px; cursor:pointer; }
+  .btn:hover { background:#063585; } .btn:disabled { opacity:.6; cursor:wait; }
+  .btn.block { width:100%; padding:16px; font-size:15px; }
+  .btn.ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
+  .paybar { margin-top:8px; }
+  .total-line { display:flex; justify-content:space-between; align-items:baseline; margin:4px 0 16px; }
+  .total-line span { color:var(--muted); }
+
+  /* ---- payment status shown to the customer ---- */
+  .paystatus { border-radius:6px; padding:16px 18px; margin:0 0 22px; border-left:4px solid; }
+  .paystatus.err { background:var(--err-bg); border-color:var(--err); color:#5a1410; }
+  .paystatus.ok { background:var(--ok-bg); border-color:var(--ok); color:#0e3d24; }
+  .paystatus.info { background:#eef3fb; border-color:var(--blue); color:#13284f; }
+  .paystatus.warn { background:var(--warn-bg); border-color:var(--amber); color:#4d3600; }
+  .paystatus h3 { margin:0 0 4px; font-size:16px; } .paystatus p { margin:4px 0; }
+  .paystatus .btn { margin-top:12px; }
+  .paystatus dl { display:grid; grid-template-columns:auto 1fr; gap:2px 14px; margin:10px 0 0; font-size:14px; } .paystatus dt { color:var(--muted); } .paystatus dd { margin:0; }
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:sp .8s linear infinite; vertical-align:-2px; margin-right:6px; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+
+  /* ---- order summary in their flight-card style ---- */
+  .summary h2 { font-size:22px; margin-bottom:16px; }
+  .seg { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:start; }
+  .ap { font-size:13px; font-weight:700; color:var(--gold); letter-spacing:.04em; }
+  .tm { font-size:20px; font-weight:700; color:var(--navy); line-height:1.15; }
+  .dt { font-size:13px; color:var(--muted); }
+  .mid { text-align:center; font-size:12px; color:var(--muted); padding-top:2px; }
+  .mid .stop { color:var(--gold); font-weight:600; }
+  .mid .line { display:flex; align-items:center; gap:6px; margin:2px 0; font-weight:700; color:var(--gold); letter-spacing:.12em; }
+  .mid .line::before, .mid .line::after { content:""; flex:1; border-top:1px solid #8a8f98; }
+  .flt { font-size:12px; color:var(--muted); margin:12px 0 4px; } .flt b { color:var(--ink); }
+  .fare { border:1.5px solid var(--green); border-radius:4px; padding:10px 12px; margin:14px 0; position:relative; }
+  .fare::after { content:""; position:absolute; top:0; right:0; border-top:14px solid var(--amber); border-left:14px solid transparent; }
+  .fare .nm { font-size:11px; font-weight:700; letter-spacing:.1em; color:#1d2b2a; text-transform:uppercase; }
+  .fare .per { text-align:right; font-size:12px; font-style:italic; color:var(--muted); margin-top:10px; }
+  .price { text-align:right; font-size:13px; } .price b { font-family:var(--serif); font-size:18px; font-weight:400; } .price small { font-family:var(--serif); font-size:12px; }
+  .sumrows { border-top:1px solid var(--line); margin-top:6px; padding-top:10px; font-size:14px; }
+  .sumrows div { display:flex; justify-content:space-between; margin:4px 0; } .sumrows .tot { font-weight:700; font-size:16px; border-top:1px solid var(--line); padding-top:10px; margin-top:10px; }
+  .sumrows .tot b { font-family:var(--serif); font-size:20px; font-weight:400; color:var(--navy); }
+
+  /* ---- Test settings (developer only): clearly OUTSIDE the customer's design ---- */
+  .dev { max-width:1000px; margin:8px auto 64px; padding:0 16px; font:14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .dev > details { border:2px dashed #9aa3ad; border-radius:10px; background:#fbfbfc; }
+  .dev > details > summary { cursor:pointer; padding:12px 16px; font-weight:700; color:#39424c; }
+  .dev .in { padding:0 16px 16px; }
+  .dev .note { background:#fff6e0; color:#6b4a00; border-radius:8px; padding:10px 12px; margin:0 0 12px; font-size:13px; }
+  .dev h4 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#5f6b76; margin:16px 0 8px; }
+  .dev .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:10px; }
+  .dev label { display:block; font-size:12px; color:#5f6b76; margin-bottom:3px; }
+  .dev input, .dev select, .dev textarea { width:100%; padding:7px 9px; border:1px solid #d5d9de; border-radius:6px; background:#fff; color:#1b1f24; font:13px system-ui, sans-serif; }
+  .dev textarea { font:12px/1.4 ui-monospace, Menlo, Consolas, monospace; min-height:80px; }
+  .dev .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .dev .small { padding:6px 10px; border:1px solid #c9ced4; border-radius:6px; background:#fff; color:#1b1f24; font:13px system-ui, sans-serif; cursor:pointer; text-decoration:none; }
+  .dev .with-btn { display:flex; gap:6px; } .dev .with-btn input { flex:1; }
+  .dev .hint { font-size:12px; color:#5f6b76; margin-top:4px; }
+  .dev input.bad { border-color:#b42318; }
+  .dev pre { background:#f2f4f7; border:1px solid #e2e5e9; border-radius:6px; padding:8px; overflow:auto; font:12px/1.45 ui-monospace, Menlo, Consolas, monospace; max-height:320px; margin:6px 0 0; white-space:pre-wrap; word-break:break-all; }
+  .dev .banner { border-radius:8px; padding:10px 12px; margin:10px 0; }
+  .dev .banner.ok { background:#e8f6ee; color:#127a3b; } .dev .banner.err { background:#fdecea; color:#b42318; } .dev .banner.warn { background:#fff6e0; color:#8a5a00; }
+  .dev details details { margin-top:8px; } .dev details details summary { cursor:pointer; font-weight:600; font-size:13px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo" aria-label="Your logo">[Your logo]</div>
+    <div class="trip" aria-label="Trip summary">
+      <span id="tripRoute">SIN → AAL</span><span class="sep d">|</span><span class="date" id="tripDate">Wed, 23 Dec</span><span class="sep">|</span><span id="tripPax">1 Adult</span>
+      <button class="edit" type="button" disabled title="Edit (not part of this sample)">✎ Edit</button>
+    </div>
+    <div class="logo-spacer" aria-hidden="true"></div>
+  </div>
+</header>
+
+<nav class="steps" aria-label="Booking steps">
+  <ol>
+    <li class="done"><span class="num">1</span><span class="lbl">Flights</span></li>
+    <li class="done"><span class="num">2</span><span class="lbl">Passengers</span></li>
+    <li class="done"><span class="num">3</span><span class="lbl">Seats</span></li>
+    <li class="done"><span class="num">4</span><span class="lbl">Review</span></li>
+    <li class="active" aria-current="step"><span class="num">5</span><span class="lbl">Payment</span></li>
+  </ol>
+</nav>
+
+<main>
+  <p class="eyebrow">Complete your booking</p>
+  <h1>Singapore to Aalborg</h1>
+
+  <div class="layout">
+    <!-- ===== Card payment (customer view) ===== -->
+    <section class="box" aria-labelledby="payTitle">
+      <h2 id="payTitle">Payment</h2>
+      <div id="payStatus" class="paystatus" role="status" aria-live="polite" hidden></div>
+
+      <form id="cardForm" novalidate autocomplete="on">
+        <p class="sec">Card details</p>
+        <p class="helper">Enter the details exactly as they appear on your card.</p>
+
+        <div class="fld" id="f-cardNo">
+          <input id="cardNo" name="cardnumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder=" ">
+          <label for="cardNo">Card number</label>
+          <div class="msg" id="m-cardNo"></div>
+        </div>
+        <div class="row2">
+          <div class="fld" id="f-cardExp">
+            <input id="cardExp" name="exp-date" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder=" ">
+            <label for="cardExp">Expiry (MM/YY)</label>
+            <div class="msg" id="m-cardExp"></div>
+          </div>
+          <div class="fld" id="f-cvv">
+            <input id="cvv" name="cvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder=" " type="password">
+            <label for="cvv">CVV</label>
+            <div class="msg" id="m-cvv"></div>
+          </div>
+        </div>
+        <div class="fld upper" id="f-holder">
+          <input id="holder" name="ccname" autocomplete="cc-name" maxlength="45" placeholder=" ">
+          <label for="holder">Name on card</label>
+          <div class="msg" id="m-holder"></div>
+        </div>
+
+        <div class="total-line"><span>Total to pay</span><b id="payTotal">SGD 1,493.70</b></div>
+        <div class="paybar"><button class="btn block" id="payBtn" type="submit">Make payment</button></div>
+      </form>
+    </section>
+
+    <!-- ===== Order summary (their flight card style) ===== -->
+    <aside class="box summary" aria-labelledby="sumTitle">
+      <h2 id="sumTitle">Booking summary</h2>
+      <div class="seg">
+        <div><div class="ap">SIN</div><div class="tm">00:25</div><div class="dt">Wed, 23 Dec</div></div>
+        <div class="mid"><div class="stop">1 stop • 16h 45m</div><div class="line">CPH</div><div>2h 10m</div></div>
+        <div style="text-align:right"><div class="ap">AAL</div><div class="tm">10:10</div><div class="dt">Wed, 23 Dec</div></div>
+      </div>
+      <div class="flt"><b>[XX] 352</b> • connecting flight to Aalborg</div>
+      <div class="fare">
+        <div class="nm">Economy Standard</div>
+        <div class="per">Per adult</div>
+        <div class="price" id="farePrice"></div>
+      </div>
+      <div class="sumrows">
+        <div><span>Passenger 1 - Adult</span><span id="paxPrice"></span></div>
+        <div class="tot"><span>Total</span><b id="sumTotal"></b></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- ===== Test settings (developer only, UAT) - not part of the customer's page ===== -->
+<div class="dev">
+  <details id="devPanel">
+    <summary>Test settings (developer only) · UAT</summary>
+    <div class="in">
+      <p class="note"><b>UAT only.</b> This file calls PACO from the browser with plain JSON. A real site serves this page from its server and the server calls PACO (browser → your server → PACO), with JOSE in production and the server's allowlisted IP. The amount must come from your server-side order, never from the browser.<br>
+        <b>PCI DSS:</b> on this page you collect raw card data, so you are in <b>PCI DSS scope</b> and must agree the use of <code>/nonUi</code> with 2C2P first. Paying on 2C2P's payment page (<code>/prePaymentUi</code>) makes your PCI DSS scope <b>much smaller</b>. Never log or store card numbers or CVV.<br>
+        <b>Status:</b> the <code>/nonUi</code> answer is a first report. The page shows "confirmed" only after <b>Inquiry</b> returns <code>paymentStatus</code> <code>A</code> or <code>S</code>.</p>
+
+      <h4>Connection <span style="float:right"><input id="envFile" type="file" accept=".env,text/plain" hidden><button class="small" id="loadEnv" type="button">Load .env file</button></span></h4>
+      <div class="grid">
+        <div><label for="envSel">Environment</label>
+          <select id="envSel"><option value="https://core.demo-paco.2c2p.com">UAT sandbox</option><option value="custom">Custom base URL…</option></select>
+          <input id="baseUrl" hidden placeholder="https://..." style="margin-top:6px"></div>
+        <div><label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="from onboarding"></div>
+        <div><label for="officeId">Office ID</label><input id="officeId" autocomplete="off" placeholder="from onboarding"></div>
+      </div>
+      <div class="row"><label style="display:flex;gap:6px;align-items:center;margin:0"><input id="remember" type="checkbox" style="width:auto"> Remember API key and office ID on this browser</label>
+        <button class="small" id="forget" type="button">Forget</button></div>
+
+      <h4>Order (a real site takes these from the server-side booking)</h4>
+      <div class="grid">
+        <div><label for="orderNo">Order number (orderNo)</label>
+          <div class="with-btn"><input id="orderNo" maxlength="40" autocomplete="off"><button class="small" id="newOrderNo" type="button" title="Generate a new one">↻ New</button></div>
+          <div class="hint" id="orderNoHint">Generated for you: 1–40 of A–Z a–z 0–9 - _ +</div></div>
+        <div><label for="desc">Product description (max 50)</label><input id="desc" maxlength="50" value="SIN-AAL 23DEC 1ADT">
+          <div class="hint">Airlines: put the PNR here when you have it.</div></div>
+        <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="1493.70"></div>
+        <div><label for="currency">Currency (alphabetic)</label><input id="currency" maxlength="3" value="SGD">
+          <div class="hint">Must be a currency your office is set up for (else PC-B050006).</div></div>
+      </div>
+
+      <h4>Card payment options</h4>
+      <div class="grid">
+        <div><label for="tds">3DS (request3dsFlag)</label>
+          <select id="tds"><option value="Y">Y: ask the bank for 3DS / OTP</option><option value="">Not sent: office setting</option><option value="N">N: no 3DS</option><option value="Y-Strict">Y-Strict: full authentication only</option></select></div>
+        <div><label for="otpMode">Open the bank's OTP page</label>
+          <select id="otpMode"><option value="tab">Full page in a new tab (keeps this page for Inquiry)</option><option value="self">Full page in this window (like the real site)</option></select></div>
+        <div><label for="returnUrl">Return URL (- = PACO's result page)</label><input id="returnUrl" value="-"></div>
+        <div><label for="backendUrl">Backend notification URL (- = office setting)</label><input id="backendUrl" value="-"></div>
+      </div>
+      <p class="hint">Device data for 3DS (user agent, screen, language, time zone) is collected automatically from the browser; the customer never types it. A real server also adds <code>browserIP</code> and the <code>Accept</code> header.</p>
+      <div class="row"><span class="hint" style="margin:0">Fill a UAT test card:</span>
+        <button class="small" type="button" data-card="4111111111111111">Visa 4111…</button>
+        <button class="small" type="button" data-card="5555555555554444">Mastercard 5555…</button>
+        <button class="small" type="button" data-card="4444333322221111">Decline test 4444…</button>
+        <span class="hint" style="margin:0">CVV 123 · expiry 12/30 · OTP 123456</span></div>
+
+      <h4>Inquiry (the real status)</h4>
+      <div class="row" style="margin-top:0"><input id="inqOrder" placeholder="orderNo: filled in after each payment" style="flex:1;min-width:200px"><button class="small" id="runInq" type="button">Run Inquiry</button></div>
+
+      <div id="out" hidden>
+        <h4>Last call</h4>
+        <div id="banner"></div>
+        <div id="fallback" hidden>
+          <p style="margin:0 0 6px"><b>Step 1: which problem is it?</b> Open the PACO host in a new tab.</p>
+          <ul class="hint" style="margin:0 0 6px;padding-left:18px">
+            <li>Any page or error code shows (404, 401, JSON…) → this computer <b>can</b> reach UAT. The browser is blocked by <b>CORS</b>, so use Step 2.</li>
+            <li>"This site can't be reached" / <code>ERR_CONNECTION_RESET</code> → this computer <b>can't</b> reach UAT: <b>IP not allowlisted or VPN off</b>. Step 2 will fail too until that's fixed.</li>
+          </ul>
+          <div class="row" style="margin-top:0"><a class="small" id="probe" target="_blank" rel="noopener">Open PACO host ↗</a></div>
+          <p style="margin:12px 0 6px"><b>Step 2: send it from a terminal instead.</b> Copy the command, run it on this computer, then paste the output below.</p>
+          <div class="row" style="margin-top:0"><label for="shell" style="margin:0">Terminal</label>
+            <select id="shell" style="width:auto"><option value="ps">Windows PowerShell</option><option value="bash">macOS / Linux (bash)</option></select></div>
+          <pre id="curl"></pre>
+          <div class="row" style="margin-top:8px"><button class="small" id="copyCurl" type="button">Copy command</button></div>
+          <label for="pasted" style="margin-top:10px">Paste the response here</label>
+          <textarea id="pasted" placeholder='{"version":"2.0","apiResponse":{...},"data":{...}}'></textarea>
+          <div class="row" style="margin-top:8px"><button class="small" id="readPasted" type="button">Read response</button></div>
+        </div>
+        <details open><summary>Request sent (card number and CVV masked)</summary><pre id="reqView"></pre></details>
+        <details open><summary>Response</summary><pre id="resView">(none)</pre></details>
+        <details id="prevBox" hidden><summary>Previous call (e.g. the /nonUi payment before its Inquiry)</summary><pre id="prevView"></pre></details>
+      </div>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STORE = 'paco-step5-settings';   // API key / office ID only, and only if "Remember" is ticked. Never card data.
+  const PENDING = 'paco-step5-pending';  // orderNo waiting for the 3DS result (this tab only). Never card data.
+  let lastReq = null;        // { url, key, json } for the terminal fallback
+  let lastChallenge = null;  // Base64 challengeHtml (single use, not stored)
+  let lastSentOrder = null;  // { orderNo, maskedCard }
+  let busy = false;
+  const genOrderNo = () => `ORD${Date.now()}${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`;
+  const ORDER_RE = /^[A-Za-z0-9\-_+]{1,40}$/;
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const ss = { // sessionStorage, wrapped: may be unavailable
+    get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { sessionStorage.setItem(k, v); } catch {} },
+    del(k) { try { sessionStorage.removeItem(k); } catch {} },
+  };
+
+  // ---------- 3DS: the bank's OTP page, FULL PAGE (never in an iframe) ----------
+  function decodeChallenge(b64) { const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); return new TextDecoder().decode(bytes); }
+  function openChallenge() {
+    if (!lastChallenge) return;
+    const html = decodeChallenge(lastChallenge);
+    lastChallenge = null; // single use
+    if ($('otpMode').value === 'self') {
+      // Like the real site: write the bank's page into this window. Remember the order (not the card) to inquire on return.
+      if (lastSentOrder) ss.set(PENDING, lastSentOrder.orderNo);
+      const startHref = location.href;
+      document.open(); document.write(html); document.close();
+      setTimeout(() => { try { const f = document.forms.creqForm || document.forms[0]; if (f && location.href === startHref) f.submit(); } catch {} }, 2000);
+      return;
+    }
+    const w = window.open('', '_blank');
+    if (!w) { customer('err', '<h3>Please allow pop-ups</h3><p>Your browser blocked the bank\'s verification page. Allow pop-ups for this page, then try again.</p>'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    setTimeout(() => { try { const f = w.document.forms.creqForm || w.document.forms[0]; if (f && w.location.href === 'about:blank') f.submit(); } catch {} }, 2000);
+    customer('info', `<h3>Finish verifying with your bank</h3><p>Enter the one-time password (OTP) on your bank's page. When you've finished, come back to this page.</p>
+      <button class="btn" type="button" data-act="check">Check payment status</button>`, { hideForm: true });
+  }
+
+  // ---------- settings ----------
+  const baseUrl = () => ($('envSel').value === 'custom' ? $('baseUrl').value.trim() : $('envSel').value).replace(/\/$/, '');
+  function setBase(url) {
+    const opt = [...$('envSel').options].find((o) => o.value === url);
+    if (opt) { $('envSel').value = url; $('baseUrl').hidden = true; }
+    else { $('envSel').value = 'custom'; $('baseUrl').value = url; $('baseUrl').hidden = false; }
+  }
+  $('envSel').addEventListener('change', () => { $('baseUrl').hidden = $('envSel').value !== 'custom'; });
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem(STORE) || 'null'); } catch { return null; } },
+    set(v) { try { localStorage.setItem(STORE, JSON.stringify(v)); } catch {} },
+    clear() { try { localStorage.removeItem(STORE); } catch {} },
+  };
+  const saved = store.get();
+  if (saved) { setBase(saved.baseUrl); $('apiKey').value = saved.apiKey || ''; $('officeId').value = saved.officeId || ''; $('remember').checked = true; }
+  $('forget').addEventListener('click', () => { store.clear(); $('apiKey').value = ''; $('officeId').value = ''; $('remember').checked = false; });
+
+  // Load a .env file: reads PACO_BASE_URL / PACO_ENV, PACO_API_KEY, PACO_OFFICE_ID, PACO_CURRENCY
+  $('loadEnv').addEventListener('click', () => $('envFile').click());
+  $('envFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const env = {};
+    for (const line of (await f.text()).split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/); if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+    if (env.PACO_BASE_URL) setBase(env.PACO_BASE_URL.replace(/\/$/, ''));
+    else if ((env.PACO_ENV || '').toUpperCase() === 'UAT') setBase('https://core.demo-paco.2c2p.com');
+    if (env.PACO_API_KEY) $('apiKey').value = env.PACO_API_KEY;
+    if (env.PACO_OFFICE_ID) $('officeId').value = env.PACO_OFFICE_ID;
+    if (env.PACO_CURRENCY) { $('currency').value = env.PACO_CURRENCY; renderSummary(); }
+    e.target.value = '';
+    showOut(); banner('ok', `Loaded ${esc(f.name)}: ${env.PACO_API_KEY ? 'API key ✓' : 'API key missing'} · ${env.PACO_OFFICE_ID ? 'Office ID ✓' : 'Office ID missing'}`);
+  });
+
+  $('orderNo').value = genOrderNo();
+  $('newOrderNo').addEventListener('click', () => { $('orderNo').value = genOrderNo(); $('orderNo').dispatchEvent(new Event('input')); });
+  $('orderNo').addEventListener('input', () => {
+    const ok = ORDER_RE.test($('orderNo').value.trim());
+    $('orderNo').classList.toggle('bad', !ok);
+    $('orderNoHint').textContent = ok ? 'Generated for you: 1–40 of A–Z a–z 0–9 - _ +' : 'Only 1–40 of A–Z a–z 0–9 - _ + (no spaces or dots)';
+  });
+
+  // ---------- amounts (same rules as the Node backend) ----------
+  // PACO currency list (alphabetic code -> decimalPlaces), exported 2026-11-22. Numeric codes are rejected.
+  const DECIMALS = {"AED":2,"AFN":2,"ALL":2,"AMD":2,"ANG":2,"AOA":2,"ARS":2,"AUD":2,"AWG":2,"AZN":2,"BAM":2,"BBD":2,"BDT":2,"BGN":2,"BHD":3,"BIF":0,"BMD":2,"BND":2,"BOB":2,"BRL":2,"BSD":2,"BTN":2,"BWP":2,"BYN":2,"BZD":2,"CAD":2,"CDF":2,"CHF":2,"CLP":0,"CNY":2,"COP":2,"CRC":2,"CUP":2,"CVE":2,"CZK":2,"DJF":0,"DKK":2,"DOP":2,"DZD":2,"EGP":2,"ERN":2,"ETB":2,"EUR":2,"FJD":2,"FKP":2,"GBP":2,"GEL":2,"GHS":2,"GIP":2,"GMD":2,"GNF":0,"GTQ":2,"GYD":2,"HKD":2,"HNL":2,"HRK":2,"HTG":2,"HUF":2,"IDR":2,"ILS":2,"INR":2,"IQD":3,"IRR":2,"ISK":0,"JMD":2,"JOD":3,"JPY":0,"KES":2,"KGS":2,"KHR":2,"KMF":0,"KPW":2,"KRW":0,"KWD":3,"KYD":2,"KZT":2,"LAK":2,"LBP":2,"LKR":2,"LRD":2,"LSL":2,"LYD":3,"MAD":2,"MDL":2,"MGA":2,"MKD":2,"MMK":2,"MNT":2,"MOP":2,"MRU":2,"MUR":2,"MVR":2,"MWK":2,"MXN":2,"MYR":2,"MZN":2,"NAD":2,"NGN":2,"NIO":2,"NOK":2,"NPR":2,"NZD":2,"OMR":3,"PAB":2,"PEN":2,"PGK":2,"PHP":2,"PKR":2,"PLN":2,"PYG":0,"QAR":2,"RON":2,"RSD":2,"RUB":2,"RWF":0,"SAR":2,"SBD":2,"SCR":2,"SDG":2,"SEK":2,"SGD":2,"SHP":2,"SLL":2,"SOS":2,"SRD":2,"SSP":2,"STN":2,"SYP":2,"SZL":2,"THB":2,"TJS":2,"TMT":2,"TND":3,"TOP":2,"TRY":2,"TTD":2,"TWD":2,"TZS":2,"UAH":2,"UGX":0,"USD":2,"UYU":2,"UZS":2,"VES":2,"VND":0,"VUV":0,"WST":2,"XAF":0,"XCD":2,"XOF":0,"XPF":0,"YER":2,"ZAR":2,"ZMW":2,"ZWL":2};
+  function amountCompound(amount, currencyCode) {
+    const decimalPlaces = DECIMALS[currencyCode];
+    if (decimalPlaces === undefined) throw new Error(/^\d+$/.test(currencyCode) ? 'Currency must be alphabetic (e.g. SGD), not numeric' : `Unknown currency "${currencyCode}"`);
+    const minor = Math.round(Number(amount) * 10 ** decimalPlaces);
+    if (!Number.isFinite(minor) || minor <= 0) throw new Error('Amount must be a positive number');
+    const amountText = String(minor).padStart(12, '0');
+    if (amountText.length !== 12) throw new Error('Amount too large');
+    return { amount: minor / 10 ** decimalPlaces, amountText, currencyCode, decimalPlaces };
+  }
+
+  // ---------- order summary (display only) ----------
+  function money(amount, cur, split) {
+    const dp = DECIMALS[cur] ?? 2;
+    const s = Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+    if (!split) return `${esc(cur)} ${s}`;
+    const [i, d] = s.split('.');
+    return `${esc(cur)} <b>${i}</b>${d ? `<small>.${d}</small>` : ''}`;
+  }
+  function renderSummary() {
+    const cur = $('currency').value.trim().toUpperCase() || 'SGD', amt = $('amount').value;
+    $('farePrice').innerHTML = money(amt, cur, true) + ' ›';
+    $('paxPrice').textContent = money(amt, cur).replace(/&amp;/g, '&');
+    $('sumTotal').textContent = $('payTotal').textContent = money(amt, cur);
+  }
+  $('amount').addEventListener('input', renderSummary); $('currency').addEventListener('input', renderSummary);
+  renderSummary();
+
+  // ---------- card form (customer view) ----------
+  const digits = (s) => s.replace(/\D+/g, '');
+  $('cardNo').addEventListener('input', (e) => { const d = digits(e.target.value).slice(0, 19); e.target.value = d.replace(/(.{4})(?=.)/g, '$1 '); });
+  $('cardExp').addEventListener('input', (e) => { const d = digits(e.target.value).slice(0, 4); e.target.value = d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d; });
+  $('cvv').addEventListener('input', (e) => { e.target.value = digits(e.target.value).slice(0, 4); });
+  document.querySelectorAll('[data-card]').forEach((b) => b.addEventListener('click', () => {
+    $('cardNo').value = b.dataset.card.replace(/(.{4})(?=.)/g, '$1 '); $('cardExp').value = '12/30'; $('cvv').value = '123';
+    if (!$('holder').value) $('holder').value = 'TEST CARDHOLDER';
+  }));
+  function fieldError(id, msg) { $('f-' + id).classList.toggle('bad', !!msg); $('m-' + id).textContent = msg || ''; return !msg; }
+  function readCard() {
+    const cardNumber = digits($('cardNo').value);
+    const exp = digits($('cardExp').value);
+    const cvvCode = $('cvv').value.trim();
+    const cardHolderName = $('holder').value.trim().replace(/\s+/g, ' ').toUpperCase();
+    let ok = true;
+    ok = fieldError('cardNo', /^\d{13,19}$/.test(cardNumber) ? '' : 'Enter the card number (13 to 19 digits).') && ok;
+    let expMsg = '';
+    if (!/^\d{4}$/.test(exp)) expMsg = 'Enter the expiry date as MM/YY.';
+    else {
+      const mm = +exp.slice(0, 2), yy = 2000 + +exp.slice(2), now = new Date();
+      if (mm < 1 || mm > 12) expMsg = 'Enter a valid month (01 to 12).';
+      else if (yy < now.getFullYear() || (yy === now.getFullYear() && mm < now.getMonth() + 1)) expMsg = 'This card has expired.';
+    }
+    ok = fieldError('cardExp', expMsg) && ok;
+    ok = fieldError('cvv', /^\d{3,4}$/.test(cvvCode) ? '' : 'Enter the 3 or 4 digit security code.') && ok;
+    ok = fieldError('holder', /^[A-Za-z ]{1,45}$/.test(cardHolderName) ? '' : 'Enter the name as on the card, in English letters.') && ok;
+    return ok ? { cardNumber, cardExpiryMMYY: exp, cvvCode, cardHolderName } : null;
+  }
+
+  // ---------- customer status panel ----------
+  function customer(kind, html, { hideForm = false } = {}) {
+    const box = $('payStatus');
+    box.className = 'paystatus ' + kind; box.innerHTML = html; box.hidden = !html;
+    $('cardForm').hidden = hideForm;
+  }
+  $('payStatus').addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'otp') openChallenge();
+    if (act === 'check') inquire(lastSentOrder?.orderNo || ss.get(PENDING) || $('inqOrder').value.trim(), { auto: false });
+    if (act === 'retry') { customer('', ''); $('cardNo').focus(); }
+  });
+
+  // ---------- request building (same rules as the Node backend) ----------
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+  function deviceDetails() {
+    // 3DS device data: collected automatically from the browser, the customer never types it.
+    // (A real server also adds browserIP and browserAcceptHeader from the incoming request.)
+    return {
+      browserUserAgent: navigator.userAgent.slice(0, 500),
+      browserLanguage: /^[a-z]{2}-[A-Z]{2}$/.test(navigator.language) ? navigator.language : 'en-US',
+      browserColorDepth: screen.colorDepth, browserScreenHeight: screen.height, browserScreenWidth: screen.width,
+      browserTZ: new Date().getTimezoneOffset(), browserJavaEnabled: 'Y',
+      mobileDeviceFlag: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'Y' : 'N',
+    };
+  }
+  function buildBody(card) {
+    const orderNo = $('orderNo').value.trim();
+    if (!ORDER_RE.test(orderNo)) throw new Error('orderNo must be 1–40 characters of A–Z a–z 0–9 - _ +');
+    const ret = $('returnUrl').value.trim() || '-';
+    const back = $('backendUrl').value.trim() || '-';
+    const body = {
+      apiRequest: { requestMessageID: uuid(), requestDateTime: new Date().toISOString(), language: 'en-US' },
+      officeId: $('officeId').value.trim(),
+      orderNo,
+      productDescription: $('desc').value.trim().slice(0, 50),
+      transactionAmount: amountCompound($('amount').value, $('currency').value.trim().toUpperCase()),
+      notificationUrls: {
+        // "-" = PACO shows its own result page. PACO adds orderNo etc. to your URL itself.
+        confirmationUrl: ret, failedUrl: ret, cancellationUrl: ret,
+        backendUrl: back,
+      },
+      paymentType: 'CC',
+    };
+    if ($('tds').value) body.request3dsFlag = $('tds').value;
+    body.creditCardDetails = card;
+    body.deviceDetails = deviceDetails();
+    return body;
+  }
+  const maskCard = (b) => b.creditCardDetails ? { ...b, creditCardDetails: { ...b.creditCardDetails, cardNumber: b.creditCardDetails.cardNumber.replace(/^(\d{6})\d+(\d{4})$/, '$1******$2'), cvvCode: '***' } } : b;
+
+  // ---------- terminal fallback (when the browser can't call UAT) ----------
+  const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;   // bash single-quote
+  const psq = (s) => `'${String(s).replace(/'/g, "''")}'`;          // PowerShell single-quote
+  function command(kind, { url, key, json }) {
+    if (json == null) { // GET (inquiry)
+      return kind === 'bash'
+        ? `curl -sS ${shq(url)} -H 'Accept: application/json' -H ${shq('apiKey: ' + key)}; echo`
+        : `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\ntry { (Invoke-WebRequest -UseBasicParsing -Uri ${psq(url)} -Headers @{ apiKey = ${psq(key)}; Accept = 'application/json' }).Content }\ncatch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+    }
+    if (kind === 'bash') {
+      return `curl -sS -X POST ${shq(url)} \\\n  -H 'Content-Type: application/json' -H 'Accept: application/json' \\\n  -H ${shq('apiKey: ' + key)} \\\n  -d ${shq(json)}; echo`;
+    }
+    return `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\n`
+      + `try { (Invoke-WebRequest -UseBasicParsing -Method Post -Uri ${psq(url)} -ContentType 'application/json' -Headers @{ apiKey = ${psq(key)} } -Body ${psq(json)}).Content }\n`
+      + `catch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+  }
+  // The displayed command hides the API key AND the card data; "Copy" puts the real values on the clipboard.
+  function displayCommand() {
+    if (!lastReq) return '';
+    const shown = { ...lastReq, json: lastReq.json ? JSON.stringify(maskCard(JSON.parse(lastReq.json))) : null };
+    return command($('shell').value, shown).split(lastReq.key).join('<your API key>');
+  }
+  function renderCommand() { $('curl').textContent = displayCommand(); }
+  $('shell').value = /Win/i.test(navigator.userAgent) ? 'ps' : 'bash';
+  $('shell').addEventListener('change', renderCommand);
+
+  // ---------- developer result view ----------
+  function showOut() { $('out').hidden = false; }
+  function banner(kind, html) { $('banner').innerHTML = `<div class="banner ${kind}">${html}</div>`; }
+  function openDev() { $('devPanel').open = true; $('devPanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+  // Inquiry: the payment = the first entry whose step is not a refund step.
+  const REFUND_STEPS = ['RI', 'RP', 'RP2', 'RP3', 'RF', 'RS', 'RR', 'RE', 'RX'];
+  function readInquiry(list) {
+    const pay = list.find((e) => !REFUND_STEPS.includes(e?.paymentStatusInfo?.paymentStep));
+    const st = pay?.paymentStatusInfo?.paymentStatus, step = pay?.paymentStatusInfo?.paymentStep;
+    const verdict = ['A', 'S'].includes(st) ? 'paid' : ['F', 'C', 'E', 'V'].includes(st) ? 'notpaid' : 'pending';
+    return { pay, st, step, verdict, refunds: list.filter((e) => REFUND_STEPS.includes(e?.paymentStatusInfo?.paymentStep)).length };
+  }
+
+  function interpret(httpStatus, data) {
+    $('resView').textContent = (httpStatus ? `HTTP ${httpStatus}\n` : '') + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    const ar = data?.apiResponse || {};
+    const code = ar.responseCode ? `${esc(ar.responseCode)} ${esc(ar.responseDescription || '')}` : '';
+    const result = data?.data?.paymentResult;
+    const incomplete = data?.data?.paymentIncompleteResult;
+    const web = data?.data?.webPaymentResult;
+    const challenge = incomplete?.aresACSChallenge?.challengeHtml;
+
+    if (Array.isArray(data?.data)) { // ---- Inquiry (source of truth) ----
+      const r = readInquiry(data.data);
+      const label = { paid: ['ok', 'PAID'], notpaid: ['err', 'NOT PAID'], pending: ['warn', 'IN PROGRESS'] }[r.verdict];
+      banner(label[0], `<b>Inquiry (source of truth): ${label[1]}</b> · status ${esc(r.st ?? '-')} / step ${esc(r.step ?? '-')}<br>${data.data.length} entr${data.data.length === 1 ? 'y' : 'ies'} (attempts + ${r.refunds} refund${r.refunds === 1 ? '' : 's'}) · order ${esc(r.pay?.orderNo ?? '')}`);
+      const orderNo = r.pay?.orderNo ?? '';
+      if (r.verdict === 'paid') {
+        ss.del(PENDING);
+        customer('ok', `<h3>Payment confirmed</h3><p>Thank you. Your payment has been received.</p>
+          <dl><dt>Order number</dt><dd>${esc(orderNo)}</dd>${r.pay?.invoiceNo2C2P ? `<dt>Payment reference</dt><dd>${esc(r.pay.invoiceNo2C2P)}</dd>` : ''}${lastSentOrder?.maskedCard && lastSentOrder.orderNo === orderNo ? `<dt>Card</dt><dd>${esc(lastSentOrder.maskedCard)}</dd>` : ''}</dl>`, { hideForm: true });
+      } else if (r.verdict === 'notpaid') {
+        ss.del(PENDING);
+        const msg = r.pay?.priorPaymentResponseDetails?.marketingDescription;
+        customer('err', `<h3>Your payment was not completed</h3><p>${esc(msg || 'You have not been charged. Please try again or use another card.')}</p>`);
+        $('orderNo').value = genOrderNo();
+      } else {
+        customer('warn', `<h3>We're still waiting for your bank</h3><p>Your payment is being processed. Please don't pay again.</p>
+          <button class="btn" type="button" data-act="check">Check again</button>`, { hideForm: true });
+      }
+      return;
+    }
+    if (challenge) { // /nonUi 3DS: show the bank's page FULL PAGE
+      lastChallenge = challenge;
+      banner('ok', `<b>3DS / OTP needed</b> ${code ? '· ' + code : ''}<br>The customer opens the bank's page and enters OTP <b>123456</b>. Afterwards PACO shows the result (or redirects to your URL) and sends the notification. Then the page runs <b>Inquiry</b> for the real status.`);
+      customer('info', `<h3>Verify it's you</h3><p>Your bank needs to confirm this payment. You'll enter a one-time password (OTP) on your bank's page.</p>
+        <button class="btn" type="button" data-act="otp">Continue to your bank</button>`, { hideForm: true });
+      return;
+    }
+    if (web) { // /nonUi QR / wallet / deeplink (not expected for a card payment, kept from the tester)
+      banner('ok', `<b>Send the customer to the payment app / QR</b> ${code ? '· ' + code : ''}<br>Pay before: ${esc(web.pspExpiryDateTime || web.paymentExpiryDateTime || '-')} (UTC)`);
+      customer('info', `<h3>Complete your payment</h3><p>Continue to finish paying.</p><a class="btn" href="${esc(web.webPaymentUrl)}" target="_blank" rel="noopener">Continue</a>
+        <br><button class="btn ghost" type="button" data-act="check">Check payment status</button>`, { hideForm: true });
+      return;
+    }
+    if (incomplete && ar.responseCode && !['PC-B050001', 'PC-B050002'].includes(ar.responseCode)) { // /nonUi declined = HTTP 202
+      banner('err', `<b>✗ Payment not completed</b> · ${code}<br>Shown to the customer: “${esc(ar.marketingDescription || 'Your payment was not completed.')}”<br><small>Technical reason (store, don't show): ${esc(incomplete.failedReason || '-')}. A decline comes back as HTTP 202, not 4xx. Retry = a new /nonUi call.</small>`);
+      customer('err', `<h3>Your payment was not successful</h3><p>${esc(ar.marketingDescription || 'Your payment was not completed.')}</p><p>Please check your card details or use another card.</p>`);
+      ss.del(PENDING);
+      return;
+    }
+    if (result) { // /nonUi approved (HTTP 200): a first report only -> confirm with Inquiry
+      const st = result.paymentStatusInfo?.paymentStatus;
+      const names = { A: 'Approved', S: 'Settled', V: 'Voided', F: 'Rejected', P: 'Pending', C: 'Cancelled', E: 'Expired' };
+      banner(st === 'A' || st === 'S' ? 'ok' : 'warn', `<b>Payment status: ${esc(st)} ${esc(names[st] || '')}</b> · order ${esc(result.orderNo)}${code ? '<br>' + code : ''}<br><small>First report only. Confirming with the Inquiry API…</small>`);
+      if (lastSentOrder && result.creditCardAuthenticatedDetails?.cardNumber) lastSentOrder.maskedCard = result.creditCardAuthenticatedDetails.cardNumber;
+      customer('info', `<h3><span class="spin"></span>Confirming your payment…</h3><p>Please don't close this page or pay again.</p>`, { hideForm: true });
+      inquire(result.orderNo || lastSentOrder?.orderNo, { auto: true });
+      return;
+    }
+    // 400 / 401 / anything else: request rejected. Don't show marketingDescription here (it repeats the technical message).
+    banner('err', `<b>✗ PACO did not return a result</b>${code ? '<br>' + code : ''}${httpStatus === 415 ? '<br>HTTP 415: this environment needs JOSE, not plain JSON.' : ''}<br>See the response below.`);
+    customer('err', `<h3>We couldn't process your payment</h3><p>You have not been charged. Please try again in a moment.</p>`);
+  }
+
+  // ---------- calls ----------
+  async function send(url, body) {
+    const key = $('apiKey').value.trim();
+    if (lastReq && $('reqView').textContent) { // keep the previous call visible (e.g. the payment before its Inquiry)
+      $('prevView').textContent = `${$('reqView').textContent}\n\n--- response ---\n${$('resView').textContent}`; $('prevBox').hidden = false;
+    }
+    $('fallback').hidden = true; $('resView').textContent = '(waiting…)';
+    if ($('remember').checked) store.set({ baseUrl: baseUrl(), apiKey: key, officeId: $('officeId').value.trim() });
+    $('reqView').textContent = body
+      ? `POST ${url}\nContent-Type: application/json\napiKey: ••••${key.slice(-4)}\n\n${JSON.stringify(maskCard(body), null, 2)}`
+      : `GET ${url}\napiKey: ••••${key.slice(-4)}`;
+    lastReq = { url, key, json: body ? JSON.stringify(body) : null };
+    renderCommand();
+    $('probe').href = baseUrl() + '/';
+    banner('warn', 'Sending…');
+    try {
+      const res = body
+        ? await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', apiKey: key }, body: JSON.stringify(body) })
+        : await fetch(url, { headers: { Accept: 'application/json', apiKey: key } });
+      const text = await res.text();
+      let data; try { data = JSON.parse(text); } catch { data = text; }
+      return { status: res.status, data };
+    } catch (e) {
+      // fetch() hides the reason: CORS block, IP not allowlisted, DNS, VPN... all look the same here.
+      banner('err', `<b>✗ The browser could not complete the call.</b><br>Either PACO doesn't accept calls from a browser (CORS), or this computer can't reach UAT (IP not allowlisted / VPN off). Use the terminal command below. It shows which one it is.`);
+      $('resView').textContent = `(${esc(e.message)})`;
+      $('fallback').hidden = false;
+      return null;
+    }
+  }
+  function precheck(needOffice) {
+    const key = $('apiKey').value.trim();
+    if (!key) return 'Fill in the API key first (or load your .env file).';
+    if (needOffice && !$('officeId').value.trim()) return 'Fill in Office ID first (or load your .env file).';
+    if (!/^https:\/\//.test(baseUrl())) return 'Base URL must start with https://';
+    if (needOffice && /core\.paco\.2c2p\.com/.test(baseUrl())) return 'Production rejects plain JSON. Use your server with JOSE for production.';
+    return '';
+  }
+
+  async function pay(e) {
+    e.preventDefault();
+    if (busy) return;
+    customer('', '');
+    const card = readCard();
+    if (!card) return;
+    const problem = precheck(true);
+    showOut();
+    if (problem) {
+      banner('err', esc(problem)); $('resView').textContent = '(not sent)';
+      customer('err', `<h3>Payment can't start yet</h3><p>This test page isn't connected. See <b>Test settings</b> below.</p>`);
+      openDev(); return;
+    }
+    let body;
+    try { body = buildBody(card); }
+    catch (err) { banner('err', esc(err.message)); $('resView').textContent = '(not sent)'; customer('err', `<h3>Payment can't start yet</h3><p>See <b>Test settings</b> below.</p>`); openDev(); return; }
+    const url = `${baseUrl()}/api/2.0/Payment/nonUi`;
+    lastSentOrder = { orderNo: body.orderNo, maskedCard: maskCard(body).creditCardDetails.cardNumber.replace(/\*/g, 'X') };
+    $('inqOrder').value = body.orderNo;   // ready for Inquiry
+    $('orderNo').value = genOrderNo();    // fresh one for the next attempt (edit it to retry with the same number)
+    busy = true; $('payBtn').disabled = true; $('payBtn').textContent = 'Processing…';
+    customer('info', `<h3><span class="spin"></span>Processing your payment…</h3><p>Please don't close this page.</p>`);
+    try {
+      const r = await send(url, body);
+      if (!r) { customer('err', `<h3>We couldn't process your payment</h3><p>You have not been charged. Please try again in a moment.</p>`); openDev(); return; }
+      interpret(r.status, r.data);
+    } finally {
+      busy = false; $('payBtn').disabled = false; $('payBtn').textContent = 'Make payment';
+      // The card data leaves memory with the request; clear the security code from the form.
+      $('cvv').value = '';
+    }
+  }
+  $('cardForm').addEventListener('submit', pay);
+
+  async function inquire(orderNo, { auto } = {}) {
+    showOut();
+    if (!orderNo || !ORDER_RE.test(orderNo)) { banner('err', 'Enter a valid orderNo for Inquiry.'); openDev(); return; }
+    const problem = precheck(false);
+    if (problem) {
+      banner('err', esc(problem)); $('resView').textContent = '(not sent)';
+      customer('warn', `<h3>We can't check your payment yet</h3><p>See <b>Test settings</b> below.</p><button class="btn" type="button" data-act="check">Check payment status</button>`, { hideForm: true });
+      openDev(); return;
+    }
+    $('inqOrder').value = orderNo;
+    if (!auto) customer('info', `<h3><span class="spin"></span>Checking your payment…</h3>`, { hideForm: true });
+    const url = `${baseUrl()}/api/2.0/Inquiry/transactionStatus?orderNo=${encodeURIComponent(orderNo)}`;
+    const r = await send(url, null);
+    if (!r) {
+      customer('warn', `<h3>We couldn't confirm your payment yet</h3><p>Please don't pay again. We'll keep checking.</p><button class="btn" type="button" data-act="check">Check payment status</button>`, { hideForm: true });
+      openDev(); return;
+    }
+    if (Array.isArray(r.data?.data)) { interpret(r.status, r.data); return; }
+    // Inquiry failed (e.g. PC-B052201 not found): show it to the developer, keep the customer waiting safely.
+    interpret(r.status, r.data);
+    customer('warn', `<h3>We couldn't confirm your payment yet</h3><p>Please don't pay again.</p><button class="btn" type="button" data-act="check">Check payment status</button>`, { hideForm: true });
+  }
+  $('runInq').addEventListener('click', () => inquire($('inqOrder').value.trim(), { auto: false }));
+
+  $('copyCurl').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(command($('shell').value, lastReq)); $('copyCurl').textContent = 'Copied ✓ (includes your API key and the test card)'; }
+    catch { $('copyCurl').textContent = 'Copy failed: select the text manually'; }
+    setTimeout(() => ($('copyCurl').textContent = 'Copy command'), 2500);
+  });
+  $('readPasted').addEventListener('click', () => {
+    const t = $('pasted').value.trim();
+    try { interpret(null, JSON.parse(t)); }
+    catch {
+      const net = /NETWORK ERROR|reset|forcibly closed|connection was closed|could not be resolved|timed out|Recv failure/i.test(t);
+      banner('err', net ? '<b>✗ Network error before PACO answered.</b> This computer can\'t reach UAT: the IP isn\'t allowlisted, or VPN is off.'
+                        : 'That is not JSON. Paste the full output of the command.');
+    }
+  });
+
+  // ---------- coming back after the bank's page ----------
+  // The redirect carries no status (and anyone can edit a URL): use only its orderNo, then ask Inquiry.
+  const back = new URLSearchParams(location.search).get('orderNo') || ss.get(PENDING);
+  if (back && ORDER_RE.test(back)) {
+    $('inqOrder').value = back;
+    lastSentOrder = { orderNo: back };
+    customer('info', `<h3>Welcome back</h3><p>Let's check the result of your payment for order ${esc(back)}.</p>
+      <button class="btn" type="button" data-act="check">Check payment status</button>`, { hideForm: true });
+    if ($('apiKey').value.trim()) inquire(back, { auto: false });
+  }
+})();
+</script>
+</body>
+</html>
