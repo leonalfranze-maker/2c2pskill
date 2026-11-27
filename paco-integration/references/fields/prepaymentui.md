@@ -152,6 +152,6 @@ Send `billingAddress` (Line1, City, PostCode, Country) with it. Missing required
 | `passengers[].gender` | `F`, `M`, `X` | no |
 | `passengers[].type` | IATA passenger type: `ADT`, `CNN`, `INF` | no |
 | `passengers[].identificationNo` / `documentType` / `title` | ≤ 30 / 30 / 10 | no |
-| `passengers[].frequentFlyerStatus` / `frequentFlyerNumber` | ≤ 64 | no |
+| `passengers[].frequentFlyerStatus` / `frequentFlyerNumber` | ≤ 64 | no: not needed, PACO doesn't keep loyalty data |
 | `passengers[].isPurchaser` / `isFrequentFlyer` | JSON boolean | no |
 Use the exact values listed for `gender`, `type` and `status`: other values are accepted but stored as invalid.

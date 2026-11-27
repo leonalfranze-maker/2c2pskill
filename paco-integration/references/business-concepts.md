@@ -14,7 +14,7 @@ Don't answer with field rules alone. A merchant who understands the "why" fills 
 - **What:** the booking code that an airline's (or travel agent's) reservation system creates for a booking. Usually **6 letters and numbers**, e.g. `URRT55`. It holds the reservation details: who travels, which flights.
 - **Why it matters:** tickets are issued against the PNR, and **one PNR can hold several tickets** (e.g. one per passenger). It's the reference airlines, agents and 2C2P use to find the booking later: ticketing, customer support, disputes, refunds.
 - **When you have it:** it depends on each airline's or agent's process. Some create the PNR before the customer pays, others only after.
-- **What to do:** **have it → send it. Don't have it yet → leave it out.** Never send a made-up or placeholder PNR. `pnrCode` takes exactly 6 characters: a booking code of another length still goes in `productDescription`, and ask 2C2P about `pnrCode` (PO list).
+- **What to do:** **have it → send it. Don't have it yet → leave it out.** Never send a made-up PNR **in production**. In **UAT tests** a sample PNR (6 letters/digits, e.g. `ABC123`) is fine so the test can pass. `pnrCode` takes exactly 6 characters: a booking code of another length still goes in `productDescription`, and ask 2C2P about `pnrCode` (PO list).
 
 **PNR in each API**
 | API | Where | If you have the PNR | If you don't have it yet |

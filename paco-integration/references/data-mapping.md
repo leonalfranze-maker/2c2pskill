@@ -56,7 +56,7 @@ Required with airline data (Line1, City, PostCode, Country).
 |---|---|---|
 | Booking code (PNR) | `bookingReference.pnrCode` (+ `productDescription`) | exactly 6 letters/digits. No PNR yet → leave `airlineData` out |
 | Booking date | `bookingReference.bookingDateTime` | UTC `Z` |
-| Passenger "Adult / Child / Infant", "under 18" | `passengers[].type` | `ADT` / `CNN` / `INF` |
+| Passenger type from your booking (Adult / Child / Infant) | `passengers[].type` | `ADT` / `CNN` / `INF`. Use the type your booking system gives the passenger: an "under 18" tick alone doesn't decide child vs adult. |
 | Passenger number (1, 2, …) | `passengers[].sequenceNo` | 1, 2, 3… |
 | Title | `passengers[].title` | ≤ 10 |
 | First / given name, last name (as in passport) | `passengers[].firstName`, `lastName` | ≤ 64 each, **required** |
@@ -78,7 +78,7 @@ Full rules: `fields/prepaymentui.md` → Airline data.
 | Browser details | `deviceDetails` | collected automatically, never typed by the customer |
 
 ### Don't send (PACO doesn't use them)
-- **Loyalty / frequent flyer programme** details: PACO doesn't keep loyalty data. Skip them. [2C2P confirmed]
+- **Loyalty / frequent flyer programme** details: PACO doesn't keep loyalty data. Skip them (the optional `frequentFlyer*` fields in `airlineData` are accepted but not needed). [2C2P confirmed]
 - Marketing / newsletter opt-ins, preferred notification channel (SMS, WhatsApp).
 - "I have no first name in my passport" and similar edge cases: ask your PO what to send; in UAT tests use a sample value (e.g. `FNU`) so the test passes.
 
@@ -102,7 +102,7 @@ Form fields: Passenger 1 - Adult · Title Mr · First/given name · Last/family 
 | Passenger 1 - Adult | `airlineData.passengers[0].sequenceNo: 1`, `type: "ADT"` |
 | Title Mr | `passengers[0].title: "Mr"`, `generalPayerDetails.personName.title: "Mr"` |
 | First / last name | `passengers[0].firstName` / `lastName` (≤ 64) and `generalPayerDetails.personName.firstName` / `lastName` (≤ 30) |
-| Under 18 | if ticked: `type: "CNN"` (or `INF`) |
+| Under 18 | doesn't decide the type alone: use the passenger type from the booking (Adult `ADT`, Child `CNN`, Infant `INF`) |
 | Mobile, Singapore (+65), 91234567 | `generalPayerDetails.mobilePhoneCountryCode: "65"`, `mobilePhone: "91234567"`; `passengers[0].mobileNo: "6591234567"` |
 | Email | `generalPayerDetails.email` and `passengers[0].email` |
 | First passenger is the primary contact and pays | `passengers[0].isPurchaser: true` |
