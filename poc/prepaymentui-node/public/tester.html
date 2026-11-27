@@ -81,18 +81,18 @@
       <div><label for="desc">Product description (max 50)</label><input id="desc" maxlength="50" value="Skill POC test"></div>
       <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="100.00"></div>
       <div><label for="currency">Currency</label><input id="currency" maxlength="3" value="THB"></div>
-      <div><label for="returnUrl">Return URL (customer comes back here)</label><input id="returnUrl" value="https://example.com/paco-return"></div>
-      <div><label for="backendUrl">Backend notification URL</label><input id="backendUrl" value="https://example.com/paco/notification"></div>
+      <div><label for="returnUrl">Return URL (<code>-</code> = PACO's own result page)</label><input id="returnUrl" value="-"></div>
+      <div><label for="backendUrl">Backend notification URL (<code>-</code> = office setting)</label><input id="backendUrl" value="-"></div>
     </div>
     <div id="cardBox" class="grid hidden" style="margin-top:12px">
       <div><label for="cardNo">Card number</label><input id="cardNo" value="4111111111111111" autocomplete="off"></div>
       <div><label for="cardExp">Expiry MMYY</label><input id="cardExp" value="1230" maxlength="4"></div>
-      <div><label for="cvv">CVV</label><input id="cvv" value="123" maxlength="3"></div>
+      <div><label for="cvv">CVV</label><input id="cvv" value="123" maxlength="4"></div>
       <div><label for="holder">Card holder</label><input id="holder" value="TEST CARDHOLDER"></div>
       <div><label for="tds">3DS (request3dsFlag)</label>
         <select id="tds"><option value="Y">Y: ask for OTP</option><option value="">office default</option><option value="N">N: no 3DS</option><option value="Y-Strict">Y-Strict</option></select></div>
     </div>
-    <p class="hint" style="margin-top:12px">Test cards (TH): Visa 4111111111111111 · MasterCard 5555555555554444 · CVV 123 · OTP 123456.</p>
+    <p class="hint" style="margin-top:12px">Test cards (TH): Visa 4111111111111111 · MasterCard 5555555555554444 · CVV 123 · OTP 123456 · expiry 1230. Decline test: 4444333322221111. For /nonUi, the browser's device data (user agent, screen, language, time zone) is added automatically, as a merchant's system would.</p>
     <div class="row"><button class="primary" id="fire" type="button">Send request</button></div>
   </section>
 
@@ -126,6 +126,15 @@
   const STORE = 'paco-tester';
   let api = 'prePaymentUi';
   let lastReq = null; // { url, key, json }
+  let lastChallenge = null;
+  function openChallenge() { // decode Base64 challengeHtml and open it as a full page
+    const bytes = Uint8Array.from(atob(lastChallenge), (c) => c.charCodeAt(0));
+    const html = new TextDecoder().decode(bytes);
+    const w = window.open('', '_blank');
+    if (!w) { alert('Allow pop-ups for this page, then try again.'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    setTimeout(() => { try { const f = w.document.forms.creqForm || w.document.forms[0]; if (f && w.location.href === 'about:blank') f.submit(); } catch {} }, 2000);
+  }
 
   // ---------- settings ----------
   const baseUrl = () => ($('envSel').value === 'custom' ? $('baseUrl').value.trim() : $('envSel').value).replace(/\/$/, '');
@@ -193,7 +202,8 @@
 
   function buildBody() {
     const orderNo = `ORD${Date.now()}${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`;
-    const ret = $('returnUrl').value.trim();
+    const ret = $('returnUrl').value.trim() || '-';
+    const back = $('backendUrl').value.trim() || '-';
     const body = {
       apiRequest: { requestMessageID: uuid(), requestDateTime: new Date().toISOString(), language: 'en-US' },
       officeId: $('officeId').value.trim(),
@@ -201,10 +211,9 @@
       productDescription: $('desc').value.trim().slice(0, 50),
       transactionAmount: amountCompound($('amount').value, $('currency').value.trim().toUpperCase()),
       notificationUrls: {
-        confirmationUrl: withParams(ret, { status: 'success', orderNo }),
-        failedUrl: withParams(ret, { status: 'failed', orderNo }),
-        cancellationUrl: withParams(ret, { status: 'cancelled', orderNo }),
-        backendUrl: $('backendUrl').value.trim(),
+        // "-" = PACO shows its own result page. PACO adds orderNo etc. to your URL itself.
+        confirmationUrl: ret, failedUrl: ret, cancellationUrl: ret,
+        backendUrl: back,
       },
     };
     if (api === 'nonUi') {
@@ -213,6 +222,15 @@
       body.creditCardDetails = {
         cardNumber: $('cardNo').value.replace(/\s+/g, ''), cardExpiryMMYY: $('cardExp').value.trim(),
         cvvCode: $('cvv').value.trim(), cardHolderName: $('holder').value.trim(),
+      };
+      // 3DS device data: collected automatically from the browser, the customer never types it.
+      // (A real server also adds browserIP and the Accept header from the incoming request.)
+      body.deviceDetails = {
+        browserUserAgent: navigator.userAgent.slice(0, 500),
+        browserLanguage: /^[a-z]{2}-[A-Z]{2}$/.test(navigator.language) ? navigator.language : 'en-US',
+        browserColorDepth: screen.colorDepth, browserScreenHeight: screen.height, browserScreenWidth: screen.width,
+        browserTZ: new Date().getTimezoneOffset(), browserJavaEnabled: 'Y',
+        mobileDeviceFlag: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'Y' : 'N',
       };
     }
     return body;
@@ -252,8 +270,11 @@
     const code = ar.responseCode ? `${esc(ar.responseCode)} ${esc(ar.responseDescription || '')}` : '';
     const page = data?.data?.paymentPage?.paymentPageURL;
     const result = data?.data?.paymentResult;
-    if (Array.isArray(data?.data)) { // Inquiry: newest first; refunds are separate entries (R / PCRP)
-      const isRefund = (e) => ['R', 'PCRP'].includes(e?.paymentStatusInfo?.paymentStatus);
+    const incomplete = data?.data?.paymentIncompleteResult;
+    const web = data?.data?.webPaymentResult;
+    const challenge = incomplete?.aresACSChallenge?.challengeHtml;
+    if (Array.isArray(data?.data)) { // Inquiry: refunds are separate entries, recognised by their STEP
+      const isRefund = (e) => ['RI', 'RP', 'RP2', 'RP3', 'RF', 'RS', 'RR', 'RE', 'RX'].includes(e?.paymentStatusInfo?.paymentStep);
       const pay = data.data.find((e) => !isRefund(e));
       const refunds = data.data.filter(isRefund).length;
       const st = pay?.paymentStatusInfo?.paymentStatus, step = pay?.paymentStatusInfo?.paymentStep;
@@ -264,6 +285,16 @@
     if (page) {
       banner('ok', `<b>✓ Got a payment page link</b> ${code ? '· ' + code : ''}<br><small>"Success" here means the page was created, not that anyone has paid.</small><br>Pay with 4111111111111111 · CVV 123 · OTP 123456.<br>
         <a class="go" href="${esc(page)}" target="_blank" rel="noopener">Open payment page →</a>`);
+    } else if (challenge) { // /nonUi 3DS: show the bank's page FULL PAGE
+      lastChallenge = challenge;
+      banner('ok', `<b>🔐 3DS / OTP needed</b> ${code ? '· ' + code : ''}<br>Open the bank's page and enter OTP <b>123456</b>. Afterwards PACO shows the result (or redirects to your URL) and sends the notification. Then check the real status in the <b>Inquiry</b> tab.<br>
+        <button class="small" id="openOtp" type="button" style="margin-top:8px">Open OTP page (full page) →</button>`);
+      $('openOtp').addEventListener('click', openChallenge);
+    } else if (web) { // /nonUi QR / wallet / deeplink
+      banner('ok', `<b>Send the customer to the payment app / QR</b> ${code ? '· ' + code : ''}<br>Pay before: ${esc(web.pspExpiryDateTime || web.paymentExpiryDateTime || '-')} (UTC)${web.content?.extra?.qrData ? '<br>QR data: <code>' + esc(web.content.extra.qrData) + '</code>' : ''}<br>
+        <a class="go" href="${esc(web.webPaymentUrl)}" target="_blank" rel="noopener">Open payment →</a>`);
+    } else if (incomplete && ar.responseCode && !['PC-B050001', 'PC-B050002'].includes(ar.responseCode)) { // /nonUi declined = HTTP 202
+      banner('err', `<b>✗ Payment not completed</b> · ${code}<br>Shown to the customer: “${esc(ar.marketingDescription || 'Your payment was not completed.')}”<br><small>Technical reason (store, don't show): ${esc(incomplete.failedReason || '-')}. A decline comes back as HTTP 202, not 4xx.</small>`);
     } else if (result) {
       const st = result.paymentStatusInfo?.paymentStatus;
       const names = { A: 'Approved', S: 'Settled', V: 'Voided', F: 'Rejected', P: 'Pending', C: 'Cancelled', E: 'Expired' };
