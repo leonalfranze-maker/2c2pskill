@@ -56,6 +56,7 @@ These protect the merchant's money, their customers' card data and their credent
 | Currency codes and decimal places (155 currencies) | `references/currencies.md` |
 | **Every payment type, channel and agent code** (which values to send for e.g. GrabPay QR) | `references/payment-methods.md` |
 | **Mapping the merchant's own data** (screenshot, form, DB columns, JSON) to PACO fields, "what else should I send?", sample payloads for both APIs | `references/data-mapping.md` |
+| **Making sample pages look like the merchant's site** (from a screenshot or a link) | `references/match-merchant-ui.md` |
 | **How to fill common fields** (envelope, orderNo, texts, amounts, dates, URLs) | `references/field-guide.md` |
 | Every request field per API, confirmed by 2C2P: limits, required when, what to send / leave out, error codes | `references/fields/<api>.md` (prepaymentui, nonui, inquiry-transactionstatus, inquiry-transactionlist, void, settlement, refund) |
 | Backend notification, **Inquiry**, redirect, status/step codes, final states | `references/notification.md` |
@@ -117,7 +118,7 @@ Work in small steps. Stop after each step until it works. Keep a visible checkli
 
 If they don't have PACO's public keys yet, set `PACO_UAT_PLAIN_JSON=true` in `.env` (UAT only) so the first call can work without keys. On "done", run `npm run doctor`.
 
-**Step 3b: Map their data.** Once the minimum request works, or whenever they show their data (a screenshot of their checkout/booking form, DB columns, a sample JSON) or ask "what else should I send?", follow `references/data-mapping.md`: a mapping table (their field → PACO field → conversion), what not to send, sample payloads for `/prePaymentUi` and `/nonUi` filled with their values, and the gaps. Small uncertain points go to the PO list; for UAT tests use clearly fake sample values so the test passes now.
+**Step 3b: Map their data.** Once the minimum request works, or whenever they show their data (a screenshot of their checkout/booking form, DB columns, a sample JSON) or ask "what else should I send?", follow `references/data-mapping.md`: a mapping table (their field → PACO field → conversion), what not to send, sample payloads for `/prePaymentUi` and `/nonUi` filled with their values, and the gaps. Small uncertain points go to the PO list; for UAT tests use clearly fake sample values so the test passes now. When you build or adapt pages for them and they've shown their own page (screenshot or link), **make the draft look as close to theirs as possible**: same fields, order, labels, layout and colours (`references/match-merchant-ui.md`).
 
 **Step 4: First UAT call.** First check **where the command will run**: it must be the machine whose IP 2C2P allowlisted. If you (the assistant) run in a different environment, such as a cloud sandbox or a laptop that isn't allowlisted, give the user the commands to run there instead. On the allowlisted machine, run the tester to create a payment page (`npm run try -- prepayment`).
 - Success = a `paymentPageURL`. Remind them this "Success" only means the page exists (rule 5).
