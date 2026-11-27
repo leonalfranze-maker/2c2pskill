@@ -2,6 +2,18 @@
 
 When the AI builds or adapts a page for the merchant (checkout, passenger/contact form, card form, result page) and the merchant has shown their own page (a **screenshot**, or a **link**), make the draft look **as close to theirs as possible**. A page that looks like their own is easier to review, demo to their team and drop into their site.
 
+## When to ask
+- **`/nonUi`: always.** The merchant shows their own payment page, so it must look like their site. Ask: *"Do you have an example of the payment or checkout page you use now? A screenshot is fine, or send me a link and I'll read it."*
+- **`/prePaymentUi`:** not needed for payment: the customer pays on 2C2P's page. Only if they want their own pages around it (cart, passenger form) to match.
+- Any other page you build for them (tester, demo): if they've already shown their page, use its style.
+
+## nonUi payment page
+Build the **card payment page** the customer will see, in their style:
+- Their look (below) + the `/nonUi` functions from the HTML tester's /nonUi tab: card number, expiry (MMYY), CVV, name on card; device data collected automatically; the result handling: approved → result, **3DS → the bank's OTP page full page**, declined → `marketingDescription`; then **Inquiry** for the real status.
+- Keep their wording, field order and button style where they have them (e.g. their "Pay now" button).
+- **HTML file by default** (SKILL.md rule 13) for UAT testing. For the real site, the same page is served by their server (Node template `public/card.html` + theme), never calling PACO from the browser.
+- Keep the PCI DSS note for the developer (`payment-apis.md`).
+
 ## From a screenshot
 Copy what you can see:
 - **Fields:** the same fields, in the same order, with the same labels, grouping, headings and helper texts (e.g. "Personal details", "Contact details", "Tips on entering your name"). Same input types: dropdowns stay dropdowns, checkboxes stay checkboxes, radio buttons stay radio buttons.

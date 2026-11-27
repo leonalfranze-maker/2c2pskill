@@ -112,6 +112,8 @@ Work in small steps. Stop after each step until it works. Keep a visible checkli
 **Step 1b: Check the features they need.** Ask what they want to offer (cards only? QR/wallets? installments? saved cards? refunds from their back office? partial capture?). Look each up in `feature-support.md` **before building anything**. State ❌ and ⚠️ limits up front, and add every "ask 2C2P first" item they haven't confirmed to the PO list. Example: refunds by API are off by default.
 
 **Step 2: Pick the flow.** Recommend `/prePaymentUi` (section 2, rule 8) unless they already run a PCI-compliant card form.
+- **`/prePaymentUi`:** the customer pays on 2C2P's own payment page, so there's no payment page to design.
+- **`/nonUi`:** the merchant shows **their own** payment page, so it must look like their site. **Always ask:** *"Do you have an example of the payment or checkout page you use now? A screenshot is fine, or send me a link and I'll read it."* Then build their card payment page in that style (`references/match-merchant-ui.md` → *nonUi payment page*). If they have nothing to show, use a clean neutral style and offer to restyle it later.
 
 **Step 3: Set up the project.**
 - **Just trying it / no Node.js:** give `templates/html/paco-tester.html`, restyled like their site if they shared it (`references/match-merchant-ui.md`). UAT only.

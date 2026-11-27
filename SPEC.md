@@ -165,3 +165,6 @@ Remaining items are added step by step after milestone 1.
 
 ## Decision (Max, 2026-11-27): HTML by default
 Anything the merchant should try (tester, demo, sample page) is delivered as a single HTML file they can double-click. Before handing over anything that needs installing (Node template, npm), ask whether Node.js is installed. Skill rule 13, `templates/html/`.
+
+## Decision (Max, 2026-11-27): nonUi payment page in the merchant's style
+With /nonUi the merchant shows its own payment page. The AI always asks for an example (screenshot or link), reads it and builds the card payment page in that style. Not needed for /prePaymentUi (2C2P's page). SKILL.md step 2, `references/match-merchant-ui.md`.
