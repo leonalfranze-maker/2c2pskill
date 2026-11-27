@@ -38,7 +38,7 @@ Most field problems found during processing come back as a **202 failure**, not 
 ## 3DS challenge (HTTP 202 + `aresACSChallenge`)
 | Field | Use |
 |---|---|
-| `challengeHtml` | **Main way.** Base64 of a complete HTML page from the bank's 3DS server. **Decode it and write it into the customer's browser** (full page, or an iframe of at least 500×600). It posts to the bank, the customer enters the OTP. If the form doesn't submit by itself, submit the form named `creqForm`. |
+| `challengeHtml` | **Main way.** Base64 of a complete HTML page from the bank's 3DS server. **Decode it and show it as a full page in the customer's browser** (not in an iframe). [2C2P confirmed] It posts to the bank, the customer enters the OTP. If the form doesn't submit by itself, submit the form named `creqForm`. |
 | `acsURL`, `rawCreq`, `threeDSSessionData` | only if you build your own form: POST `creq` = `rawCreq` and `threeDSSessionData` to `acsURL` from the customer's browser |
 | `cReq` | deprecated (same as `challengeHtml`): ignore |
 | `transStatus` | `C` = challenge required. Informational. |

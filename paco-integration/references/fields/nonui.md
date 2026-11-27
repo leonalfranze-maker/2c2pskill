@@ -38,6 +38,7 @@ PACO uses your 3DS result **only when all four are sent:** `dsTransID` + `eciVal
 | `xidValue` | as returned | |
 
 ## Device data for 3DS (`deviceDetails`)
+**The merchant's system collects these automatically** from the customer's browser (and the request headers) and sends them. **The customer never types anything.** [2C2P confirmed]
 Send all of them on browser payments: missing values are filled with defaults, which may lead to more declines or challenges.
 | Field | Rule | Do this |
 |---|---|---|

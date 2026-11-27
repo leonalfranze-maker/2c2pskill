@@ -136,7 +136,7 @@ export function buildNonUiRequest(order, card, cfg) {
  * /nonUi -> { outcome, action?, orderNo, responseCode, paymentStatus, ..., raw }
  * HTTP 200 = approved (status A / step PA). Everything else that was processed is HTTP 202:
  *   202 + paymentIncompleteResult.aresACSChallenge -> ACTION_REQUIRED, action CHALLENGE:
- *        decode challengeHtml (Base64) and write it into the customer's browser (page or iframe >= 500x600).
+ *        decode challengeHtml (Base64) and show it as a full page in the customer's browser (not an iframe).
  *        Afterwards PACO redirects to confirmationUrl/failedUrl and sends the backend notification.
  *   202 + data.webPaymentResult                     -> ACTION_REQUIRED, action REDIRECT:
  *        send the customer to webPaymentUrl (or show content.extra.qrData as a QR). Result comes by notification.
