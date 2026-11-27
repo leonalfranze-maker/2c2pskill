@@ -16,7 +16,7 @@ Don't copy logos or images you don't have; leave a placeholder (`[Your logo]`).
 - If the page needs a login, is behind a paywall, or can't be opened: say so and ask for a screenshot instead.
 
 ## Default: a single HTML file
-Build the page as **one HTML file** the merchant can double-click (SKILL.md rule 13), starting from `templates/html/sample-checkout.html`: set the colours and fonts in its `:root` block, replace the form with theirs, and map the fields in its `buildRequest()`. It calls PACO from the browser, so it's for **UAT testing only**.
+Start from the **HTML tester** `templates/html/paco-tester.html` and keep **all of its functions** (connection, /prePaymentUi, /nonUi with the OTP page, Inquiry, request/response view). **Change only how it looks** so it feels like their site: colours, fonts, headings, input style (e.g. filled boxes with the label inside and an underline), checkbox / radio / tab / button style, page width. Add a THEME block at the end of its `<style>`; don't rebuild the page around their form. One file they can double-click (SKILL.md rule 13). It calls PACO from the browser, so it's for **UAT testing only**.
 
 ## In the Node template (the real site, server side; ask about Node.js first)
 - **Theme:** set the variables at the top of `templates/node/public/style.css` (`--brand`, `--brand-ink`, `--font`, `--radius`, `--page-width`) to their colours, font, corners and width. Load a web font only if their site uses one and it's freely available.

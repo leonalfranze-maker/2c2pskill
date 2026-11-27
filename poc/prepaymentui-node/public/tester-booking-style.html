@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACO API Tester · booking style</title>
+<!--
+  PACO API Tester: one file, open it in a browser. No server, no install.
+  Calls /prePaymentUi or /nonUi with PLAIN JSON (UAT only; production requires JOSE).
+  Credentials are typed in or loaded from your .env file. They are NOT stored in this file.
+  Sources: https://devzone.2c2p.com/reference/payviapaymentpage · https://devzone.2c2p.com/reference/pay
+-->
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1b1f24; --muted:#5f6b76; --line:#e2e5e9; --accent:#0b6bcb; --accent-ink:#fff;
+          --ok:#127a3b; --ok-bg:#e8f6ee; --err:#b42318; --err-bg:#fdecea; --warn:#8a5a00; --warn-bg:#fff6e0; --code:#f2f4f7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111418; --card:#1a1f25; --ink:#e7eaee; --muted:#9aa4ae; --line:#2b323a; --accent:#4c9bf0; --accent-ink:#0b1017;
+          --ok:#5fd08e; --ok-bg:#12291c; --err:#ff8a80; --err-bg:#2d1513; --warn:#f4c46a; --warn-bg:#2b2311; --code:#14181d; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:880px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:22px; margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 20px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px; }
+  .card h2 { font-size:15px; margin:0 0 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; }
+  input, select, textarea { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit; }
+  textarea { font:12px/1.45 ui-monospace, Menlo, Consolas, monospace; min-height:90px; }
+  .tabs { display:flex; gap:6px; margin-bottom:14px; }
+  .tab { flex:1; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); cursor:pointer; font:inherit; text-align:left; }
+  .tab b { display:block; } .tab span { font-size:12px; color:var(--muted); }
+  .tab[aria-selected="true"] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+  button.primary { padding:12px 18px; border:0; border-radius:8px; background:var(--accent); color:var(--accent-ink); font:inherit; font-weight:600; cursor:pointer; }
+  button.primary:disabled { opacity:.6; cursor:wait; }
+  button.small { padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font:13px system-ui; cursor:pointer; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+  .hint { font-size:12px; color:var(--muted); }
+  .banner { border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .banner.ok { background:var(--ok-bg); color:var(--ok); } .banner.err { background:var(--err-bg); color:var(--err); } .banner.warn { background:var(--warn-bg); color:var(--warn); }
+  .banner a.go { display:inline-block; margin-top:8px; padding:9px 14px; border-radius:8px; background:var(--ok); color:var(--card); font-weight:600; text-decoration:none; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:10px; overflow:auto; font:12px/1.45 ui-monospace, Menlo, Consolas, monospace; max-height:360px; margin:6px 0 0; white-space:pre-wrap; word-break:break-all; }
+  details { margin-top:10px; } summary { cursor:pointer; font-weight:600; font-size:14px; }
+
+  .section-title { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:18px 0 10px; }
+  .section-title:first-child { margin-top:0; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+  .g-card { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+  .full { grid-column:1 / -1; }
+  @media (max-width:640px) { .g2, .g3, .g-card { grid-template-columns:1fr; } }
+  .with-btn { display:flex; gap:8px; } .with-btn input { flex:1; }
+  .icon-btn { padding:0 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); cursor:pointer; font:inherit; white-space:nowrap; }
+  .field-hint { font-size:12px; color:var(--muted); margin-top:4px; }
+  input.bad { border-color:var(--err); }
+  .seg { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:6px; }
+  .sendbar { margin-top:18px; } .sendbar button.primary { width:100%; padding:14px; font-size:16px; }
+  details.adv > summary { font-size:13px; color:var(--muted); font-weight:600; margin-top:14px; }
+  label { min-height:20px; line-height:20px; }
+  .pill { display:inline-block; font-size:11px; line-height:16px; padding:0 8px; border-radius:999px; background:var(--code); color:var(--muted); border:1px solid var(--line); margin-left:6px; font-weight:500; }
+
+  /* ===== THEME: styled like the merchant's booking form (screenshots). Only looks change; behaviour is the tester's. ===== */
+  :root { --brand:#00266b; --link:#1f5fd1; --field-bg:#f8f8f8; --field-line:#c5cdec; --control-line:#9fb0d6;
+          --bg:#fff; --card:#fff; --ink:#333; --muted:#555; --line:#e5e5e5; --accent:#1f5fd1; --accent-ink:#fff; --code:#f6f7f9; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#fff; --card:#fff; --ink:#333; --muted:#555; --line:#e5e5e5; --accent:#1f5fd1; --code:#f6f7f9;
+          --ok:#127a3b; --ok-bg:#e8f6ee; --err:#b42318; --err-bg:#fdecea; --warn:#8a5a00; --warn-bg:#fff6e0; } }
+  body { background:#fff; color:#333; font:15px/1.5 "Helvetica Neue", Roboto, Arial, system-ui, sans-serif; }
+  main { max-width:620px; padding:24px 16px 64px; }
+  h1 { font:400 30px/1.2 Optima, Candara, "Segoe UI", "Gill Sans", serif; color:var(--brand); margin:8px 0 6px; }
+  .sub { color:#555; font-size:15px; margin-bottom:28px; }
+  .card { border:0; border-radius:0; padding:0; margin-bottom:36px; background:transparent; }
+  .card h2 { font-size:20px; font-weight:500; color:#222; margin:0 0 6px; }
+  .section-title { text-transform:none; letter-spacing:0; font-size:15px; font-weight:600; color:#222; margin:24px 0 12px; }
+  .hint, .field-hint { color:#555; font-size:13px; }
+  a, .link { color:var(--link); }
+  /* filled fields: small label inside the grey box, light-blue underline */
+  .grid > div:has(> input, > select), .g2 > div:has(> input, > select, > .with-btn), .g-card > div:has(> input),
+  #inqBox > div:has(> input) { background:var(--field-bg); border-bottom:1px solid var(--field-line); border-radius:2px 2px 0 0; padding:8px 8px 6px; }
+  .grid > div:has(> input, > select):focus-within, .g2 > div:focus-within, .g-card > div:focus-within, #inqBox > div:focus-within { border-bottom:2px solid var(--link); padding-bottom:5px; }
+  .grid label, .g2 label, .g-card label, #inqBox label { font-size:11px; color:#555; margin:0; min-height:0; line-height:1.3; }
+  .grid input, .grid select, .g2 input, .g2 select, .g-card input, #inqBox input { border:0; border-radius:0; background:transparent; padding:2px 0 0; font-size:15px; color:#222; }
+  .grid input:focus, .g2 input:focus, .g-card input:focus, select:focus, #inqBox input:focus { outline:none; }
+  .with-btn .icon-btn { border:1px solid var(--control-line); border-radius:4px; background:#fff; color:var(--link); font-size:13px; }
+  .grid, .g2, .g-card { gap:16px 14px; }
+  .pill { background:#eef2fb; border-color:#d7def0; color:#4a5a80; }
+  input[type="checkbox"] { accent-color:var(--link); width:18px !important; height:18px; }
+  /* tabs: plain, with a blue line under the selected one */
+  .seg { gap:0; border-bottom:1px solid #e5e5e5; margin-bottom:8px; }
+  .tab { border:0; border-radius:0; background:transparent; padding:10px 6px 12px; border-bottom:3px solid transparent; }
+  .tab b { color:#222; font-weight:600; } .tab span { color:#666; }
+  .tab[aria-selected="true"] { border-bottom-color:var(--brand); box-shadow:none; } .tab[aria-selected="true"] b { color:var(--brand); }
+  /* buttons */
+  button.primary { background:var(--brand); border-radius:2px; padding:14px; font-weight:600; }
+  .sendbar button.primary { font-size:16px; }
+  button.small { border:1px solid var(--control-line); border-radius:4px; background:#fff; color:var(--link); font-family:inherit; }
+  details.adv > summary, details > summary { color:#222; }
+  .banner { border-radius:2px; }
+  .banner a.go { background:var(--brand); border-radius:2px; color:#fff; }
+  pre { border-radius:2px; border-color:#e5e5e5; }
+  .fbox { background:var(--field-bg); border-bottom:1px solid var(--field-line); border-radius:2px 2px 0 0; padding:8px 8px 6px; }
+  .fbox:focus-within { border-bottom:2px solid var(--link); padding-bottom:5px; }
+  .fbox label { font-size:11px; color:#555; margin:0; min-height:0; line-height:1.3; }
+  .fbox input { border:0; background:transparent; padding:2px 0 0; font-size:15px; color:#222; } .fbox input:focus { outline:none; }
+  .field-hint { margin-top:6px; }
+  .g2 { align-items:start; }
+  section.card:first-of-type .grid { grid-template-columns:1fr 1fr; }
+  section.card:first-of-type .grid > div:first-child { grid-column:1 / -1; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PACO API Tester</h1>
+  <p class="sub">Fire <b>/prePaymentUi</b> or <b>/nonUi</b> against the UAT sandbox with plain JSON, then check the real status with <b>Inquiry</b>. Credentials stay in this browser only.</p>
+
+  <section class="card">
+    <h2>1 · Connection
+      <span><input id="envFile" type="file" accept=".env,text/plain" class="hidden"><button class="small" id="loadEnv" type="button">Load .env file</button></span>
+    </h2>
+    <div class="grid">
+      <div><label for="baseUrl">Environment</label>
+        <select id="envSel">
+          <option value="https://core.demo-paco.2c2p.com">UAT sandbox</option>
+          <option value="custom">Custom base URL…</option>
+        </select>
+        <input id="baseUrl" class="hidden" placeholder="https://..." style="margin-top:6px">
+      </div>
+      <div><label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="from onboarding"></div>
+      <div><label for="officeId">Office ID</label><input id="officeId" autocomplete="off" placeholder="from onboarding"></div>
+    </div>
+    <div class="row"><label style="display:flex;gap:6px;align-items:center;margin:0"><input id="remember" type="checkbox" style="width:auto"> Remember on this browser</label>
+      <button class="small" id="forget" type="button">Forget</button>
+      <span class="hint">Plain JSON works in UAT only. Production needs JOSE (use the Node backend).</span></div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Request</h2>
+    <div class="seg" role="tablist">
+      <button class="tab" role="tab" id="tab-pre" aria-selected="true" type="button"><b>/prePaymentUi</b><span>Link to the 2C2P payment page</span></button>
+      <button class="tab" role="tab" id="tab-non" aria-selected="false" type="button"><b>/nonUi</b><span>Charge card details directly</span></button>
+      <button class="tab" role="tab" id="tab-inq" aria-selected="false" type="button"><b>Inquiry</b><span>Check the real status</span></button>
+    </div>
+
+    <div id="inqBox" class="hidden">
+      <p class="section-title">Order to check</p>
+      <div><label for="inqOrder">orderNo</label><input id="inqOrder" placeholder="filled in after each payment request"></div>
+    </div>
+
+    <div id="payBox">
+      <p class="section-title">Order</p>
+      <div class="g2">
+        <div><div class="fbox"><label for="orderNo">Invoice / order number (orderNo)</label>
+          <div class="with-btn"><input id="orderNo" maxlength="40" autocomplete="off"><button class="icon-btn" id="newOrderNo" type="button" title="Generate a new one">↻ New</button></div></div>
+          <div class="field-hint" id="orderNoHint">Generated for you. Edit it if you like: 1–40 of A–Z a–z 0–9 - _ +</div></div>
+        <div><label for="desc">Product description <span class="pill">max 50</span></label><input id="desc" maxlength="50" value="Skill POC test"></div>
+      </div>
+      <div class="g2" style="margin-top:12px">
+        <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="100.00"></div>
+        <div><label for="currency">Currency <span class="pill">alphabetic, e.g. THB</span></label><input id="currency" maxlength="3" value="THB"></div>
+      </div>
+
+      <div id="cardBox" class="hidden">
+        <p class="section-title">Card</p>
+        <div class="g-card">
+          <div><label for="cardNo">Card number</label><input id="cardNo" value="4111111111111111" autocomplete="off" inputmode="numeric"></div>
+          <div><label for="cardExp">Expiry <span class="pill">MMYY</span></label><input id="cardExp" value="1230" maxlength="4" inputmode="numeric"></div>
+          <div><label for="cvv">CVV</label><input id="cvv" value="123" maxlength="4" inputmode="numeric"></div>
+        </div>
+        <div class="g2" style="margin-top:12px">
+          <div><label for="holder">Name on card <span class="pill">English letters</span></label><input id="holder" value="TEST CARDHOLDER"></div>
+          <div><label for="tds">3DS (request3dsFlag)</label>
+            <select id="tds"><option value="Y">Y: ask the bank for 3DS / OTP</option><option value="">Not sent: office setting</option><option value="N">N: no 3DS</option><option value="Y-Strict">Y-Strict: full authentication only</option></select></div>
+        </div>
+        <p class="field-hint">Device data for 3DS (user agent, screen, language, time zone) is added automatically, as a merchant's system would.</p>
+      </div>
+
+      <details class="adv"><summary>Return and notification URLs</summary>
+        <div class="g2" style="margin-top:10px">
+          <div><label for="returnUrl">Return URL <span class="pill">- = PACO's result page</span></label><input id="returnUrl" value="-"></div>
+          <div><label for="backendUrl">Backend notification URL <span class="pill">- = office setting</span></label><input id="backendUrl" value="-"></div>
+        </div>
+      </details>
+    </div>
+
+    <p class="hint" style="margin-top:14px">UAT test cards: Visa 4111111111111111 · Mastercard 5555555555554444 · CVV 123 · expiry 1230 · OTP 123456 · decline test 4444333322221111.</p>
+    <div class="sendbar"><button class="primary" id="fire" type="button">Send request</button></div>
+  </section>
+
+  <section class="card hidden" id="out">
+    <h2>3 · Result</h2>
+    <div id="banner"></div>
+    <div id="fallback" class="hidden">
+      <p style="margin:0 0 6px"><b>Step 1: which problem is it?</b> Open the PACO host in a new tab.</p>
+      <ul class="hint" style="margin:0 0 6px;padding-left:18px">
+        <li>Any page or error code shows (404, 401, JSON…) → this computer <b>can</b> reach UAT. The browser is blocked by <b>CORS</b>, so use Step 2.</li>
+        <li>"This site can't be reached" / <code>ERR_CONNECTION_RESET</code> → this computer <b>can't</b> reach UAT: <b>IP not allowlisted or VPN off</b>. Step 2 will fail too until that's fixed.</li>
+      </ul>
+      <div class="row" style="margin-top:0"><a class="small" id="probe" target="_blank" rel="noopener" style="text-decoration:none">Open PACO host ↗</a></div>
+      <p style="margin:14px 0 6px"><b>Step 2: send it from a terminal instead.</b> Copy the command, run it on this computer, then paste the output below.</p>
+      <div class="row" style="margin-top:0"><label for="shell" style="margin:0">Terminal</label>
+        <select id="shell" style="width:auto"><option value="ps">Windows PowerShell</option><option value="bash">macOS / Linux (bash)</option></select></div>
+      <pre id="curl"></pre>
+      <div class="row" style="margin-top:8px"><button class="small" id="copyCurl" type="button">Copy command</button></div>
+      <label for="pasted" style="margin-top:12px">Paste the response here</label>
+      <textarea id="pasted" placeholder='{"version":"2.0","apiResponse":{...},"data":{...}}'></textarea>
+      <div class="row" style="margin-top:8px"><button class="small" id="readPasted" type="button">Read response</button></div>
+    </div>
+    <details open><summary>Request sent</summary><pre id="reqView"></pre></details>
+    <details open><summary>Response</summary><pre id="resView">(none)</pre></details>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STORE = 'paco-tester';
+  let api = 'prePaymentUi';
+  let lastReq = null; // { url, key, json }
+  let lastChallenge = null;
+  const genOrderNo = () => `ORD${Date.now()}${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`;
+  const ORDER_RE = /^[A-Za-z0-9\-_+]{1,40}$/;
+  function openChallenge() { // decode Base64 challengeHtml and open it as a full page
+    const bytes = Uint8Array.from(atob(lastChallenge), (c) => c.charCodeAt(0));
+    const html = new TextDecoder().decode(bytes);
+    const w = window.open('', '_blank');
+    if (!w) { alert('Allow pop-ups for this page, then try again.'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    setTimeout(() => { try { const f = w.document.forms.creqForm || w.document.forms[0]; if (f && w.location.href === 'about:blank') f.submit(); } catch {} }, 2000);
+  }
+
+  // ---------- settings ----------
+  const baseUrl = () => ($('envSel').value === 'custom' ? $('baseUrl').value.trim() : $('envSel').value).replace(/\/$/, '');
+  function setBase(url) {
+    const opt = [...$('envSel').options].find((o) => o.value === url);
+    if (opt) { $('envSel').value = url; $('baseUrl').classList.add('hidden'); }
+    else { $('envSel').value = 'custom'; $('baseUrl').value = url; $('baseUrl').classList.remove('hidden'); }
+  }
+  $('envSel').addEventListener('change', () => $('baseUrl').classList.toggle('hidden', $('envSel').value !== 'custom'));
+
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem(STORE) || 'null'); } catch { return null; } },
+    set(v) { try { localStorage.setItem(STORE, JSON.stringify(v)); } catch {} },
+    clear() { try { localStorage.removeItem(STORE); } catch {} },
+  };
+  const saved = store.get();
+  if (saved) { setBase(saved.baseUrl); $('apiKey').value = saved.apiKey || ''; $('officeId').value = saved.officeId || ''; $('remember').checked = true; }
+  $('forget').addEventListener('click', () => { store.clear(); $('apiKey').value = ''; $('officeId').value = ''; $('remember').checked = false; });
+
+  // Load a .env file: reads PACO_BASE_URL / PACO_ENV, PACO_API_KEY, PACO_OFFICE_ID, PACO_CURRENCY
+  $('loadEnv').addEventListener('click', () => $('envFile').click());
+  $('envFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const env = {};
+    for (const line of (await f.text()).split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/); if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+    if (env.PACO_BASE_URL) setBase(env.PACO_BASE_URL.replace(/\/$/, ''));
+    else if ((env.PACO_ENV || '').toUpperCase() === 'UAT') setBase('https://core.demo-paco.2c2p.com');
+    if (env.PACO_API_KEY) $('apiKey').value = env.PACO_API_KEY;
+    if (env.PACO_OFFICE_ID) $('officeId').value = env.PACO_OFFICE_ID;
+    if (env.PACO_CURRENCY) $('currency').value = env.PACO_CURRENCY;
+    e.target.value = '';
+    showOut(); banner('ok', `Loaded ${esc(f.name)}: ${env.PACO_API_KEY ? 'API key ✓' : 'API key missing'} · ${env.PACO_OFFICE_ID ? 'Office ID ✓' : 'Office ID missing'}`);
+  });
+
+  // ---------- tabs ----------
+  function selectTab(name) {
+    api = name;
+    $('tab-pre').setAttribute('aria-selected', name === 'prePaymentUi');
+    $('tab-non').setAttribute('aria-selected', name === 'nonUi');
+    $('tab-inq').setAttribute('aria-selected', name === 'inquiry');
+    $('cardBox').classList.toggle('hidden', name !== 'nonUi');
+    $('payBox').classList.toggle('hidden', name === 'inquiry');
+    $('inqBox').classList.toggle('hidden', name !== 'inquiry');
+  }
+  $('tab-pre').addEventListener('click', () => selectTab('prePaymentUi'));
+  $('tab-non').addEventListener('click', () => selectTab('nonUi'));
+  $('tab-inq').addEventListener('click', () => selectTab('inquiry'));
+  $('orderNo').value = genOrderNo();
+  $('newOrderNo').addEventListener('click', () => { $('orderNo').value = genOrderNo(); $('orderNo').dispatchEvent(new Event('input')); });
+  $('orderNo').addEventListener('input', () => {
+    const ok = ORDER_RE.test($('orderNo').value.trim());
+    $('orderNo').classList.toggle('bad', !ok);
+    $('orderNoHint').textContent = ok ? 'Generated for you. Edit it if you like: 1–40 of A–Z a–z 0–9 - _ +' : 'Only 1–40 of A–Z a–z 0–9 - _ + (no spaces or dots)';
+  });
+
+  // ---------- request building (same rules as the Node backend) ----------
+  // PACO currency list (alphabetic code -> decimalPlaces), exported 2026-11-22. Numeric codes are rejected.
+  const DECIMALS = {"AED":2,"AFN":2,"ALL":2,"AMD":2,"ANG":2,"AOA":2,"ARS":2,"AUD":2,"AWG":2,"AZN":2,"BAM":2,"BBD":2,"BDT":2,"BGN":2,"BHD":3,"BIF":0,"BMD":2,"BND":2,"BOB":2,"BRL":2,"BSD":2,"BTN":2,"BWP":2,"BYN":2,"BZD":2,"CAD":2,"CDF":2,"CHF":2,"CLP":0,"CNY":2,"COP":2,"CRC":2,"CUP":2,"CVE":2,"CZK":2,"DJF":0,"DKK":2,"DOP":2,"DZD":2,"EGP":2,"ERN":2,"ETB":2,"EUR":2,"FJD":2,"FKP":2,"GBP":2,"GEL":2,"GHS":2,"GIP":2,"GMD":2,"GNF":0,"GTQ":2,"GYD":2,"HKD":2,"HNL":2,"HRK":2,"HTG":2,"HUF":2,"IDR":2,"ILS":2,"INR":2,"IQD":3,"IRR":2,"ISK":0,"JMD":2,"JOD":3,"JPY":0,"KES":2,"KGS":2,"KHR":2,"KMF":0,"KPW":2,"KRW":0,"KWD":3,"KYD":2,"KZT":2,"LAK":2,"LBP":2,"LKR":2,"LRD":2,"LSL":2,"LYD":3,"MAD":2,"MDL":2,"MGA":2,"MKD":2,"MMK":2,"MNT":2,"MOP":2,"MRU":2,"MUR":2,"MVR":2,"MWK":2,"MXN":2,"MYR":2,"MZN":2,"NAD":2,"NGN":2,"NIO":2,"NOK":2,"NPR":2,"NZD":2,"OMR":3,"PAB":2,"PEN":2,"PGK":2,"PHP":2,"PKR":2,"PLN":2,"PYG":0,"QAR":2,"RON":2,"RSD":2,"RUB":2,"RWF":0,"SAR":2,"SBD":2,"SCR":2,"SDG":2,"SEK":2,"SGD":2,"SHP":2,"SLL":2,"SOS":2,"SRD":2,"SSP":2,"STN":2,"SYP":2,"SZL":2,"THB":2,"TJS":2,"TMT":2,"TND":3,"TOP":2,"TRY":2,"TTD":2,"TWD":2,"TZS":2,"UAH":2,"UGX":0,"USD":2,"UYU":2,"UZS":2,"VES":2,"VND":0,"VUV":0,"WST":2,"XAF":0,"XCD":2,"XOF":0,"XPF":0,"YER":2,"ZAR":2,"ZMW":2,"ZWL":2};
+  function amountCompound(amount, currencyCode) {
+    const decimalPlaces = DECIMALS[currencyCode];
+    if (decimalPlaces === undefined) throw new Error(/^\d+$/.test(currencyCode) ? 'Currency must be alphabetic (e.g. THB), not numeric' : `Unknown currency "${currencyCode}"`);
+    const minor = Math.round(Number(amount) * 10 ** decimalPlaces);
+    if (!Number.isFinite(minor) || minor <= 0) throw new Error('Amount must be a positive number');
+    const amountText = String(minor).padStart(12, '0');
+    if (amountText.length !== 12) throw new Error('Amount too large');
+    return { amount: minor / 10 ** decimalPlaces, amountText, currencyCode, decimalPlaces };
+  }
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+  const withParams = (url, p) => { const u = new URL(url); Object.entries(p).forEach(([k, v]) => u.searchParams.set(k, v)); return u.toString(); };
+
+  function buildBody() {
+    const orderNo = $('orderNo').value.trim();
+    if (!/^[A-Za-z0-9\-_+]{1,40}$/.test(orderNo)) throw new Error('orderNo must be 1–40 characters of A–Z a–z 0–9 - _ +');
+    const ret = $('returnUrl').value.trim() || '-';
+    const back = $('backendUrl').value.trim() || '-';
+    const body = {
+      apiRequest: { requestMessageID: uuid(), requestDateTime: new Date().toISOString(), language: 'en-US' },
+      officeId: $('officeId').value.trim(),
+      orderNo,
+      productDescription: $('desc').value.trim().slice(0, 50),
+      transactionAmount: amountCompound($('amount').value, $('currency').value.trim().toUpperCase()),
+      notificationUrls: {
+        // "-" = PACO shows its own result page. PACO adds orderNo etc. to your URL itself.
+        confirmationUrl: ret, failedUrl: ret, cancellationUrl: ret,
+        backendUrl: back,
+      },
+    };
+    if (api === 'nonUi') {
+      body.paymentType = 'CC';
+      if ($('tds').value) body.request3dsFlag = $('tds').value;
+      body.creditCardDetails = {
+        cardNumber: $('cardNo').value.replace(/\s+/g, ''), cardExpiryMMYY: $('cardExp').value.trim(),
+        cvvCode: $('cvv').value.trim(), cardHolderName: $('holder').value.trim(),
+      };
+      // 3DS device data: collected automatically from the browser, the customer never types it.
+      // (A real server also adds browserIP and the Accept header from the incoming request.)
+      body.deviceDetails = {
+        browserUserAgent: navigator.userAgent.slice(0, 500),
+        browserLanguage: /^[a-z]{2}-[A-Z]{2}$/.test(navigator.language) ? navigator.language : 'en-US',
+        browserColorDepth: screen.colorDepth, browserScreenHeight: screen.height, browserScreenWidth: screen.width,
+        browserTZ: new Date().getTimezoneOffset(), browserJavaEnabled: 'Y',
+        mobileDeviceFlag: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'Y' : 'N',
+      };
+    }
+    return body;
+  }
+  const maskCard = (b) => b.creditCardDetails ? { ...b, creditCardDetails: { ...b.creditCardDetails, cardNumber: b.creditCardDetails.cardNumber.replace(/^(\d{6})\d+(\d{4})$/, '$1******$2'), cvvCode: '***' } } : b;
+  const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;   // bash single-quote
+  const psq = (s) => `'${String(s).replace(/'/g, "''")}'`;          // PowerShell single-quote
+  function command(kind, { url, key, json }) {
+    if (json == null) { // GET (inquiry)
+      return kind === 'bash'
+        ? `curl -sS ${shq(url)} -H 'Accept: application/json' -H ${shq('apiKey: ' + key)}; echo`
+        : `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\ntry { (Invoke-WebRequest -UseBasicParsing -Uri ${psq(url)} -Headers @{ apiKey = ${psq(key)}; Accept = 'application/json' }).Content }\ncatch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+    }
+    if (kind === 'bash') {
+      return `curl -sS -X POST ${shq(url)} \\\n  -H 'Content-Type: application/json' -H 'Accept: application/json' \\\n  -H ${shq('apiKey: ' + key)} \\\n  -d ${shq(json)}; echo`;
+    }
+    // Windows PowerShell 5.1 and 7: force TLS 1.2, print the body on HTTP errors too
+    return `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\n`
+      + `try { (Invoke-WebRequest -UseBasicParsing -Method Post -Uri ${psq(url)} -ContentType 'application/json' -Headers @{ apiKey = ${psq(key)} } -Body ${psq(json)}).Content }\n`
+      + `catch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+  }
+  function renderCommand() {
+    if (!lastReq) return;
+    $('curl').textContent = command($('shell').value, lastReq).split(lastReq.key).join('<your API key>');
+  }
+  $('shell').value = /Win/i.test(navigator.userAgent) ? 'ps' : 'bash';
+  $('shell').addEventListener('change', renderCommand);
+
+  // ---------- result rendering ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  function showOut() { $('out').classList.remove('hidden'); }
+  function banner(kind, html) { $('banner').innerHTML = `<div class="banner ${kind}">${html}</div>`; }
+
+  function interpret(httpStatus, data) {
+    $('resView').textContent = (httpStatus ? `HTTP ${httpStatus}\n` : '') + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    const ar = data?.apiResponse || {};
+    const code = ar.responseCode ? `${esc(ar.responseCode)} ${esc(ar.responseDescription || '')}` : '';
+    const page = data?.data?.paymentPage?.paymentPageURL;
+    const result = data?.data?.paymentResult;
+    const incomplete = data?.data?.paymentIncompleteResult;
+    const web = data?.data?.webPaymentResult;
+    const challenge = incomplete?.aresACSChallenge?.challengeHtml;
+    if (Array.isArray(data?.data)) { // Inquiry: refunds are separate entries, recognised by their STEP
+      const isRefund = (e) => ['RI', 'RP', 'RP2', 'RP3', 'RF', 'RS', 'RR', 'RE', 'RX'].includes(e?.paymentStatusInfo?.paymentStep);
+      const pay = data.data.find((e) => !isRefund(e));
+      const refunds = data.data.filter(isRefund).length;
+      const st = pay?.paymentStatusInfo?.paymentStatus, step = pay?.paymentStatusInfo?.paymentStep;
+      const verdict = ['A', 'S'].includes(st) ? ['ok', 'PAID'] : ['F', 'C', 'E', 'V'].includes(st) ? ['err', 'NOT PAID'] : ['warn', 'IN PROGRESS'];
+      banner(verdict[0], `<b>Inquiry (source of truth): ${esc(verdict[1])}</b> · status ${esc(st ?? '-')} / step ${esc(step ?? '-')}<br>${data.data.length} entr${data.data.length === 1 ? 'y' : 'ies'} (attempts + ${refunds} refund${refunds === 1 ? '' : 's'}) · order ${esc(pay?.orderNo ?? '')}`);
+      return;
+    }
+    if (page) {
+      banner('ok', `<b>✓ Got a payment page link</b> ${code ? '· ' + code : ''}<br><small>"Success" here means the page was created, not that anyone has paid.</small><br>Pay with 4111111111111111 · CVV 123 · OTP 123456.<br>
+        <a class="go" href="${esc(page)}" target="_blank" rel="noopener">Open payment page →</a>`);
+    } else if (challenge) { // /nonUi 3DS: show the bank's page FULL PAGE
+      lastChallenge = challenge;
+      banner('ok', `<b>🔐 3DS / OTP needed</b> ${code ? '· ' + code : ''}<br>Open the bank's page and enter OTP <b>123456</b>. Afterwards PACO shows the result (or redirects to your URL) and sends the notification. Then check the real status in the <b>Inquiry</b> tab.<br>
+        <button class="small" id="openOtp" type="button" style="margin-top:8px">Open OTP page (full page) →</button>`);
+      $('openOtp').addEventListener('click', openChallenge);
+    } else if (web) { // /nonUi QR / wallet / deeplink
+      banner('ok', `<b>Send the customer to the payment app / QR</b> ${code ? '· ' + code : ''}<br>Pay before: ${esc(web.pspExpiryDateTime || web.paymentExpiryDateTime || '-')} (UTC)${web.content?.extra?.qrData ? '<br>QR data: <code>' + esc(web.content.extra.qrData) + '</code>' : ''}<br>
+        <a class="go" href="${esc(web.webPaymentUrl)}" target="_blank" rel="noopener">Open payment →</a>`);
+    } else if (incomplete && ar.responseCode && !['PC-B050001', 'PC-B050002'].includes(ar.responseCode)) { // /nonUi declined = HTTP 202
+      banner('err', `<b>✗ Payment not completed</b> · ${code}<br>Shown to the customer: “${esc(ar.marketingDescription || 'Your payment was not completed.')}”<br><small>Technical reason (store, don't show): ${esc(incomplete.failedReason || '-')}. A decline comes back as HTTP 202, not 4xx.</small>`);
+    } else if (result) {
+      const st = result.paymentStatusInfo?.paymentStatus;
+      const names = { A: 'Approved', S: 'Settled', V: 'Voided', F: 'Rejected', P: 'Pending', C: 'Cancelled', E: 'Expired' };
+      banner(st === 'A' || st === 'S' ? 'ok' : 'warn', `<b>Payment status: ${esc(st)} ${esc(names[st] || '')}</b> · order ${esc(result.orderNo)}${code ? '<br>' + code : ''}${result.failedReason ? '<br>' + esc(result.failedReason) : ''}<br><small>⚠️ First report only. Confirm with the Inquiry API before fulfilling an order.</small>`);
+    } else {
+      banner('err', `<b>✗ PACO did not return a link or a result</b>${code ? '<br>' + code : ''}<br>See the response below.`);
+    }
+  }
+
+  // ---------- send ----------
+  $('fire').addEventListener('click', async () => {
+    showOut(); $('fallback').classList.add('hidden'); $('resView').textContent = '(waiting…)';
+    let body = null, url;
+    const key = $('apiKey').value.trim();
+    try {
+      if (!key) throw new Error('Fill in the API key first (or load your .env file).');
+      if (/core\.paco\.2c2p\.com/.test(baseUrl()) && api !== 'inquiry') throw new Error('Production rejects plain JSON. Use the Node backend with JOSE for production.');
+      if (api === 'inquiry') {
+        const orderNo = $('inqOrder').value.trim();
+        if (!orderNo) throw new Error('Enter an orderNo.');
+        url = `${baseUrl()}/api/2.0/Inquiry/transactionStatus?orderNo=${encodeURIComponent(orderNo)}`;
+      } else {
+        if (!$('officeId').value.trim()) throw new Error('Fill in Office ID first (or load your .env file).');
+        url = `${baseUrl()}/api/2.0/Payment/${api}`;
+        body = buildBody();
+        $('inqOrder').value = body.orderNo; // ready for the Inquiry tab
+        $('orderNo').value = genOrderNo();   // fresh one for the next payment (edit it to retry with the same number)
+      }
+      if (!/^https:\/\//.test(url)) throw new Error('Base URL must start with https://');
+    } catch (e) { banner('err', esc(e.message)); $('resView').textContent = '(not sent)'; return; }
+
+    if ($('remember').checked) store.set({ baseUrl: baseUrl(), apiKey: key, officeId: $('officeId').value.trim() });
+    $('reqView').textContent = body
+      ? `POST ${url}\nContent-Type: application/json\napiKey: ••••${key.slice(-4)}\n\n${JSON.stringify(maskCard(body), null, 2)}`
+      : `GET ${url}\napiKey: ••••${key.slice(-4)}`;
+    lastReq = { url, key, json: body ? JSON.stringify(body) : null };
+    renderCommand();
+    $('probe').href = baseUrl() + '/';
+
+    $('fire').disabled = true; banner('warn', 'Sending…');
+    try {
+      const res = body
+        ? await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', apiKey: key }, body: JSON.stringify(body) })
+        : await fetch(url, { headers: { Accept: 'application/json', apiKey: key } });
+      const text = await res.text();
+      let data; try { data = JSON.parse(text); } catch { data = text; }
+      interpret(res.status, data);
+    } catch (e) {
+      // fetch() hides the reason: CORS block, IP not allowlisted, DNS, VPN… all look the same here.
+      banner('err', `<b>✗ The browser could not complete the call.</b><br>Either PACO doesn't accept calls from a browser (CORS), or this computer can't reach UAT (IP not allowlisted / VPN off). Use the terminal command below. It shows which one it is.`);
+      $('resView').textContent = `(${esc(e.message)})`;
+      $('fallback').classList.remove('hidden');
+    } finally { $('fire').disabled = false; }
+  });
+
+  $('copyCurl').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(command($('shell').value, lastReq)); $('copyCurl').textContent = 'Copied ✓ (includes your API key)'; }
+    catch { $('copyCurl').textContent = 'Copy failed: select the text manually'; }
+    setTimeout(() => ($('copyCurl').textContent = 'Copy command'), 2500);
+  });
+  $('readPasted').addEventListener('click', () => {
+    const t = $('pasted').value.trim();
+    try { interpret(null, JSON.parse(t)); }
+    catch {
+      const net = /NETWORK ERROR|reset|forcibly closed|connection was closed|could not be resolved|timed out|Recv failure/i.test(t);
+      banner('err', net ? '<b>✗ Network error before PACO answered.</b> This computer can\'t reach UAT: the IP isn\'t allowlisted, or VPN is off.'
+                        : 'That is not JSON. Paste the full output of the command.');
+    }
+  });
+})();
+</script>
+</body>
+</html>

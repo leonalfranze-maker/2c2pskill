@@ -70,7 +70,7 @@ These protect the merchant's money, their customers' card data and their credent
 | Email templates for the PO | `references/helpdesk-templates.md` |
 | **Fixed** overview deck: "What is PACO, what can it do" (give as-is) | `templates/slides/paco-overview.html` |
 | Executive proposal deck template (fill in the merchant's details) | `templates/slides/paco-executive-deck.html` |
-| **Ready-to-open HTML files (default for trying things):** API tester (prePaymentUi, nonUi with OTP page, Inquiry) and a sample checkout page | `templates/html/paco-tester.html`, `templates/html/sample-checkout.html` |
+| **Ready-to-open HTML file (default for trying things):** API tester (prePaymentUi, nonUi with OTP page, Inquiry), restyled to the merchant's look when they share their page | `templates/html/paco-tester.html` |
 | Working Node.js integration template (server side, for the real site; ask about Node.js first) | `templates/node/` |
 
 ## 4. Option 1: answer questions
@@ -114,7 +114,7 @@ Work in small steps. Stop after each step until it works. Keep a visible checkli
 **Step 2: Pick the flow.** Recommend `/prePaymentUi` (section 2, rule 8) unless they already run a PCI-compliant card form.
 
 **Step 3: Set up the project.**
-- **Just trying it / no Node.js:** give `templates/html/paco-tester.html` (or a sample page built on `templates/html/sample-checkout.html`, styled like their site). UAT only.
+- **Just trying it / no Node.js:** give `templates/html/paco-tester.html`, restyled like their site if they shared it (`references/match-merchant-ui.md`). UAT only.
 - **New/empty project:** copy `templates/node/` in.
 - **Existing project:** don't overwrite their files. Copy `paco/` and `scripts/` in, merge the template's npm scripts, `engines` and the `jose` dependency into their `package.json`, and add the template's three routes (`/api/checkout`, `/paco/notification`, `/payment/result`) to their server, using their own products as the catalog. Keep the template's README as `PACO-README.md`. Create `.env` from `.env.example` with empty values, then tell them:
 > I've created `.env` in your project. Open it, paste your **API key** after `PACO_API_KEY=` and your **Office ID** after `PACO_OFFICE_ID=`, save, and tell me "done". Please don't paste them here.
