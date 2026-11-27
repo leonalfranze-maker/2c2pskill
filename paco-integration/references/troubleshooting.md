@@ -7,7 +7,7 @@ Codes and meanings are from the Dev Zone. The **Action / Usual fix** columns are
 | Symptom | Cause | Action |
 |---|---|---|
 | TLS handshake reset / `ECONNRESET` / curl `(35) Connection reset by peer` to `*.demo-paco.2c2p.com` | source IP not allowlisted for UAT [2C2P confirmed] | Not a code problem. Run from the allowlisted machine/network. Otherwise send the server's public IP to the PO (draft email). |
-| Browser: `Failed to fetch` | the browser is calling PACO directly (CORS / network) | Architecture error: call PACO from the backend only. |
+| Browser: `Failed to fetch` | the browser is calling PACO directly; the call failed on the network (often IP not allowlisted / VPN off) | Calling PACO from the browser is an architecture error anyway: the API key would be visible in the page, and production needs JOSE with private keys. Call PACO from the backend only. |
 | DNS failure (`ENOTFOUND`) | typo in base URL, or no internet / proxy | Check `PACO_BASE_URL`. |
 
 ## HTTP errors
