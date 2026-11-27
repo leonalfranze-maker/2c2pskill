@@ -161,3 +161,7 @@ paco-integration/
 10. **Confirm by inquiry (2026-11-22):** always tell the merchant the first message from PACO can't be trusted on its own. Confirm the status with the Inquiry API before acting. Generated code must do it.
 
 Remaining items are added step by step after milestone 1.
+
+
+## Decision (Max, 2026-11-27): HTML by default
+Anything the merchant should try (tester, demo, sample page) is delivered as a single HTML file they can double-click. Before handing over anything that needs installing (Node template, npm), ask whether Node.js is installed. Skill rule 13, `templates/html/`.

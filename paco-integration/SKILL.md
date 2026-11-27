@@ -41,6 +41,7 @@ These protect the merchant's money, their customers' card data and their credent
 10. **Say where each command runs.** For example: "on the server whose IP 2C2P allowlisted" or "in a terminal in your project folder". UAT rejects machines that aren't allowlisted, so the place matters.
 11. **Check `feature-support.md` before building any feature**, and say what doesn't work **before** writing code, not after testing. Build on API **v2.0** only.
 12. **Business first, always, then technical.** Every answer starts from the business meaning; go more technical only as the user asks deeper. When asked what a field or term is (PNR, `paymentCategory`, settlement, …), first explain what it means in the merchant's business and why it matters, then what to do if they don't have it, then where it goes **in every API** that uses it, and only then the field rules. → `references/business-concepts.md`
+13. **HTML file by default for anything the user should try.** Testers, demos and sample pages are a **single HTML file** they can double-click (`templates/html/`), with no install. Before handing over anything that needs installing (the Node template, npm), **ask first whether Node.js ≥ 20.6 is installed**; if not, give the HTML version. HTML files call PACO from the browser with plain JSON, which is for **UAT testing only**: say so, and that a real site calls PACO from its server (rule 6).
 
 ## 3. Where to find things
 
@@ -69,7 +70,8 @@ These protect the merchant's money, their customers' card data and their credent
 | Email templates for the PO | `references/helpdesk-templates.md` |
 | **Fixed** overview deck: "What is PACO, what can it do" (give as-is) | `templates/slides/paco-overview.html` |
 | Executive proposal deck template (fill in the merchant's details) | `templates/slides/paco-executive-deck.html` |
-| Working Node.js integration template | `templates/node/` |
+| **Ready-to-open HTML files (default for trying things):** API tester (prePaymentUi, nonUi with OTP page, Inquiry) and a sample checkout page | `templates/html/paco-tester.html`, `templates/html/sample-checkout.html` |
+| Working Node.js integration template (server side, for the real site; ask about Node.js first) | `templates/node/` |
 
 ## 4. Option 1: answer questions
 
@@ -105,13 +107,14 @@ Afterwards, say where the file is, how many items are still to fill, and offer o
 
 Work in small steps. Stop after each step until it works. Keep a visible checklist of where the user is.
 
-**Step 1: Check prerequisites.** Show the checklist from `prerequisites.md` and ask which items they have. Don't ask for values. Missing items go on the PO list. Confirm the stack (v1 template: **Node.js ≥ 20.6**). For another stack, explain the flow from the references and port the template's logic carefully. Say it hasn't been tested on that stack.
+**Step 1: Check prerequisites.** Show the checklist from `prerequisites.md` and ask which items they have. Don't ask for values. Missing items go on the PO list. Ask whether **Node.js ≥ 20.6** is installed (rule 13). For a first try, start with the HTML tester (`templates/html/paco-tester.html`): double-click, load `.env`, send. For the real integration, the server template needs Node.js. For another stack, explain the flow from the references and port the template's logic carefully. Say it hasn't been tested on that stack.
 
 **Step 1b: Check the features they need.** Ask what they want to offer (cards only? QR/wallets? installments? saved cards? refunds from their back office? partial capture?). Look each up in `feature-support.md` **before building anything**. State ❌ and ⚠️ limits up front, and add every "ask 2C2P first" item they haven't confirmed to the PO list. Example: refunds by API are off by default.
 
 **Step 2: Pick the flow.** Recommend `/prePaymentUi` (section 2, rule 8) unless they already run a PCI-compliant card form.
 
 **Step 3: Set up the project.**
+- **Just trying it / no Node.js:** give `templates/html/paco-tester.html` (or a sample page built on `templates/html/sample-checkout.html`, styled like their site). UAT only.
 - **New/empty project:** copy `templates/node/` in.
 - **Existing project:** don't overwrite their files. Copy `paco/` and `scripts/` in, merge the template's npm scripts, `engines` and the `jose` dependency into their `package.json`, and add the template's three routes (`/api/checkout`, `/paco/notification`, `/payment/result`) to their server, using their own products as the catalog. Keep the template's README as `PACO-README.md`. Create `.env` from `.env.example` with empty values, then tell them:
 > I've created `.env` in your project. Open it, paste your **API key** after `PACO_API_KEY=` and your **Office ID** after `PACO_OFFICE_ID=`, save, and tell me "done". Please don't paste them here.

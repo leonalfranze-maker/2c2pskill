@@ -15,7 +15,10 @@ Don't copy logos or images you don't have; leave a placeholder (`[Your logo]`).
 - Don't load the merchant's scripts, trackers or third-party widgets into the sample page; copy the look, not the code.
 - If the page needs a login, is behind a paywall, or can't be opened: say so and ask for a screenshot instead.
 
-## How to apply it in the Node template
+## Default: a single HTML file
+Build the page as **one HTML file** the merchant can double-click (SKILL.md rule 13), starting from `templates/html/sample-checkout.html`: set the colours and fonts in its `:root` block, replace the form with theirs, and map the fields in its `buildRequest()`. It calls PACO from the browser, so it's for **UAT testing only**.
+
+## In the Node template (the real site, server side; ask about Node.js first)
 - **Theme:** set the variables at the top of `templates/node/public/style.css` (`--brand`, `--brand-ink`, `--font`, `--radius`, `--page-width`) to their colours, font, corners and width. Load a web font only if their site uses one and it's freely available.
 - **Fields:** add their fields to the page and send them to the server; map them to PACO fields with `data-mapping.md` (e.g. passenger names → `generalPayerDetails` and `airlineData.passengers[]`).
 - **Keep the safety rules**, whatever their page does: the amount comes from the server, never from the browser; card number and CVV are never logged or stored; on the own card form keep the PCI DSS note for the developer (it can move to a code comment or a UAT-only banner); the result page shows the status confirmed by **Inquiry**.
