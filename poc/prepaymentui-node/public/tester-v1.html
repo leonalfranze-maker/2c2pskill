@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACO API Tester (v1)</title>
+<!--
+  PACO API Tester: one file, open it in a browser. No server, no install.
+  Calls /prePaymentUi or /nonUi with PLAIN JSON (UAT only; production requires JOSE).
+  Credentials are typed in or loaded from your .env file. They are NOT stored in this file.
+  Sources: https://devzone.2c2p.com/reference/payviapaymentpage · https://devzone.2c2p.com/reference/pay
+-->
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1b1f24; --muted:#5f6b76; --line:#e2e5e9; --accent:#0b6bcb; --accent-ink:#fff;
+          --ok:#127a3b; --ok-bg:#e8f6ee; --err:#b42318; --err-bg:#fdecea; --warn:#8a5a00; --warn-bg:#fff6e0; --code:#f2f4f7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111418; --card:#1a1f25; --ink:#e7eaee; --muted:#9aa4ae; --line:#2b323a; --accent:#4c9bf0; --accent-ink:#0b1017;
+          --ok:#5fd08e; --ok-bg:#12291c; --err:#ff8a80; --err-bg:#2d1513; --warn:#f4c46a; --warn-bg:#2b2311; --code:#14181d; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:880px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:22px; margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 20px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px; }
+  .card h2 { font-size:15px; margin:0 0 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; }
+  input, select, textarea { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit; }
+  textarea { font:12px/1.45 ui-monospace, Menlo, Consolas, monospace; min-height:90px; }
+  .tabs { display:flex; gap:6px; margin-bottom:14px; }
+  .tab { flex:1; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); cursor:pointer; font:inherit; text-align:left; }
+  .tab b { display:block; } .tab span { font-size:12px; color:var(--muted); }
+  .tab[aria-selected="true"] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+  button.primary { padding:12px 18px; border:0; border-radius:8px; background:var(--accent); color:var(--accent-ink); font:inherit; font-weight:600; cursor:pointer; }
+  button.primary:disabled { opacity:.6; cursor:wait; }
+  button.small { padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font:13px system-ui; cursor:pointer; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+  .hint { font-size:12px; color:var(--muted); }
+  .banner { border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .banner.ok { background:var(--ok-bg); color:var(--ok); } .banner.err { background:var(--err-bg); color:var(--err); } .banner.warn { background:var(--warn-bg); color:var(--warn); }
+  .banner a.go { display:inline-block; margin-top:8px; padding:9px 14px; border-radius:8px; background:var(--ok); color:var(--card); font-weight:600; text-decoration:none; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:10px; overflow:auto; font:12px/1.45 ui-monospace, Menlo, Consolas, monospace; max-height:360px; margin:6px 0 0; white-space:pre-wrap; word-break:break-all; }
+  details { margin-top:10px; } summary { cursor:pointer; font-weight:600; font-size:14px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PACO API Tester</h1>
+  <p class="sub">Fire <b>/prePaymentUi</b> or <b>/nonUi</b> against the UAT sandbox with plain JSON. Credentials stay in this browser only.</p>
+
+  <section class="card">
+    <h2>1 · Connection
+      <span><input id="envFile" type="file" accept=".env,text/plain" class="hidden"><button class="small" id="loadEnv" type="button">Load .env file</button></span>
+    </h2>
+    <div class="grid">
+      <div><label for="baseUrl">Environment</label>
+        <select id="envSel">
+          <option value="https://core.demo-paco.2c2p.com">UAT: core.demo-paco.2c2p.com</option>
+          <option value="custom">Custom base URL…</option>
+        </select>
+        <input id="baseUrl" class="hidden" placeholder="https://..." style="margin-top:6px">
+      </div>
+      <div><label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="from onboarding"></div>
+      <div><label for="officeId">Office ID</label><input id="officeId" autocomplete="off" placeholder="from onboarding"></div>
+    </div>
+    <div class="row"><label style="display:flex;gap:6px;align-items:center;margin:0"><input id="remember" type="checkbox" style="width:auto"> Remember on this browser</label>
+      <button class="small" id="forget" type="button">Forget</button>
+      <span class="hint">Plain JSON works in UAT only. Production needs JOSE (use the Node backend).</span></div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Request</h2>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-pre" aria-selected="true" type="button"><b>/prePaymentUi</b><span>Get a link to the 2C2P payment page</span></button>
+      <button class="tab" role="tab" id="tab-non" aria-selected="false" type="button"><b>/nonUi</b><span>Charge card details directly</span></button>
+    </div>
+    <div class="grid">
+      <div><label for="desc">Product description (max 50)</label><input id="desc" maxlength="50" value="Skill POC test"></div>
+      <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="100.00"></div>
+      <div><label for="currency">Currency</label><input id="currency" maxlength="3" value="THB"></div>
+      <div><label for="returnUrl">Return URL (customer comes back here)</label><input id="returnUrl" value="https://example.com/paco-return"></div>
+      <div><label for="backendUrl">Backend notification URL</label><input id="backendUrl" value="https://example.com/paco/notification"></div>
+    </div>
+    <div id="cardBox" class="grid hidden" style="margin-top:12px">
+      <div><label for="cardNo">Card number</label><input id="cardNo" value="4111111111111111" autocomplete="off"></div>
+      <div><label for="cardExp">Expiry MMYY</label><input id="cardExp" value="1230" maxlength="4"></div>
+      <div><label for="cvv">CVV</label><input id="cvv" value="123" maxlength="3"></div>
+      <div><label for="holder">Card holder</label><input id="holder" value="TEST CARDHOLDER"></div>
+      <div><label for="tds">3DS (request3dsFlag)</label>
+        <select id="tds"><option value="Y">Y: ask for OTP</option><option value="">office default</option><option value="N">N: no 3DS</option><option value="Y-Strict">Y-Strict</option></select></div>
+    </div>
+    <p class="hint" style="margin-top:12px">Test cards (TH): Visa 4111111111111111 · MasterCard 5555555555554444 · CVV 123 · OTP 123456.</p>
+    <div class="row"><button class="primary" id="fire" type="button">Send request</button></div>
+  </section>
+
+  <section class="card hidden" id="out">
+    <h2>3 · Result</h2>
+    <div id="banner"></div>
+    <div id="fallback" class="hidden">
+      <p style="margin:0 0 6px"><b>Step 1: which problem is it?</b> Open the PACO host in a new tab.</p>
+      <ul class="hint" style="margin:0 0 6px;padding-left:18px">
+        <li>Any page or error code shows (404, 401, JSON…) → this computer <b>can</b> reach UAT. The browser is blocked by <b>CORS</b>, so use Step 2.</li>
+        <li>"This site can't be reached" / <code>ERR_CONNECTION_RESET</code> → this computer <b>can't</b> reach UAT: <b>IP not allowlisted or VPN off</b>. Step 2 will fail too until that's fixed.</li>
+      </ul>
+      <div class="row" style="margin-top:0"><a class="small" id="probe" target="_blank" rel="noopener" style="text-decoration:none">Open PACO host ↗</a></div>
+      <p style="margin:14px 0 6px"><b>Step 2: send it from a terminal instead.</b> Copy the command, run it on this computer, then paste the output below.</p>
+      <div class="row" style="margin-top:0"><label for="shell" style="margin:0">Terminal</label>
+        <select id="shell" style="width:auto"><option value="ps">Windows PowerShell</option><option value="bash">macOS / Linux (bash)</option></select></div>
+      <pre id="curl"></pre>
+      <div class="row" style="margin-top:8px"><button class="small" id="copyCurl" type="button">Copy command</button></div>
+      <label for="pasted" style="margin-top:12px">Paste the response here</label>
+      <textarea id="pasted" placeholder='{"version":"2.0","apiResponse":{...},"data":{...}}'></textarea>
+      <div class="row" style="margin-top:8px"><button class="small" id="readPasted" type="button">Read response</button></div>
+    </div>
+    <details open><summary>Request sent</summary><pre id="reqView"></pre></details>
+    <details open><summary>Response</summary><pre id="resView">(none)</pre></details>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STORE = 'paco-tester';
+  let api = 'prePaymentUi';
+  let lastReq = null; // { url, key, json }
+
+  // ---------- settings ----------
+  const baseUrl = () => ($('envSel').value === 'custom' ? $('baseUrl').value.trim() : $('envSel').value).replace(/\/$/, '');
+  function setBase(url) {
+    const opt = [...$('envSel').options].find((o) => o.value === url);
+    if (opt) { $('envSel').value = url; $('baseUrl').classList.add('hidden'); }
+    else { $('envSel').value = 'custom'; $('baseUrl').value = url; $('baseUrl').classList.remove('hidden'); }
+  }
+  $('envSel').addEventListener('change', () => $('baseUrl').classList.toggle('hidden', $('envSel').value !== 'custom'));
+
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem(STORE) || 'null'); } catch { return null; } },
+    set(v) { try { localStorage.setItem(STORE, JSON.stringify(v)); } catch {} },
+    clear() { try { localStorage.removeItem(STORE); } catch {} },
+  };
+  const saved = store.get();
+  if (saved) { setBase(saved.baseUrl); $('apiKey').value = saved.apiKey || ''; $('officeId').value = saved.officeId || ''; $('remember').checked = true; }
+  $('forget').addEventListener('click', () => { store.clear(); $('apiKey').value = ''; $('officeId').value = ''; $('remember').checked = false; });
+
+  // Load a .env file: reads PACO_BASE_URL / PACO_ENV, PACO_API_KEY, PACO_OFFICE_ID, PACO_CURRENCY
+  $('loadEnv').addEventListener('click', () => $('envFile').click());
+  $('envFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const env = {};
+    for (const line of (await f.text()).split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/); if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+    if (env.PACO_BASE_URL) setBase(env.PACO_BASE_URL.replace(/\/$/, ''));
+    else if ((env.PACO_ENV || '').toUpperCase() === 'UAT') setBase('https://core.demo-paco.2c2p.com');
+    if (env.PACO_API_KEY) $('apiKey').value = env.PACO_API_KEY;
+    if (env.PACO_OFFICE_ID) $('officeId').value = env.PACO_OFFICE_ID;
+    if (env.PACO_CURRENCY) $('currency').value = env.PACO_CURRENCY;
+    e.target.value = '';
+    showOut(); banner('ok', `Loaded ${esc(f.name)}: ${env.PACO_API_KEY ? 'API key ✓' : 'API key missing'} · ${env.PACO_OFFICE_ID ? 'Office ID ✓' : 'Office ID missing'}`);
+  });
+
+  // ---------- tabs ----------
+  function selectTab(name) {
+    api = name;
+    $('tab-pre').setAttribute('aria-selected', name === 'prePaymentUi');
+    $('tab-non').setAttribute('aria-selected', name === 'nonUi');
+    $('cardBox').classList.toggle('hidden', name !== 'nonUi');
+  }
+  $('tab-pre').addEventListener('click', () => selectTab('prePaymentUi'));
+  $('tab-non').addEventListener('click', () => selectTab('nonUi'));
+
+  // ---------- request building (same rules as the Node backend) ----------
+  const DECIMALS = { JPY: 0, KRW: 0, VND: 0 };
+  function amountCompound(amount, currencyCode) {
+    const decimalPlaces = DECIMALS[currencyCode] ?? 2;
+    const minor = Math.round(Number(amount) * 10 ** decimalPlaces);
+    if (!Number.isFinite(minor) || minor <= 0) throw new Error('Amount must be a positive number');
+    const amountText = String(minor).padStart(12, '0');
+    if (amountText.length !== 12) throw new Error('Amount too large');
+    return { amount: minor / 10 ** decimalPlaces, amountText, currencyCode, decimalPlaces };
+  }
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+  const withParams = (url, p) => { const u = new URL(url); Object.entries(p).forEach(([k, v]) => u.searchParams.set(k, v)); return u.toString(); };
+
+  function buildBody() {
+    const orderNo = `ORD${Date.now()}${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`;
+    const ret = $('returnUrl').value.trim();
+    const body = {
+      apiRequest: { requestMessageID: uuid(), requestDateTime: new Date().toISOString(), language: 'en-US' },
+      officeId: $('officeId').value.trim(),
+      orderNo,
+      productDescription: $('desc').value.trim().slice(0, 50),
+      transactionAmount: amountCompound($('amount').value, $('currency').value.trim().toUpperCase()),
+      notificationUrls: {
+        confirmationUrl: withParams(ret, { status: 'success', orderNo }),
+        failedUrl: withParams(ret, { status: 'failed', orderNo }),
+        cancellationUrl: withParams(ret, { status: 'cancelled', orderNo }),
+        backendUrl: $('backendUrl').value.trim(),
+      },
+    };
+    if (api === 'nonUi') {
+      body.paymentType = 'CC';
+      if ($('tds').value) body.request3dsFlag = $('tds').value;
+      body.creditCardDetails = {
+        cardNumber: $('cardNo').value.replace(/\s+/g, ''), cardExpiryMMYY: $('cardExp').value.trim(),
+        cvvCode: $('cvv').value.trim(), cardHolderName: $('holder').value.trim(),
+      };
+    }
+    return body;
+  }
+  const maskCard = (b) => b.creditCardDetails ? { ...b, creditCardDetails: { ...b.creditCardDetails, cardNumber: b.creditCardDetails.cardNumber.replace(/^(\d{6})\d+(\d{4})$/, '$1******$2'), cvvCode: '***' } } : b;
+  const shq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;   // bash single-quote
+  const psq = (s) => `'${String(s).replace(/'/g, "''")}'`;          // PowerShell single-quote
+  function command(kind, { url, key, json }) {
+    if (kind === 'bash') {
+      return `curl -sS -X POST ${shq(url)} \\\n  -H 'Content-Type: application/json' -H 'Accept: application/json' \\\n  -H ${shq('apiKey: ' + key)} \\\n  -d ${shq(json)}; echo`;
+    }
+    // Windows PowerShell 5.1 and 7: force TLS 1.2, print the body on HTTP errors too
+    return `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'\n`
+      + `try { (Invoke-WebRequest -UseBasicParsing -Method Post -Uri ${psq(url)} -ContentType 'application/json' -Headers @{ apiKey = ${psq(key)} } -Body ${psq(json)}).Content }\n`
+      + `catch { if ($_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { 'NETWORK ERROR: ' + $_.Exception.Message } }`;
+  }
+  function renderCommand() {
+    if (!lastReq) return;
+    $('curl').textContent = command($('shell').value, lastReq).split(lastReq.key).join('<your API key>');
+  }
+  $('shell').value = /Win/i.test(navigator.userAgent) ? 'ps' : 'bash';
+  $('shell').addEventListener('change', renderCommand);
+
+  // ---------- result rendering ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  function showOut() { $('out').classList.remove('hidden'); }
+  function banner(kind, html) { $('banner').innerHTML = `<div class="banner ${kind}">${html}</div>`; }
+
+  function interpret(httpStatus, data) {
+    $('resView').textContent = (httpStatus ? `HTTP ${httpStatus}\n` : '') + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    const ar = data?.apiResponse || {};
+    const code = ar.responseCode ? `${esc(ar.responseCode)} ${esc(ar.responseDescription || '')}` : '';
+    const page = data?.data?.paymentPage?.paymentPageURL;
+    const result = data?.data?.paymentResult;
+    if (page) {
+      banner('ok', `<b>✓ Got a payment page link</b> ${code ? '· ' + code : ''}<br>Pay with 4111111111111111 · CVV 123 · OTP 123456.<br>
+        <a class="go" href="${esc(page)}" target="_blank" rel="noopener">Open payment page →</a>`);
+    } else if (result) {
+      const st = result.paymentStatusInfo?.paymentStatus;
+      const names = { A: 'Authorized', S: 'Settled', V: 'Voided', F: 'Failed', P: 'Pending' };
+      banner(st === 'A' || st === 'S' ? 'ok' : 'warn', `<b>Payment status: ${esc(st)} ${esc(names[st] || '')}</b> · order ${esc(result.orderNo)}${code ? '<br>' + code : ''}${result.failedReason ? '<br>' + esc(result.failedReason) : ''}`);
+    } else {
+      banner('err', `<b>✗ PACO did not return a link or a result</b>${code ? '<br>' + code : ''}<br>See the response below.`);
+    }
+  }
+
+  // ---------- send ----------
+  $('fire').addEventListener('click', async () => {
+    showOut(); $('fallback').classList.add('hidden'); $('resView').textContent = '(waiting…)';
+    let body, url;
+    try {
+      if (!$('apiKey').value.trim() || !$('officeId').value.trim()) throw new Error('Fill in API key and Office ID first (or load your .env file).');
+      url = `${baseUrl()}/api/2.0/Payment/${api}`;
+      if (!/^https:\/\//.test(url)) throw new Error('Base URL must start with https://');
+      if (/core\.paco\.2c2p\.com/.test(url)) throw new Error('Production rejects plain JSON. Use the Node backend with JOSE for production.');
+      body = buildBody();
+    } catch (e) { banner('err', esc(e.message)); $('resView').textContent = '(not sent)'; return; }
+
+    if ($('remember').checked) store.set({ baseUrl: baseUrl(), apiKey: $('apiKey').value.trim(), officeId: $('officeId').value.trim() });
+    $('reqView').textContent = `POST ${url}\nContent-Type: application/json\napiKey: ••••${$('apiKey').value.trim().slice(-4)}\n\n${JSON.stringify(maskCard(body), null, 2)}`;
+    lastReq = { url, key: $('apiKey').value.trim(), json: JSON.stringify(body) };
+    renderCommand();
+    $('probe').href = baseUrl() + '/';
+
+    $('fire').disabled = true; banner('warn', 'Sending…');
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', apiKey: $('apiKey').value.trim() }, body: JSON.stringify(body) });
+      const text = await res.text();
+      let data; try { data = JSON.parse(text); } catch { data = text; }
+      interpret(res.status, data);
+    } catch (e) {
+      // fetch() hides the reason: CORS block, IP not allowlisted, DNS, VPN… all look the same here.
+      banner('err', `<b>✗ The browser could not complete the call.</b><br>Either PACO doesn't accept calls from a browser (CORS), or this computer can't reach UAT (IP not allowlisted / VPN off). Use the terminal command below. It shows which one it is.`);
+      $('resView').textContent = `(${esc(e.message)})`;
+      $('fallback').classList.remove('hidden');
+    } finally { $('fire').disabled = false; }
+  });
+
+  $('copyCurl').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(command($('shell').value, lastReq)); $('copyCurl').textContent = 'Copied ✓ (includes your API key)'; }
+    catch { $('copyCurl').textContent = 'Copy failed: select the text manually'; }
+    setTimeout(() => ($('copyCurl').textContent = 'Copy command'), 2500);
+  });
+  $('readPasted').addEventListener('click', () => {
+    const t = $('pasted').value.trim();
+    try { interpret(null, JSON.parse(t)); }
+    catch {
+      const net = /NETWORK ERROR|reset|forcibly closed|connection was closed|could not be resolved|timed out|Recv failure/i.test(t);
+      banner('err', net ? '<b>✗ Network error before PACO answered.</b> This computer can\'t reach UAT: the IP isn\'t allowlisted, or VPN is off.'
+                        : 'That is not JSON. Paste the full output of the command.');
+    }
+  });
+})();
+</script>
+</body>
+</html>
