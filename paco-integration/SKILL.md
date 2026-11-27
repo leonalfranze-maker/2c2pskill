@@ -113,7 +113,7 @@ Work in small steps. Stop after each step until it works. Keep a visible checkli
 
 **Step 2: Pick the flow.** Recommend `/prePaymentUi` (section 2, rule 8) unless they already run a PCI-compliant card form.
 - **`/prePaymentUi`:** the customer pays on 2C2P's own payment page, so there's no payment page to design.
-- **`/nonUi`:** the merchant shows **their own** payment page, so it must look like their site. **Always ask:** *"Do you have an example of the payment or checkout page you use now? A screenshot is fine, or send me a link and I'll read it."* Then build their card payment page in that style (`references/match-merchant-ui.md` → *nonUi payment page*). If they have nothing to show, use a clean neutral style and offer to restyle it later.
+- **`/nonUi`:** the merchant shows **their own** payment page, so it must look like their site. **Always ask:** *"Do you have an example of the payment or checkout page you use now? A screenshot is fine, or send me a link and I'll read it."* Ask only this first; other questions later. Then build their card payment page in that style: a real customer-facing payment step with their pay button, and the test settings in a collapsed panel at the bottom (`references/match-merchant-ui.md` → *nonUi payment page*, *Well-known brands*). If they have nothing to show, use a clean neutral style and offer to restyle it later.
 
 **Step 3: Set up the project.**
 - **Just trying it / no Node.js:** give `templates/html/paco-tester.html`, restyled like their site if they shared it (`references/match-merchant-ui.md`). UAT only.

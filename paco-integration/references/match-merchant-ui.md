@@ -8,11 +8,21 @@ When the AI builds or adapts a page for the merchant (checkout, passenger/contac
 - Any other page you build for them (tester, demo): if they've already shown their page, use its style.
 
 ## nonUi payment page
-Build the **card payment page** the customer will see, in their style:
-- Their look (below) + the `/nonUi` functions from the HTML tester's /nonUi tab: card number, expiry (MMYY), CVV, name on card; device data collected automatically; the result handling: approved → result, **3DS → the bank's OTP page full page**, declined → `marketingDescription`; then **Inquiry** for the real status.
-- Keep their wording, field order and button style where they have them (e.g. their "Pay now" button).
-- **HTML file by default** (SKILL.md rule 13) for UAT testing. For the real site, the same page is served by their server (Node template `public/card.html` + theme), never calling PACO from the browser.
-- Keep the PCI DSS note for the developer (`payment-apis.md`).
+This is the page **the merchant's customers will see**, so it looks like a real payment step of their site, not like a tester:
+- **Their frame:** header colours, progress steps (e.g. "1 Flights · 2 Passengers · … · 5 Payment" with *Payment* active), headings, fonts, card/box style.
+- **Order summary** in their style (what's paid, the amount).
+- **Card form** in the middle: card number, expiry (MMYY), CVV, name on card, in their input style.
+- **Their pay button and wording** (e.g. "Pay now", "Make payment"): relabel freely.
+- **The `/nonUi` functions from the HTML tester:** device data collected automatically; approved → result; **3DS → the bank's OTP page full page**; declined → `marketingDescription`; then **Inquiry** for the real status.
+- **Test settings** (API key, office ID, order number, request/response, Inquiry button) go in a **collapsed "Test settings (developer only)" panel at the bottom**, clearly outside their design. UAT only.
+- **HTML file by default** (SKILL.md rule 13). For the real site the same page is served by their server (Node template `public/card.html` + theme) and never calls PACO from the browser.
+- Keep the PCI DSS note for the developer (in the test panel or a code comment, not in the customer's view).
+
+## Order of questions
+Ask **one thing first**: the screenshot or link of their current page. Ask the rest (Node.js, level, PCI DSS agreement) later, when it's needed.
+
+## Well-known brands
+If the page belongs to a well-known company, **confirm the user is that company or works for it** before styling the page like it. Either way, **never put their logo, brand name or trademarks** in the page: use `[Your logo]` / `[Your brand]` placeholders that their team fills in. Copy the look (colours, layout, type style), not the brand.
 
 ## From a screenshot
 Copy what you can see:
@@ -28,7 +38,8 @@ Don't copy logos or images you don't have; leave a placeholder (`[Your logo]`).
 - If the page needs a login, is behind a paywall, or can't be opened: say so and ask for a screenshot instead.
 
 ## Default: a single HTML file
-Start from the **HTML tester** `templates/html/paco-tester.html` and keep **all of its functions** (connection, /prePaymentUi, /nonUi with the OTP page, Inquiry, request/response view). **Change only how it looks** so it feels like their site: colours, fonts, headings, input style (e.g. filled boxes with the label inside and an underline), checkbox / radio / tab / button style, page width. Add a THEME block at the end of its `<style>`; don't rebuild the page around their form. One file they can double-click (SKILL.md rule 13). It calls PACO from the browser, so it's for **UAT testing only**.
+**Developer tester in their look:** start from the **HTML tester** `templates/html/paco-tester.html` and keep **all of its functions** (connection, /prePaymentUi, /nonUi with the OTP page, Inquiry, request/response view). **Change only how it looks** so it feels like their site: colours, fonts, headings, input style (e.g. filled boxes with the label inside and an underline), checkbox / radio / tab / button style, page width. Add a THEME block at the end of its `<style>`; don't rebuild the page around their form. One file they can double-click (SKILL.md rule 13). It calls PACO from the browser, so it's for **UAT testing only**.
+**Customer-facing nonUi payment page:** see *nonUi payment page* above (their layout, tester functions underneath).
 
 ## In the Node template (the real site, server side; ask about Node.js first)
 - **Theme:** set the variables at the top of `templates/node/public/style.css` (`--brand`, `--brand-ink`, `--font`, `--radius`, `--page-width`) to their colours, font, corners and width. Load a web font only if their site uses one and it's freely available.
