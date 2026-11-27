@@ -148,7 +148,7 @@ Send `billingAddress` (Line1, City, PostCode, Country) with it. Missing required
 | `passengers[].firstName` / `lastName` | ≤ 64 | yes |
 | `passengers[].middleName` | ≤ 64 | no |
 | `passengers[].email` | email, ≤ 100 recommended | yes |
-| `passengers[].mobileNo` | 8–15 digits | no |
+| `passengers[].mobileNo` | 8–15 digits: **country code + number without the leading 0** (`0830753193` → `66830753193`). Always this format. | no |
 | `passengers[].gender` | `F`, `M`, `X` | no |
 | `passengers[].type` | IATA passenger type: `ADT`, `CNN`, `INF` | no |
 | `passengers[].identificationNo` / `documentType` / `title` | ≤ 30 / 30 / 10 | no |
