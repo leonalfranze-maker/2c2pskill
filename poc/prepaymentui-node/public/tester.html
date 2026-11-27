@@ -39,6 +39,23 @@
   .banner a.go { display:inline-block; margin-top:8px; padding:9px 14px; border-radius:8px; background:var(--ok); color:var(--card); font-weight:600; text-decoration:none; }
   pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:10px; overflow:auto; font:12px/1.45 ui-monospace, Menlo, Consolas, monospace; max-height:360px; margin:6px 0 0; white-space:pre-wrap; word-break:break-all; }
   details { margin-top:10px; } summary { cursor:pointer; font-weight:600; font-size:14px; }
+
+  .section-title { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:18px 0 10px; }
+  .section-title:first-child { margin-top:0; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+  .g-card { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+  .full { grid-column:1 / -1; }
+  @media (max-width:640px) { .g2, .g3, .g-card { grid-template-columns:1fr; } }
+  .with-btn { display:flex; gap:8px; } .with-btn input { flex:1; }
+  .icon-btn { padding:0 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); cursor:pointer; font:inherit; white-space:nowrap; }
+  .field-hint { font-size:12px; color:var(--muted); margin-top:4px; }
+  input.bad { border-color:var(--err); }
+  .seg { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:6px; }
+  .sendbar { margin-top:18px; } .sendbar button.primary { width:100%; padding:14px; font-size:16px; }
+  details.adv > summary { font-size:13px; color:var(--muted); font-weight:600; margin-top:14px; }
+  label { min-height:20px; line-height:20px; }
+  .pill { display:inline-block; font-size:11px; line-height:16px; padding:0 8px; border-radius:999px; background:var(--code); color:var(--muted); border:1px solid var(--line); margin-left:6px; font-weight:500; }
   .hidden { display:none; }
 </style>
 </head>
@@ -54,7 +71,7 @@
     <div class="grid">
       <div><label for="baseUrl">Environment</label>
         <select id="envSel">
-          <option value="https://core.demo-paco.2c2p.com">UAT: core.demo-paco.2c2p.com</option>
+          <option value="https://core.demo-paco.2c2p.com">UAT sandbox</option>
           <option value="custom">Custom base URL…</option>
         </select>
         <input id="baseUrl" class="hidden" placeholder="https://..." style="margin-top:6px">
@@ -69,31 +86,55 @@
 
   <section class="card">
     <h2>2 · Request</h2>
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="tab-pre" aria-selected="true" type="button"><b>/prePaymentUi</b><span>Get a link to the 2C2P payment page</span></button>
+    <div class="seg" role="tablist">
+      <button class="tab" role="tab" id="tab-pre" aria-selected="true" type="button"><b>/prePaymentUi</b><span>Link to the 2C2P payment page</span></button>
       <button class="tab" role="tab" id="tab-non" aria-selected="false" type="button"><b>/nonUi</b><span>Charge card details directly</span></button>
-      <button class="tab" role="tab" id="tab-inq" aria-selected="false" type="button"><b>Inquiry</b><span>Check the real status of an order</span></button>
+      <button class="tab" role="tab" id="tab-inq" aria-selected="false" type="button"><b>Inquiry</b><span>Check the real status</span></button>
     </div>
-    <div id="inqBox" class="grid hidden">
+
+    <div id="inqBox" class="hidden">
+      <p class="section-title">Order to check</p>
       <div><label for="inqOrder">orderNo</label><input id="inqOrder" placeholder="filled in after each payment request"></div>
     </div>
-    <div class="grid" id="payBox">
-      <div><label for="desc">Product description (max 50)</label><input id="desc" maxlength="50" value="Skill POC test"></div>
-      <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="100.00"></div>
-      <div><label for="currency">Currency</label><input id="currency" maxlength="3" value="THB"></div>
-      <div><label for="returnUrl">Return URL (<code>-</code> = PACO's own result page)</label><input id="returnUrl" value="-"></div>
-      <div><label for="backendUrl">Backend notification URL (<code>-</code> = office setting)</label><input id="backendUrl" value="-"></div>
+
+    <div id="payBox">
+      <p class="section-title">Order</p>
+      <div class="g2">
+        <div><label for="orderNo">Invoice / order number (orderNo)</label>
+          <div class="with-btn"><input id="orderNo" maxlength="40" autocomplete="off"><button class="icon-btn" id="newOrderNo" type="button" title="Generate a new one">↻ New</button></div>
+          <div class="field-hint" id="orderNoHint">Generated for you. Edit it if you like: 1–40 of A–Z a–z 0–9 - _ +</div></div>
+        <div><label for="desc">Product description <span class="pill">max 50</span></label><input id="desc" maxlength="50" value="Skill POC test"></div>
+      </div>
+      <div class="g2" style="margin-top:12px">
+        <div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" value="100.00"></div>
+        <div><label for="currency">Currency <span class="pill">alphabetic, e.g. THB</span></label><input id="currency" maxlength="3" value="THB"></div>
+      </div>
+
+      <div id="cardBox" class="hidden">
+        <p class="section-title">Card</p>
+        <div class="g-card">
+          <div><label for="cardNo">Card number</label><input id="cardNo" value="4111111111111111" autocomplete="off" inputmode="numeric"></div>
+          <div><label for="cardExp">Expiry <span class="pill">MMYY</span></label><input id="cardExp" value="1230" maxlength="4" inputmode="numeric"></div>
+          <div><label for="cvv">CVV</label><input id="cvv" value="123" maxlength="4" inputmode="numeric"></div>
+        </div>
+        <div class="g2" style="margin-top:12px">
+          <div><label for="holder">Name on card <span class="pill">English letters</span></label><input id="holder" value="TEST CARDHOLDER"></div>
+          <div><label for="tds">3DS (request3dsFlag)</label>
+            <select id="tds"><option value="Y">Y: ask the bank for 3DS / OTP</option><option value="">Not sent: office setting</option><option value="N">N: no 3DS</option><option value="Y-Strict">Y-Strict: full authentication only</option></select></div>
+        </div>
+        <p class="field-hint">Device data for 3DS (user agent, screen, language, time zone) is added automatically, as a merchant's system would.</p>
+      </div>
+
+      <details class="adv"><summary>Return and notification URLs</summary>
+        <div class="g2" style="margin-top:10px">
+          <div><label for="returnUrl">Return URL <span class="pill">- = PACO's result page</span></label><input id="returnUrl" value="-"></div>
+          <div><label for="backendUrl">Backend notification URL <span class="pill">- = office setting</span></label><input id="backendUrl" value="-"></div>
+        </div>
+      </details>
     </div>
-    <div id="cardBox" class="grid hidden" style="margin-top:12px">
-      <div><label for="cardNo">Card number</label><input id="cardNo" value="4111111111111111" autocomplete="off"></div>
-      <div><label for="cardExp">Expiry MMYY</label><input id="cardExp" value="1230" maxlength="4"></div>
-      <div><label for="cvv">CVV</label><input id="cvv" value="123" maxlength="4"></div>
-      <div><label for="holder">Card holder</label><input id="holder" value="TEST CARDHOLDER"></div>
-      <div><label for="tds">3DS (request3dsFlag)</label>
-        <select id="tds"><option value="Y">Y: ask for OTP</option><option value="">office default</option><option value="N">N: no 3DS</option><option value="Y-Strict">Y-Strict</option></select></div>
-    </div>
-    <p class="hint" style="margin-top:12px">Test cards (TH): Visa 4111111111111111 · MasterCard 5555555555554444 · CVV 123 · OTP 123456 · expiry 1230. Decline test: 4444333322221111. For /nonUi, the browser's device data (user agent, screen, language, time zone) is added automatically, as a merchant's system would.</p>
-    <div class="row"><button class="primary" id="fire" type="button">Send request</button></div>
+
+    <p class="hint" style="margin-top:14px">UAT test cards: Visa 4111111111111111 · Mastercard 5555555555554444 · CVV 123 · expiry 1230 · OTP 123456 · decline test 4444333322221111.</p>
+    <div class="sendbar"><button class="primary" id="fire" type="button">Send request</button></div>
   </section>
 
   <section class="card hidden" id="out">
@@ -127,6 +168,8 @@
   let api = 'prePaymentUi';
   let lastReq = null; // { url, key, json }
   let lastChallenge = null;
+  const genOrderNo = () => `ORD${Date.now()}${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`;
+  const ORDER_RE = /^[A-Za-z0-9\-_+]{1,40}$/;
   function openChallenge() { // decode Base64 challengeHtml and open it as a full page
     const bytes = Uint8Array.from(atob(lastChallenge), (c) => c.charCodeAt(0));
     const html = new TextDecoder().decode(bytes);
@@ -184,6 +227,13 @@
   $('tab-pre').addEventListener('click', () => selectTab('prePaymentUi'));
   $('tab-non').addEventListener('click', () => selectTab('nonUi'));
   $('tab-inq').addEventListener('click', () => selectTab('inquiry'));
+  $('orderNo').value = genOrderNo();
+  $('newOrderNo').addEventListener('click', () => { $('orderNo').value = genOrderNo(); $('orderNo').dispatchEvent(new Event('input')); });
+  $('orderNo').addEventListener('input', () => {
+    const ok = ORDER_RE.test($('orderNo').value.trim());
+    $('orderNo').classList.toggle('bad', !ok);
+    $('orderNoHint').textContent = ok ? 'Generated for you. Edit it if you like: 1–40 of A–Z a–z 0–9 - _ +' : 'Only 1–40 of A–Z a–z 0–9 - _ + (no spaces or dots)';
+  });
 
   // ---------- request building (same rules as the Node backend) ----------
   // PACO currency list (alphabetic code -> decimalPlaces), exported 2026-11-22. Numeric codes are rejected.
@@ -201,7 +251,8 @@
   const withParams = (url, p) => { const u = new URL(url); Object.entries(p).forEach(([k, v]) => u.searchParams.set(k, v)); return u.toString(); };
 
   function buildBody() {
-    const orderNo = `ORD${Date.now()}${String(Math.floor(Math.random() * 1e4)).padStart(4, '0')}`;
+    const orderNo = $('orderNo').value.trim();
+    if (!/^[A-Za-z0-9\-_+]{1,40}$/.test(orderNo)) throw new Error('orderNo must be 1–40 characters of A–Z a–z 0–9 - _ +');
     const ret = $('returnUrl').value.trim() || '-';
     const back = $('backendUrl').value.trim() || '-';
     const body = {
@@ -321,6 +372,7 @@
         url = `${baseUrl()}/api/2.0/Payment/${api}`;
         body = buildBody();
         $('inqOrder').value = body.orderNo; // ready for the Inquiry tab
+        $('orderNo').value = genOrderNo();   // fresh one for the next payment (edit it to retry with the same number)
       }
       if (!/^https:\/\//.test(url)) throw new Error('Base URL must start with https://');
     } catch (e) { banner('err', esc(e.message)); $('resView').textContent = '(not sent)'; return; }
